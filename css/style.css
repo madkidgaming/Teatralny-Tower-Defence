@@ -1,81 +1,77 @@
 body {
     font-family: 'Arial', sans-serif;
     display: flex;
-    /* flex-direction: column; Usuniemy to, aby móc zrobić układ kolumnowy dla gry */
-    align-items: center; /* Wyśrodkowanie w pionie na całej stronie może być trudne z bocznymi panelami, ale zostawmy na razie */
-    justify-content: center; /* Wyśrodkowanie w poziomie */
-    background-color: rgba(20, 10, 5, 0.92); /* Takie samo tło jak w menu */
-    color: #f0f0f0; /* Jaśniejszy domyślny kolor tekstu na ciemnym tle */
+    flex-direction: column; /* Zmienione z powrotem na column dla ogólnego layoutu strony */
+    align-items: center;
+    justify-content: flex-start; /* Wyrównanie do góry, menu i gra będą pod tytułem */
+    background-color: rgba(20, 10, 5, 0.92);
+    color: #f0f0f0;
     margin: 0;
-    padding: 20px; /* Dodajemy padding do body dla odstępów */
+    padding: 20px;
     min-height: 100vh;
     box-sizing: border-box;
-    overflow-x: hidden; /* Zapobieganie poziomemu scrollbarowi, jeśli panele będą szerokie */
+    overflow-x: hidden;
 }
 
-h1#pageTitle { /* Dodajemy ID dla głównego tytułu strony, aby go inaczej stylować */
+h1#pageTitle {
     font-family: 'Georgia', serif;
-    color: #ffd700; /* Złoty */
+    color: #ffd700;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     margin-bottom: 20px;
     font-size: 2.5em;
     text-align: center;
-    width: 100%; /* Aby tytuł był na całą szerokość przed kontenerem gry */
-}
-
-/* Główny kontener dla gry i bocznych paneli UI */
-#gameLayout {
-    display: flex;
-    flex-direction: row; /* Główne elementy (panel lewy, gra, panel prawy) w rzędzie */
-    align-items: flex-start; /* Wyrównanie do góry */
-    gap: 20px; /* Odstęp między panelami a grą */
-    max-width: 1400px; /* Ograniczenie maksymalnej szerokości layoutu */
     width: 100%;
 }
 
+#gameLayout {
+    display: flex; /* Ukrywany/pokazywany przez JS */
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 20px;
+    max-width: 1400px;
+    width: 100%;
+    margin-top: 20px; /* Odstęp od tytułu strony */
+}
+
 #leftUiPanel, #rightUiPanel {
-    background-color: rgba(40, 20, 10, 0.85); /* Tło paneli UI */
+    background-color: rgba(40, 20, 10, 0.85);
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    /* Szerokość paneli - można dostosować */
-    /* flex-basis: 200px; */ /* Stała szerokość */
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Odstępy między elementami w panelu */
+    gap: 15px;
     color: #e0e0e0;
 }
 #leftUiPanel {
-    min-width: 200px; /* Minimalna szerokość, można dostosować */
+    min-width: 200px;
+    max-width: 250px; /* Ograniczenie, żeby nie był za szeroki */
 }
 #rightUiPanel {
-    min-width: 220px; /* Minimalna szerokość, można dostosować */
+    min-width: 220px;
+    max-width: 280px;
 }
 
-
-#gameCanvasContainer { /* Kontener dla canvasa i przycisków pauzy/menu pod nim */
+#gameCanvasContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* flex-grow: 1; Usuniemy, canvas ma stały rozmiar */
 }
 
 canvas {
     border: 3px solid #8B4513;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     cursor: default;
-    /* Rozmiar canvasa jest ustawiany przez JS, więc nie ma potrzeby definiowania go tutaj */
 }
 
-#inGameUI { /* Przyciski pod canvasem (Pauza, Menu Główne) */
+#inGameUI {
     margin-top: 10px;
     display: flex;
     gap: 10px;
 }
 
-/* Stylizacja przycisków i elementów w panelach UI */
 .ui-panel-section h3 {
     font-family: 'Georgia', serif;
     color: #ffd700;
@@ -86,11 +82,11 @@ canvas {
     font-size: 1.3em;
 }
 
-.ui-button, #inGameUI button, .menu-screen button { /* Wspólna klasa dla przycisków w panelach */
+.ui-button, #inGameUI button, .menu-screen button {
     background-color: #b8860b;
     color: #ffffff;
     border: 2px solid #8c6c0a;
-    padding: 10px 15px; /* Mniejszy padding dla przycisków w panelach */
+    padding: 10px 15px;
     font-size: 1em;
     font-family: 'Arial', sans-serif;
     font-weight: bold;
@@ -99,7 +95,7 @@ canvas {
     text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
-    width: 100%; /* Przyciski na całą szerokość panelu */
+    width: 100%;
     box-sizing: border-box;
     text-align: center;
 }
@@ -116,15 +112,14 @@ canvas {
 }
 
 .ui-button.disabled {
-    background-color: #555;
-    color: #999;
-    cursor: not-allowed;
-    border-color: #444;
-    box-shadow: none;
-    transform: none;
+    background-color: #555 !important; /* Ważne, żeby nadpisać hover */
+    color: #999 !important;
+    cursor: not-allowed !important;
+    border-color: #444 !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
-/* Statystyki w panelu */
 .panel-stat {
     font-size: 1.1em;
     margin-bottom: 8px;
@@ -132,30 +127,108 @@ canvas {
 .panel-stat strong {
     color: #ffd700;
 }
+#uiMessages {
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0; /* Domyślnie przezroczyste, JS ustawi opacity na 1 */
+}
 
-/* Style dla menu pozostają takie same jak wcześniej */
 .menu-screen {
-    /* ... (bez zmian) ... */
+    /* display: none; klasa .hidden to robi */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Usunięto position:absolute, bo menu będzie teraz częścią normalnego przepływu pod tytułem */
+    width: 100%;
+    max-width: 800px; /* Ograniczenie szerokości menu */
+    margin-top: 30px; /* Odstęp od tytułu */
+    background-color: rgba(40, 20, 10, 0.88); /* Nieco inne tło dla menu, żeby odróżnić od tła strony */
+    color: white;
+    z-index: 10;
+    padding: 30px;
+    box-sizing: border-box;
+    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
-#levelSelection {
-    /* ... (bez zmian) ... */
-}
-.level-button {
-    /* ... (bez zmian) ... */
-}
-/* itd. dla reszty stylów menu */
 
-/* Ukrywanie/pokazywanie ekranów */
+.menu-screen h2 {
+    font-family: 'Georgia', serif;
+    color: #ffd700;
+    margin-bottom: 30px;
+    font-size: 2.8em;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+#levelSelection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.level-button {
+    background-color: #8B4513;
+    color: white;
+    border: 3px solid #54311a;
+    padding: 20px 30px;
+    font-size: 1.1em;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 220px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+}
+
+.level-button:hover:not(.locked) {
+    background-color: #a0522d;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+.level-button:active:not(.locked) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.level-button.locked {
+    background-color: #6a4f3a !important;
+    color: #a88e79 !important;
+    cursor: not-allowed !important;
+    border-color: #4d3520 !important;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3) !important;
+    transform: none !important;
+}
+
+.level-button .level-name {
+    display: block;
+    font-size: 1.25em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #ffebb3;
+}
+
+.level-button .level-progress {
+    display: block;
+    font-size: 0.9em;
+    color: #f0f0f0;
+}
+
+.level-button.locked .level-progress {
+    color: #8c7566;
+}
+
+#saveStatus {
+    font-style: italic;
+    color: #ccc;
+    font-size: 0.9em;
+    margin-top: 20px;
+}
+
 .hidden {
     display: none !important;
 }
 .visible {
-    display: flex !important;
-}
-
-/* Dostosowanie dla gameContainer, który jest teraz częścią gameLayout */
-#gameContainer.visible {
-    display: flex !important; /* Upewnij się, że jest flex, gdy widoczny */
-    flex-direction: column;
-    align-items: center;
+    display: flex !important; /* Główne kontenery używają flex */
 }

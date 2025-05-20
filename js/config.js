@@ -1,27 +1,20 @@
 export const TILE_SIZE = 40;
-export const ROWS = 12; // Liczba rzędów na canvasie
-export const COLS = 20; // Liczba kolumn na canvasie
+export const ROWS = 12;
+export const COLS = 20;
 
 export const UI_FONT_LARGE = "bold 18px Arial";
 export const UI_FONT_MEDIUM = "bold 15px Arial";
 export const UI_FONT_SMALL = "13px Arial";
 export const UI_FONT_TINY = `bold 11px Arial`;
 
-// Stałe UI_BUTTON_* nie są już bezpośrednio używane do rysowania UI na canvasie,
-// ale mogą być przydatne, jeśli zdecydujesz się na jakieś elementy dynamiczne na canvasie
-// lub do spójności z logiką, która mogłaby je wykorzystywać.
-// Można je usunąć, jeśli nie są nigdzie indziej potrzebne.
+// Stałe UI_BUTTON_* mogą być zachowane dla spójności lub jeśli będą potrzebne
 export const UI_BUTTON_HEIGHT = 55;
 export const UI_BUTTON_WIDTH = 140;
 export const UI_PADDING = 10;
-// export const UPGRADE_PANEL_WIDTH = 200; // Dla panelu na canvasie, teraz w HTML
-// export const UPGRADE_PANEL_HEIGHT = 120; // Dla panelu na canvasie, teraz w HTML
-// export const UPGRADE_BUTTON_HEIGHT = 35; // Dla panelu na canvasie, teraz w HTML
-// export const UI_BOTTOM_PANEL_HEIGHT = UI_BUTTON_HEIGHT + UI_PADDING * 2; // Dla UI na canvasie
 
 export const WAVES_PER_LEVEL = 10;
 export const MAX_ZADOWOLENIE_UPGRADE_LEVEL = 5;
-export const MAX_UPGRADE_LEVEL = 5; // Max tower upgrade level
+export const MAX_UPGRADE_LEVEL = 5;
 
 export const ENEMY_BASE_SIZE_MULTIPLIER = 1.4;
 export const TOWER_RENDER_SIZE_MULTIPLIER = 1.6;
@@ -79,7 +72,6 @@ export const levelData = [
     { name: "Oblężenie Garderoby", path: [ { x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }, { x: 6, y: 8 }, { x: 7, y: 8 }, { x: 8, y: 8 }, { x: 8, y: 7 }, { x: 8, y: 6 }, { x: 8, y: 5 }, { x: 8, y: 4 }, { x: 8, y: 3 }, { x: 8, y: 2 }, { x: 8, y: 1 }, { x: 9, y: 1 }, { x: 10, y: 1 }, { x: 11, y: 1 }, { x: 12, y: 1 }, { x: 13, y: 1 }, { x: 14, y: 1 }, { x: 15, y: 1 }, { x: 16, y: 1 }, { x: 17, y: 1 }, { x: 18, y: 1 }, { x: 19, y: 1 } ], towerSpots: [ { x: 2, y: 7 }, { x: 5, y: 7 }, { x: 7, y: 6 }, { x: 7, y: 3 }, { x: 7, y: 0 }, { x: 9, y: 2 }, { x: 12, y: 2 }, { x: 15, y: 2 }, { x: 18, y: 2 } ], bgColor: '#ecc1c1', pathColor: '#c79a9a'},
     { name: "Wielki Finał", path: [ { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 1, y: 5 }, { x: 1, y: 6 }, { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }, { x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }, { x: 8, y: 7 }, { x: 9, y: 7 }, { x: 10, y: 7 }, { x: 11, y: 7 }, { x: 12, y: 7 }, { x: 13, y: 7 }, { x: 14, y: 7 }, { x: 15, y: 7 }, { x: 15, y: 6 }, { x: 16, y: 6 }, { x: 17, y: 6 }, { x: 18, y: 6 }, { x: 19, y: 6 } ], towerSpots: [ { x: 3, y: 1 }, { x: 0, y: 3 }, { x: 0, y: 6 }, { x: 3, y: 6 }, { x: 6, y: 6 }, { x: 9, y: 6 }, { x: 12, y: 6 }, { x: 16, y: 7 }, { x: 17, y: 5 }, { x: 5, y:1} ], bgColor: '#670c0c', pathColor: '#400a0a' }
 ].map(level => ({ ...level, towerSpots: level.towerSpots.map(spot => ({...spot, occupied: false})) }));
-
 
 export const waveDefinitionsBase = [
     { krytyk: {count: 2, level: 1}, spozniony: {count: 0, level: 1}, interval: 150 },

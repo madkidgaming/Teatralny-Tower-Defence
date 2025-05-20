@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1 id="pageTitle">Teatr Tower Defense</h1> <!-- Główny tytuł strony -->
+    <h1 id="pageTitle">Teatr Tower Defense</h1>
 
-    <div id="gameLayout" class="hidden"> <!-- Kontener dla gry i UI, początkowo ukryty -->
+    <div id="gameLayout" class="hidden">
         <div id="leftUiPanel">
             <div class="ui-panel-section">
                 <h3>Statystyki Gry</h3>
@@ -24,14 +24,14 @@
                 <button id="uiButtonOswietleniowiec" class="ui-button">Oświetleniowiec (<span class="cost">0</span> Ap.)</button>
             </div>
             <div class="ui-panel-section">
-                <h3>Ulepszenia Globalne</h3>
+                <h3>Ulepszenia</h3>
                 <button id="uiButtonUpgradeSatisfaction" class="ui-button">Zadowolenie+ (<span class="cost">0</span> Ap.)</button>
             </div>
         </div>
 
         <div id="gameCanvasContainer">
             <canvas id="gameCanvas"></canvas>
-            <div id="inGameUI"> <!-- Przyciski pod canvasem -->
+            <div id="inGameUI">
                 <button id="pauseButton" class="ui-button">Pauza</button>
                 <button id="returnToMenuButtonGame" class="ui-button hidden">Menu Główne</button>
             </div>
@@ -42,7 +42,7 @@
                 <h3>Akcje</h3>
                 <button id="uiButtonStartWave" class="ui-button">Start Fali</button>
             </div>
-            <div id="towerUpgradePanel" class="ui-panel-section hidden"> <!-- Panel ulepszeń wieży -->
+            <div id="towerUpgradePanel" class="ui-panel-section hidden">
                 <h3 id="upgradePanelTowerName">Ulepsz Wieżę</h3>
                 <button id="uiButtonUpgradeDamage" class="ui-button">Obrażenia+ (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonUpgradeFireRate" class="ui-button">Szybkostrzelność+ (<span class="cost">0</span> Ap.)</button>
@@ -50,14 +50,13 @@
             </div>
             <div class="ui-panel-section">
                 <h3>Komunikaty</h3>
-                <div id="uiMessages" style="min-height: 50px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
-                    <!-- Komunikaty będą tu wstawiane przez JS -->
+                <div id="uiMessages" style="min-height: 50px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; color: #ffd700; font-weight: bold;">
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="mainMenu" class="menu-screen visible"> <!-- Menu główne, początkowo widoczne -->
+    <div id="mainMenu" class="menu-screen visible">
         <h2>Wybierz Akt</h2>
         <div id="levelSelection"></div>
         <p id="saveStatus">Postęp gry jest zapisywany automatycznie.</p>
