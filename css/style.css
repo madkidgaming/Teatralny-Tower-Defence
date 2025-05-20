@@ -1,247 +1,248 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Merriweather', serif;
     display: flex;
     flex-direction: column;
-    align-items: center; 
-    justify-content: flex-start; 
-    background-color: rgba(20, 10, 5, 0.92); /* Ciemne tło strony */
-    color: #f0f0f0; /* Jasny domyślny kolor tekstu */
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #1a0505;
+    background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%233b0e0e' fill-opacity='0.2'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414zM41.828 15l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414zM15 41.828l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414zM0 26h2V0h-2v26z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    color: #e0c9a6;
     margin: 0;
     padding: 20px;
     min-height: 100vh;
     box-sizing: border-box;
-    overflow-x: hidden; /* Zapobieganie poziomemu scrollbarowi */
+    overflow-x: hidden;
 }
 
 h1#pageTitle {
-    font-family: 'Georgia', serif;
-    color: #ffd700; /* Złoty */
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-    margin-bottom: 20px;
-    font-size: 2.5em;
+    font-family: 'Cinzel Decorative', cursive;
+    color: #ffd700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    margin-bottom: 30px;
+    font-size: 3em;
     text-align: center;
+    letter-spacing: 2px;
 }
 
-/* --- Główny układ gry z panelami --- */
 #gameLayout {
-    display: flex; /* Domyślnie ukryty przez JS, pokazywany z klasą .visible */
+    display: flex;
     flex-direction: row;
-    align-items: flex-start; /* Panele i canvas wyrównane do góry */
-    gap: 20px;
-    max-width: 1400px; 
+    align-items: flex-start;
+    gap: 25px;
+    max-width: 1500px; 
     width: 100%;
-    margin-top: 20px; /* Odstęp od tytułu strony */
+    margin-top: 20px;
 }
 
 #leftUiPanel, #rightUiPanel {
-    background-color: rgba(40, 20, 10, 0.88); /* Nieco jaśniejsze niż tło body */
-    padding: 20px; /* Więcej paddingu */
-    border-radius: 10px; /* Bardziej zaokrąglone */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4); /* Mocniejszy cień */
+    background-color: rgba(30, 5, 5, 0.85);
+    padding: 20px;
+    border: 2px solid #b8860b;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.3);
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Większy odstęp między sekcjami */
-    color: #e0e0e0;
+    gap: 20px;
+    color: #e0c9a6;
 }
 #leftUiPanel {
-    min-width: 220px; /* Trochę szerszy */
-    max-width: 280px;
-}
-#rightUiPanel {
     min-width: 240px;
     max-width: 300px;
+}
+#rightUiPanel {
+    min-width: 260px;
+    max-width: 320px;
 }
 
 #gameCanvasContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-grow: 1; /* Pozwól kontenerowi canvasa zająć dostępną przestrzeń */
+    flex-grow: 1;
 }
 
 canvas {
-    border: 4px solid #7a3d0f; /* Grubsza, ciemniejsza ramka */
-    box-shadow: 0 0 20px rgba(0,0,0,0.3); /* Bardziej rozmyty cień */
+    border: 5px solid #800020;
+    box-shadow: 0 0 25px rgba(255,215,0,0.3), inset 0 0 15px rgba(0,0,0,0.4);
     cursor: default;
-    background-color: #f0e6d2; /* Domyślny kolor tła canvasa, jeśli bgColor z levelData nie działa */
+    background-color: #3d291a;
+    border-radius: 5px;
 }
 
-#inGameUI { /* Przyciski pod canvasem */
+#inGameUI {
     margin-top: 15px;
     display: flex;
     gap: 15px;
-    width: 100%; /* Aby przyciski mogły się rozciągnąć */
-    justify-content: center; /* Wyśrodkowanie przycisków, jeśli nie zajmują całej szerokości */
+    width: 100%;
+    justify-content: center;
 }
 #inGameUI .ui-button {
-    width: auto; /* Pozwól przyciskom "Pauza" i "Menu Główne" mieć naturalną szerokość */
-    min-width: 120px; /* Minimalna szerokość dla czytelności */
-    padding: 10px 25px; /* Większy padding dla tych przycisków */
-}
-
-
-/* --- Style dla sekcji i elementów w panelach UI --- */
-.ui-panel-section {
-    border-bottom: 1px dashed rgba(255, 215, 0, 0.2); /* Subtelny separator */
-    padding-bottom: 15px;
-}
-.ui-panel-section:last-child {
-    border-bottom: none; /* Usuń separator dla ostatniej sekcji */
+    width: auto;
+    min-width: 130px;
+    padding: 12px 28px;
+    font-size: 1.05em;
 }
 
 .ui-panel-section h3 {
-    font-family: 'Georgia', serif;
-    color: #ffd700; /* Złoty */
+    font-family: 'Cinzel Decorative', cursive;
+    color: #ffd700;
     margin-top: 0;
-    margin-bottom: 12px; /* Większy odstęp */
-    /* border-bottom: 1px solid #b8860b; Usunięte, jest separator na całej sekcji */
-    /* padding-bottom: 5px; */
-    font-size: 1.4em; /* Nieco większy */
-    text-align: left; /* Wyrównanie do lewej dla nagłówków sekcji */
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+    padding-bottom: 8px;
+    font-size: 1.5em;
+    text-align: left;
+    letter-spacing: 1px;
 }
 
-.ui-button, /* .menu-screen button będzie osobno, bo może mieć inne szerokości */
-#inGameUI button { 
-    background-color: #b8860b;
+.ui-button, .menu-screen button {
+    background: linear-gradient(to bottom, #b8860b, #8c6c0a);
     color: #ffffff;
-    border: 2px solid #8c6c0a;
-    padding: 10px 15px;
+    border: 1px solid #5c400a;
+    padding: 12px 18px;
     font-size: 1em;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Merriweather', serif;
     font-weight: bold;
     cursor: pointer;
     border-radius: 8px;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s, border-color 0.2s;
-    width: 100%; /* Domyślnie przyciski w panelach zajmują całą szerokość */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.2s ease-out;
+    width: 100%;
     box-sizing: border-box;
     text-align: center;
 }
 
-.ui-button:hover, #inGameUI button:hover, .menu-screen button:hover {
-    background-color: #daa520;
-    border-color: #ffd700; /* Jaśniejsza ramka przy hover */
-    transform: translateY(-2px); /* Większe uniesienie */
-    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+.ui-button:hover, .menu-screen button:hover {
+    background: linear-gradient(to bottom, #daa520, #b8860b);
+    border-color: #ffd700;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
 }
-.ui-button:active, #inGameUI button:active, .menu-screen button:active {
-    transform: translateY(0px);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+.ui-button:active, .menu-screen button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .ui-button.disabled {
-    background-color: #524230 !important; /* Ciemniejszy, ale w palecie */
-    color: #8c7566 !important;
+    background: #4a3b2a !important;
+    color: #7a6854 !important;
     cursor: not-allowed !important;
-    border-color: #4d3520 !important;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2) !important;
+    border-color: #3b2e1e !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3) !important;
     transform: none !important;
 }
 
 .panel-stat {
-    font-size: 1.05em; /* Nieco większe statystyki */
+    font-size: 1.1em;
     margin-bottom: 10px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 .panel-stat strong {
     color: #ffd700;
-    font-weight: bold;
-}
-#uiMessages {
-    min-height: 60px; /* Trochę więcej miejsca */
-    background: rgba(0,0,0,0.25);
-    padding: 8px 10px;
-    border-radius: 4px;
-    color: #ffd700;
-    font-weight: bold;
-    transition: opacity 0.3s ease-in-out;
-    opacity: 0; /* JS będzie kontrolować opacity */
-    font-size: 0.95em;
-    line-height: 1.4;
-    display: flex; /* Dla lepszego wyrównania tekstu, jeśli jest wieloliniowy */
-    align-items: center;
-    justify-content: center;
+    font-weight: 700;
 }
 
-/* --- Style dla przycisków zakupu wież z ikonkami --- */
+#uiMessages {
+    min-height: 60px;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+    font-weight: bold;
+    transition: opacity 0.4s ease-in-out;
+    opacity: 0;
+    font-size: 0.95em;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center; /* Dodatkowe wyśrodkowanie tekstu wewnątrz */
+}
+
 .tower-buy-button {
     display: flex;
     align-items: center;
-    gap: 10px; /* Większy odstęp */
+    gap: 12px;
     justify-content: flex-start;
-    text-align: left; /* Tekst przycisku do lewej */
-    padding: 8px 10px; /* Mniejszy padding pionowy dla tych przycisków */
+    text-align: left;
+    padding: 10px 12px;
 }
 
 .tower-buy-button img {
-    width: 32px; 
-    height: 32px;
+    width: 36px; 
+    height: 36px;
     object-fit: contain;
     vertical-align: middle;
-    flex-shrink: 0; /* Zapobiega kurczeniu się obrazka */
+    flex-shrink: 0;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.1);
+    padding: 2px;
 }
 
 .tower-buy-button .cost {
-    margin-left: auto; /* Koszt na prawą stronę */
+    margin-left: auto;
     padding-left: 10px;
     font-size: 0.9em;
-    color: #f0e6d2; /* Jaśniejszy kolor dla kosztu */
+    color: #e0c9a6;
 }
 
 .tower-buy-button.selected-for-build {
-    background-color: #c8763b !important; /* Bardziej pomarańczowy brąz */
-    border-color: #ffb76e !important;
-    box-shadow: 0 0 10px rgba(255, 183, 110, 0.6) !important;
+    background: linear-gradient(to bottom, #e8b530, #c8860b) !important;
+    border-color: #fff0a0 !important;
+    box-shadow: 0 0 12px rgba(255, 223, 100, 0.8), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+    color: #331a00 !important;
+}
+.tower-buy-button.selected-for-build .cost {
+    color: #4d2a00;
 }
 
-
-/* --- Style dla Menu (główne i pauzy) --- */
 .menu-screen {
-    display: flex; /* Kontrolowane przez .hidden/.visible */
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 650px; /* Trochę szersze menu */
-    margin: 30px auto 0 auto; /* Wyśrodkowanie i margines górny */
-    background-color: rgba(40, 20, 10, 0.92);
+    max-width: 700px;
+    margin: 40px auto 0 auto;
+    background: linear-gradient(135deg, rgba(50, 20, 10, 0.95), rgba(30, 5, 5, 0.98));
     color: white;
     z-index: 10;
-    padding: 35px; /* Więcej paddingu */
+    padding: 40px;
     box-sizing: border-box;
     text-align: center;
-    border-radius: 12px; /* Bardziej zaokrąglone */
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    border-radius: 15px;
+    border: 2px solid #b8860b;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.7);
 }
-/* Specyficzne dla menu pauzy, jeśli jest nad grą */
 #pauseMenu.menu-screen {
-    position: absolute; /* Aby było nad canvasem */
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    margin-top: 0; /* Usuń margines, bo jest pozycjonowane absolutnie */
-    width: auto; /* Szerokość dostosuje się do zawartości */
-    min-width: 350px; /* Minimalna szerokość dla czytelności */
-    max-width: 500px;
+    margin-top: 0;
+    width: auto;
+    min-width: 400px;
+    max-width: 550px;
 }
 
-
 .menu-screen h2 {
-    font-family: 'Georgia', serif;
+    font-family: 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
-    margin-bottom: 35px; /* Większy odstęp */
-    font-size: 2.6em;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    margin-bottom: 40px;
+    font-size: 2.8em;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
 }
 
 #levelSelection {
     display: flex;
     flex-direction: column;
-    gap: 18px; /* Nieco większy odstęp */
+    gap: 20px;
     justify-content: center;
     align-items: center;
     margin-bottom: 30px;
@@ -249,82 +250,83 @@ canvas {
 }
 
 .level-button {
-    background-color: #8B4513;
-    color: white;
-    border: 3px solid #54311a;
+    background: linear-gradient(to bottom, #8B4513, #6a3005);
+    color: #ffebb3;
+    border: 2px solid #4d2103;
     padding: 18px 25px;
-    font-size: 1.15em; /* Nieco większa czcionka */
-    font-family: 'Georgia', serif;
+    font-size: 1.2em;
+    font-family: 'Merriweather', serif;
+    font-weight: 700;
     cursor: pointer;
     border-radius: 10px;
-    text-align: left; /* Tekst do lewej dla lepszego czytania nazwy aktu */
-    min-width: 320px;
+    text-align: left;
+    min-width: 350px;
     max-width: 95%;
     width: auto;
     box-sizing: border-box;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
-    display: flex; /* Dla lepszego ułożenia nazwy i postępu */
-    justify-content: space-between; /* Nazwa po lewej, postęp po prawej */
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: all 0.2s ease-out;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
 .level-button:hover:not(.locked) {
-    background-color: #a0522d;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    background: linear-gradient(to bottom, #a0522d, #803c15);
+    border-color: #b8860b;
+    box-shadow: 0 7px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .level-button:active:not(.locked) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 1px rgba(0,0,0,0.1);
 }
 
 .level-button.locked {
-    background-color: #6a4f3a !important;
-    color: #a88e79 !important;
+    background: linear-gradient(to bottom, #5a4f3a, #4a3f2a) !important;
+    color: #9c8e79 !important;
     cursor: not-allowed !important;
-    border-color: #4d3520 !important;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.3) !important;
+    border-color: #3d2e1e !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4) !important;
     transform: none !important;
 }
 
 .level-button .level-name {
-    /* display: block; Już niepotrzebne, bo button jest flex */
-    font-size: 1.1em; /* Dostosuj rozmiar */
+    font-size: 1.1em;
     font-weight: bold;
-    /* margin-bottom: 8px; Już niepotrzebne */
     color: #ffebb3;
-    margin-right: 10px; /* Odstęp od postępu */
+    margin-right: 10px;
 }
 
 .level-button .level-progress {
-    /* display: block; Już niepotrzebne */
     font-size: 0.9em;
-    color: #f0f0f0;
-    white-space: nowrap; /* Zapobiega łamaniu tekstu postępu */
+    color: #d0bfa6;
+    white-space: nowrap;
 }
-
 .level-button.locked .level-progress {
     color: #8c7566;
 }
 
 #saveStatus {
     font-style: italic;
-    color: #ccc;
+    color: #a08c76;
     font-size: 0.9em;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
-.menu-screen .ui-button { /* Style dla przycisków Wznów/Menu Główne w menu pauzy */
-    width: auto; /* Szerokość dopasowana do tekstu */
-    min-width: 180px; /* Minimalna szerokość */
-    margin-top: 10px; /* Odstęp między przyciskami w menu pauzy */
+.menu-screen .ui-button {
+    width: auto;
+    min-width: 200px;
+    margin-top: 15px;
+    padding: 12px 30px;
+    font-size: 1.1em;
 }
-
 
 .hidden {
     display: none !important;
+    /* GSAP będzie obsługiwał visibility i opacity przez autoAlpha, */
+    /* ale display: none jest fallbackiem i zapewnia ukrycie */
 }
 .visible {
     display: flex !important;
+    /* GSAP ustawi opacity i visibility na widoczne */
 }

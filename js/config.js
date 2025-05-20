@@ -7,7 +7,6 @@ export const UI_FONT_MEDIUM = "bold 15px Arial";
 export const UI_FONT_SMALL = "13px Arial";
 export const UI_FONT_TINY = `bold 11px Arial`;
 
-// Stałe UI_BUTTON_* mogą być zachowane dla spójności lub jeśli będą potrzebne
 export const UI_BUTTON_HEIGHT = 55;
 export const UI_BUTTON_WIDTH = 140;
 export const UI_PADDING = 10;
