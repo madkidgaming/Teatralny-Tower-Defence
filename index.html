@@ -9,7 +9,7 @@
 <body>
     <h1 id="pageTitle">Teatr Tower Defense</h1>
 
-    <div id="gameLayout" class="hidden">
+    <div id="gameLayout" class="hidden"> <!-- Kontener dla gry i UI, początkowo ukryty -->
         <div id="leftUiPanel">
             <div class="ui-panel-section">
                 <h3>Statystyki Gry</h3>
@@ -31,7 +31,7 @@
 
         <div id="gameCanvasContainer">
             <canvas id="gameCanvas"></canvas>
-            <div id="inGameUI">
+            <div id="inGameUI"> <!-- Przyciski pod canvasem -->
                 <button id="pauseButton" class="ui-button">Pauza</button>
                 <button id="returnToMenuButtonGame" class="ui-button hidden">Menu Główne</button>
             </div>
@@ -42,7 +42,7 @@
                 <h3>Akcje</h3>
                 <button id="uiButtonStartWave" class="ui-button">Start Fali</button>
             </div>
-            <div id="towerUpgradePanel" class="ui-panel-section hidden">
+            <div id="towerUpgradePanel" class="ui-panel-section hidden"> <!-- Panel ulepszeń wieży -->
                 <h3 id="upgradePanelTowerName">Ulepsz Wieżę</h3>
                 <button id="uiButtonUpgradeDamage" class="ui-button">Obrażenia+ (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonUpgradeFireRate" class="ui-button">Szybkostrzelność+ (<span class="cost">0</span> Ap.)</button>
@@ -50,19 +50,21 @@
             </div>
             <div class="ui-panel-section">
                 <h3>Komunikaty</h3>
-                <div id="uiMessages" style="min-height: 50px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; color: #ffd700; font-weight: bold;">
+                <div id="uiMessages" style="min-height: 50px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; color: #ffd700; font-weight: bold; transition: opacity 0.3s ease-in-out; opacity: 0;">
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="mainMenu" class="menu-screen visible">
+    <div id="mainMenu" class="menu-screen visible"> <!-- Menu główne, początkowo widoczne -->
         <h2>Wybierz Akt</h2>
-        <div id="levelSelection"></div>
+        <div id="levelSelection">
+            <!-- Poziomy będą generowane przez JS -->
+        </div>
         <p id="saveStatus">Postęp gry jest zapisywany automatycznie.</p>
     </div>
 
-    <div id="pauseMenu" class="menu-screen hidden">
+    <div id="pauseMenu" class="menu-screen hidden"> <!-- Ekran pauzy, początkowo ukryty -->
         <h2>Pauza</h2>
         <button id="resumeButton" class="ui-button">Wznów</button>
         <button id="menuFromPauseButton" class="ui-button">Menu Główne</button>

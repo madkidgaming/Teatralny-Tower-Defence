@@ -1,9 +1,9 @@
 body {
     font-family: 'Arial', sans-serif;
     display: flex;
-    flex-direction: column; /* Zmienione z powrotem na column dla ogólnego layoutu strony */
-    align-items: center;
-    justify-content: flex-start; /* Wyrównanie do góry, menu i gra będą pod tytułem */
+    flex-direction: column;
+    align-items: center; /* Wyśrodkowuje #pageTitle, #mainMenu, #gameLayout poziomo */
+    justify-content: flex-start; 
     background-color: rgba(20, 10, 5, 0.92);
     color: #f0f0f0;
     margin: 0;
@@ -20,17 +20,16 @@ h1#pageTitle {
     margin-bottom: 20px;
     font-size: 2.5em;
     text-align: center;
-    width: 100%;
 }
 
 #gameLayout {
-    display: flex; /* Ukrywany/pokazywany przez JS */
+    display: flex; /* Kontrolowane przez .hidden/.visible */
     flex-direction: row;
     align-items: flex-start;
     gap: 20px;
-    max-width: 1400px;
+    max-width: 1400px; /* Maksymalna szerokość całego układu gry */
     width: 100%;
-    margin-top: 20px; /* Odstęp od tytułu strony */
+    margin-top: 20px;
 }
 
 #leftUiPanel, #rightUiPanel {
@@ -47,7 +46,7 @@ h1#pageTitle {
 }
 #leftUiPanel {
     min-width: 200px;
-    max-width: 250px; /* Ograniczenie, żeby nie był za szeroki */
+    max-width: 250px;
 }
 #rightUiPanel {
     min-width: 220px;
@@ -58,6 +57,7 @@ h1#pageTitle {
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Canvas sam w sobie zdefiniuje swoją szerokość, więc ten kontener się dostosuje */
 }
 
 canvas {
@@ -112,7 +112,7 @@ canvas {
 }
 
 .ui-button.disabled {
-    background-color: #555 !important; /* Ważne, żeby nadpisać hover */
+    background-color: #555 !important;
     color: #999 !important;
     cursor: not-allowed !important;
     border-color: #444 !important;
@@ -127,21 +127,17 @@ canvas {
 .panel-stat strong {
     color: #ffd700;
 }
-#uiMessages {
-    transition: opacity 0.3s ease-in-out;
-    opacity: 0; /* Domyślnie przezroczyste, JS ustawi opacity na 1 */
-}
 
+/* --- Style dla Menu --- */
 .menu-screen {
-    /* display: none; klasa .hidden to robi */
+    display: flex; /* Kontrolowane przez .hidden/.visible, ale domyślnie flex */
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Usunięto position:absolute, bo menu będzie teraz częścią normalnego przepływu pod tytułem */
     width: 100%;
-    max-width: 800px; /* Ograniczenie szerokości menu */
-    margin-top: 30px; /* Odstęp od tytułu */
-    background-color: rgba(40, 20, 10, 0.88); /* Nieco inne tło dla menu, żeby odróżnić od tła strony */
+    max-width: 600px; /* Zmniejszyłem trochę dla bardziej zwartego wyglądu menu */
+    margin-top: 30px;
+    background-color: rgba(40, 20, 10, 0.9); /* Nieco jaśniejsze niż tło body */
     color: white;
     z-index: 10;
     padding: 30px;
@@ -154,30 +150,36 @@ canvas {
 .menu-screen h2 {
     font-family: 'Georgia', serif;
     color: #ffd700;
+    margin-top: 0;
     margin-bottom: 30px;
-    font-size: 2.8em;
+    font-size: 2.5em; /* Trochę mniejszy nagłówek menu */
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 #levelSelection {
     display: flex;
-    flex-wrap: wrap;
-    gap: 25px;
+    flex-direction: column; /* Przyciski jeden pod drugim */
+    gap: 15px;
     justify-content: center;
+    align-items: center; /* Wyśrodkowuje przyciski w kontenerze */
     margin-bottom: 30px;
+    width: 100%; /* Kontener zajmuje całą szerokość .menu-screen (do max-width) */
 }
 
 .level-button {
     background-color: #8B4513;
     color: white;
     border: 3px solid #54311a;
-    padding: 20px 30px;
+    padding: 15px 20px; /* Dostosowany padding */
     font-size: 1.1em;
     font-family: 'Georgia', serif;
     cursor: pointer;
     border-radius: 10px;
     text-align: center;
-    min-width: 220px;
+    min-width: 300px; /* Stała minimalna szerokość */
+    max-width: 90%;   /* Maksymalnie 90% szerokości rodzica (#levelSelection) */
+    width: auto;      /* Szerokość dostosuje się do zawartości, ale ograniczona przez min/max */
+    box-sizing: border-box;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
 }
@@ -203,7 +205,7 @@ canvas {
 
 .level-button .level-name {
     display: block;
-    font-size: 1.25em;
+    font-size: 1.2em; /* Nieco większa nazwa aktu */
     font-weight: bold;
     margin-bottom: 8px;
     color: #ffebb3;
@@ -226,9 +228,10 @@ canvas {
     margin-top: 20px;
 }
 
+/* Ukrywanie/pokazywanie ekranów */
 .hidden {
     display: none !important;
 }
 .visible {
-    display: flex !important; /* Główne kontenery używają flex */
+    display: flex !important;
 }
