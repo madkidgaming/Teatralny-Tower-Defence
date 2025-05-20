@@ -2,12 +2,206 @@ import * as C from './config.js';
 import { images, gameState as state } from './state.js';
 import { drawTextWithOutline } from './utils.js';
 
-// ... (drawBackgroundAndPath, drawTheaterBase, drawTowerSpots, drawEnemies, drawTowers, drawProjectiles, drawWaveIntro) ...
-// Wszystkie te funkcje pozostają takie same.
 
-// Funkcja drawUI może wymagać drobnej modyfikacji, jeśli np. przycisk fullscreen był w niej rysowany.
-// Obecnie nie ma takiej potrzeby, bo przyciski pauzy itp. są elementami HTML.
-export function drawUI(ctx) {
+export function drawBackgroundAndPath(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    ctx.fillStyle = C.levelData[state.currentLevelIndex].bgColor || '#c2b280';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    if (!state.currentPath || state.currentPath.length === 0) return; // Dodatkowe zabezpieczenie
+
+    ctx.strokeStyle = C.levelData[state.currentLevelIndex].pathColor || '#a0522d';
+    ctx.lineWidth = C.TILE_SIZE * 0.9;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2, state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2);
+    for (let i = 1; i < state.currentPath.length; i++) {
+        ctx.lineTo(state.currentPath[i].x * C.TILE_SIZE + C.TILE_SIZE / 2, state.currentPath[i].y * C.TILE_SIZE + C.TILE_SIZE / 2);
+    }
+    ctx.stroke();
+}
+
+export function drawTheaterBase(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    const baseImg = images.teatrBase;
+    // Dodatkowe zabezpieczenie jeśli currentPath jest puste lub za krótkie
+    if (!state.currentPath || state.currentPath.length === 0) return;
+
+    const baseNode = state.currentPath[state.currentPath.length -1];
+    if (!baseNode) return; // Zabezpieczenie jeśli baseNode nie istnieje
+
+    if (baseImg && !baseImg.error) {
+         const baseY = Math.min(baseNode.y, C.MAX_GAME_ROW -1);
+
+         const baseRenderWidth = C.TILE_SIZE * C.BASE_SIZE_MULTIPLIER;
+         const baseRenderHeight = (baseImg.height / baseImg.width) * baseRenderWidth;
+         ctx.drawImage(baseImg,
+            (baseNode.x + 0.5) * C.TILE_SIZE - baseRenderWidth / 2,
+            (baseY + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8,
+            baseRenderWidth, baseRenderHeight);
+    } else {
+        ctx.fillStyle = '#8B4513';
+        const fallbackSize = C.TILE_SIZE * 1.5;
+        const baseY = Math.min(baseNode.y, C.MAX_GAME_ROW -1);
+        ctx.fillRect( (baseNode.x +0.5) * C.TILE_SIZE - fallbackSize/2, (baseY +0.5) * C.TILE_SIZE - fallbackSize/2, fallbackSize, fallbackSize); // Poprawione centrowanie
+    }
+}
+
+export function drawTowerSpots(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    if (!state.currentTowerSpots) return; // Zabezpieczenie
+    state.currentTowerSpots.forEach(spot => {
+        if (spot.y <= C.MAX_GAME_ROW) {
+            ctx.fillStyle = spot.occupied ? 'rgba(200, 0, 0, 0.15)' : 'rgba(0, 200, 0, 0.15)';
+            ctx.strokeStyle = spot.occupied ? 'darkred' : 'darkgreen';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.rect(spot.x * C.TILE_SIZE + C.TILE_SIZE*0.2, spot.y * C.TILE_SIZE + C.TILE_SIZE*0.2, C.TILE_SIZE*0.6, C.TILE_SIZE*0.6);
+            ctx.fill();
+            ctx.stroke();
+        }
+    });
+}
+
+export function drawEnemies(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    state.enemies.forEach(enemy => {
+        if (enemy.image && !enemy.image.error) {
+            if (enemy.level > 1) {
+                ctx.save();
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = enemy.level === 2 ? "rgba(100, 180, 255, 0.9)" : "rgba(255, 100, 100, 0.9)";
+                for (let i = 0; i < 4; i++) {
+                     ctx.drawImage(enemy.image,
+                        enemy.x - enemy.width / 2 + (i === 0 ? -2 : i === 1 ? 2 : 0),
+                        enemy.y - enemy.height / 2 + (i === 2 ? -2 : i === 3 ? 2 : 0),
+                        enemy.width, enemy.height);
+                }
+                ctx.restore();
+            }
+            ctx.drawImage(enemy.image, enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
+        } else {
+            ctx.fillStyle = enemy.type === 'krytyk' ? '#5A5A5A' : '#007bff';
+            const fallbackSize = enemy.width * 0.8;
+            ctx.fillRect(enemy.x - fallbackSize / 2, enemy.y - fallbackSize / 2, fallbackSize, fallbackSize);
+        }
+
+        const barWidth = C.TILE_SIZE * 0.8;
+        const barHeight = 7;
+        ctx.fillStyle = 'rgba(255,0,0,0.7)';
+        ctx.fillRect(enemy.x - barWidth / 2, enemy.y - enemy.height / 2 - barHeight - 3, barWidth, barHeight);
+        ctx.fillStyle = 'rgba(0,255,0,0.7)';
+        ctx.fillRect(enemy.x - barWidth / 2, enemy.y - enemy.height / 2 - barHeight - 3, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+
+        if (enemy.level > 1) {
+            ctx.fillStyle = "white";
+            ctx.font = C.UI_FONT_TINY;
+            ctx.textAlign = "center";
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2;
+            const levelIndicator = `L${enemy.level}`;
+            ctx.strokeText(levelIndicator, enemy.x, enemy.y - enemy.height / 2 - barHeight - 5);
+            ctx.fillText(levelIndicator, enemy.x, enemy.y - enemy.height / 2 - barHeight - 5);
+            ctx.lineWidth = 1;
+        }
+    });
+}
+
+export function drawTowers(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    state.towers.forEach(tower => {
+        const size = tower.renderSize;
+        const drawY = tower.y + C.TILE_SIZE / 2 - size;
+
+        if (tower.image && !tower.image.error) {
+            ctx.drawImage(tower.image, tower.x - size / 2, drawY, size, size);
+        } else {
+            ctx.fillStyle = tower.type === 'bileter' ? '#4CAF50' : '#FFEB3B';
+            const fallbackSize = size * 0.8;
+            ctx.fillRect(tower.x - fallbackSize / 2, drawY + size - fallbackSize, fallbackSize, fallbackSize);
+        }
+
+        ctx.fillStyle = "#FFF";
+        ctx.font = C.UI_FONT_TINY;
+        ctx.textAlign = "center";
+        ctx.strokeStyle = "rgba(0,0,0,0.8)";
+        ctx.lineWidth = 2.5;
+        const levelText = `D:${tower.damageLevel}|S:${tower.fireRateLevel}`;
+        ctx.strokeText(levelText, tower.x, drawY - 6);
+        ctx.fillText(levelText, tower.x, drawY - 6);
+        ctx.lineWidth = 1;
+
+
+        if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.9)";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(tower.x - size / 2 -2, drawY -2, size + 4, size + 4);
+            ctx.lineWidth = 1;
+        }
+    });
+}
+
+export function drawProjectiles(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    state.projectiles.forEach(p => {
+        if (p.image && !p.image.error) {
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle);
+            ctx.drawImage(p.image, -p.width / 2, -p.height / 2, p.width, p.height);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = p.type === 'bilet' ? 'white' : 'yellow';
+            const fallbackSize = p.width * 0.5;
+            ctx.fillRect(p.x - fallbackSize, p.y - fallbackSize/2, fallbackSize*2, fallbackSize);
+        }
+    });
+}
+
+export function drawWaveIntro(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
+    if (!state.showingWaveIntro || state.waveIntroTimer <= 0) return;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "bold 28px Georgia";
+    ctx.textAlign = "center";
+    ctx.fillText(`Nadchodzi Fala ${state.currentWaveNumber + 1}!`, ctx.canvas.width / 2, 80);
+
+    ctx.font = C.UI_FONT_LARGE;
+    ctx.fillStyle = "white";
+    ctx.fillText("Przeciwnicy:", ctx.canvas.width / 2, 130);
+
+    const iconSize = C.TILE_SIZE * 1.5;
+    const startX = ctx.canvas.width / 2 - (state.waveIntroEnemies.length * (iconSize + 20) - 20) / 2;
+
+    state.waveIntroEnemies.forEach((enemyInfo, index) => {
+        const x = startX + index * (iconSize + 20);
+        const y = 160;
+        if (enemyInfo.image && !enemyInfo.image.error) {
+            ctx.drawImage(enemyInfo.image, x, y, iconSize, iconSize);
+             if (enemyInfo.isBoss) {
+                ctx.fillStyle = "red";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText("BOSS!", x + iconSize / 2, y + iconSize + 25);
+            } else if (enemyInfo.level > 1) {
+                ctx.fillStyle = enemyInfo.level === 2 ? "lightblue" : "pink";
+                ctx.font = "bold 16px Arial";
+                ctx.fillText(`Lvl ${enemyInfo.level}`, x + iconSize / 2, y + iconSize + 20);
+            }
+        } else {
+            ctx.fillStyle = enemyInfo.type === 'krytyk' ? '#5A5A5A' : '#007bff';
+            ctx.fillRect(x, y, iconSize, iconSize);
+        }
+    });
+
+    ctx.fillStyle = "lightgray";
+    ctx.font = C.UI_FONT_MEDIUM;
+    ctx.fillText(`Przygotuj się! (${Math.ceil(state.waveIntroTimer / 60)}s)`, ctx.canvas.width / 2, ctx.canvas.height - 80);
+
+    if (!state.isPaused) { // Timer intro pauzuje się z grą
+        state.waveIntroTimer--;
+    }
+    // Logika startNextWaveActual jest teraz w main.js, w gameLoop, po tym jak timer dobiegnie końca
+}
+
+export function drawUI(ctx) { // UPEWNIJ SIĘ, ŻE JEST 'export'
     if (state.showingWaveIntro) return;
     
     // Górny panel statystyk
@@ -17,7 +211,7 @@ export function drawUI(ctx) {
     ctx.textAlign = "left";
     drawTextWithOutline(ctx, `Aplauz: ${state.aplauz}`, C.UI_PADDING, 30, C.UI_FONT_LARGE, "#FFD700", "rgba(0,0,0,0.8)");
     ctx.textAlign = "center";
-    drawTextWithOutline(ctx, `Fala: ${state.currentWaveNumber}/${C.WAVES_PER_LEVEL}`, ctx.canvas.width / 2, 30, C.UI_FONT_LARGE, "#FFF", "rgba(0,0,0,0.8)");
+    drawTextWithOutline(ctx, `Fala: ${state.currentWaveNumber > 0 ? state.currentWaveNumber : '-'}/${C.WAVES_PER_LEVEL}`, ctx.canvas.width / 2, 30, C.UI_FONT_LARGE, "#FFF", "rgba(0,0,0,0.8)");
     ctx.textAlign = "right";
     drawTextWithOutline(ctx, `Zadowolenie: ${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`, ctx.canvas.width - C.UI_PADDING, 30, C.UI_FONT_LARGE, "#FFD700", "rgba(0,0,0,0.8)");
 
@@ -25,10 +219,8 @@ export function drawUI(ctx) {
     ctx.fillStyle = "rgba(40, 20, 10, 0.85)"; 
     ctx.fillRect(0, ctx.canvas.height - C.UI_BOTTOM_PANEL_HEIGHT, ctx.canvas.width, C.UI_BOTTOM_PANEL_HEIGHT);
 
-    // Przyciski wież i ulepszenia Zadowolenia
     for (const key in state.uiRegions) {
         if (key.startsWith("towerButton") && state.uiRegions[key]) {
-            // ... (logika rysowania przycisków wież - bez zmian) ...
             const region = state.uiRegions[key];
             const towerDef = C.towerDefinitions[region.type];
             const img = images[towerDef.imageKey];
@@ -59,7 +251,6 @@ export function drawUI(ctx) {
             
     const zadowolenieRegion = state.uiRegions.upgradeZadowolenieButton;
     if(zadowolenieRegion){
-        // ... (logika rysowania przycisku zadowolenia - bez zmian) ...
         let zadowolenieUpgradeCostText = "MAX";
         let zadowolenieButtonColor = "#555"; 
         if (state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) {
@@ -81,8 +272,7 @@ export function drawUI(ctx) {
 
     const startRegion = state.uiRegions.startWaveButton;
     if(startRegion) {
-        // ... (logika rysowania przycisku start fali - bez zmian) ...
-        const isStartWaveDisabled = state.gameOver || state.waveInProgress || state.showingWaveIntro; 
+        const isStartWaveDisabled = state.gameOver || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL;
         ctx.fillStyle = isStartWaveDisabled ? "#555" : "#c00";
         ctx.fillRect(startRegion.x, startRegion.y, startRegion.width, startRegion.height);
         ctx.strokeStyle = "#800";
@@ -95,9 +285,7 @@ export function drawUI(ctx) {
         ctx.textBaseline = "alphabetic"; 
     }
 
-    // Panel ulepszeń wieży
     if (state.selectedTowerForUpgrade) {
-        // ... (logika rysowania panelu ulepszeń - bez zmian) ...
         const tower = state.selectedTowerForUpgrade;
         const panelX = tower.x - C.UPGRADE_PANEL_WIDTH / 2;
         const panelY = Math.max(C.UI_PADDING + 45, tower.y - tower.definition.renderSize / 2 - C.UPGRADE_PANEL_HEIGHT - C.UI_PADDING); 
@@ -146,9 +334,7 @@ export function drawUI(ctx) {
         state.upgradeFireRateButtonRegion = null;
     }
 
-    // Komunikaty
     if (state.currentMessage && state.messageTimer > 0) {
-        // ... (logika rysowania komunikatów - bez zmian) ...
         ctx.font = C.UI_FONT_LARGE; 
         const metrics = ctx.measureText(state.currentMessage);
         const msgWidth = metrics.width;
@@ -163,7 +349,8 @@ export function drawUI(ctx) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         drawTextWithOutline(ctx, state.currentMessage, msgX, msgY, C.UI_FONT_LARGE, "#FFD700", "rgba(0,0,0,0.8)", 3);
-        if (!state.isPaused || state.currentMessage === "Pauza") { // Timer wiadomości pauzuje się z grą, chyba że to wiadomość "Pauza"
+        
+        if (!state.isPaused || state.currentMessage === "Pauza") {
              if(state.currentMessage !== "Pauza" || !state.isPaused) state.messageTimer--;
         }
         ctx.textBaseline = "alphabetic"; 
@@ -172,4 +359,18 @@ export function drawUI(ctx) {
     }
 }
 
-export function drawGameOverScreen(ctx) { /* ... (bez zmian) ... */ }
+export function drawGameOverScreen(ctx) { // Ta funkcja może nie być już potrzebna, jeśli komunikaty końca gry są przez state.currentMessage
+    // Zostawiam na razie, ale jej funkcjonalność przejmuje system komunikatów i zmiana ekranu
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
+    ctx.font = "bold 36px Georgia";
+    ctx.fillStyle = state.currentMessage.includes("GRATULACJE") || state.currentMessage.includes("ukończony") ? "lime" : "red";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(state.currentMessage, ctx.canvas.width/2, ctx.canvas.height/2 - 30);
+    
+    // ctx.font = "20px Arial";
+    // ctx.fillStyle = "white";
+    // ctx.fillText("Kliknij 'Menu Główne', aby kontynuować.", ctx.canvas.width/2, ctx.canvas.height/2 + 30);
+    ctx.textBaseline = "alphabetic";
+}
