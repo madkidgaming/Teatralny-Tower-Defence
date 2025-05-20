@@ -1,20 +1,21 @@
+// js/state.js
 export const gameState = {
     aplauz: 250,
     zadowolenieWidowni: 100,
     maxZadowolenieWidowni: 100,
-    zadowolenieUpgradeLevel: 0, // Rozważmy, czy to ma być globalne czy resetowane per poziom
+    zadowolenieUpgradeLevel: 0,
     currentWaveNumber: 0,
-    gameOver: false,
+    gameOver: false, // Oznacza przegraną na danym poziomie, lub ukończenie całego aktu
     waveInProgress: false,
     showingWaveIntro: false,
     waveIntroTimer: 0,
     waveIntroEnemies: [],
     currentLevelIndex: 0,
-    unlockedLevels: 1,    // Ile poziomów jest odblokowanych
-    levelProgress: {},    // Obiekt do przechowywania postępu fal dla każdego poziomu, np. { 0: 5, 1: 2 }
+    unlockedLevels: 1,
+    levelProgress: {}, // np. { 0: 5 } oznacza, że poziom 0 jest ukończony do fali 5 włącznie
     
     isPaused: false,
-    gameScreen: 'menu', // 'menu', 'playing', 'paused', 'levelComplete'
+    gameScreen: 'menu', // 'menu', 'playing', 'paused', 'levelComplete', 'levelLost'
 
     enemies: [],
     towers: [],
@@ -28,17 +29,13 @@ export const gameState = {
     spawnInterval: 0,
     spawnTimer: 0,
 
-    currentMessage: "",
-    messageTimer: 0,
+    selectedTowerType: null,
+    selectedTowerForUpgrade: null,
 
-    uiRegions: {
-        towerButtonBileter: null,
-        towerButtonOswietleniowiec: null,
-        startWaveButton: null,
-        upgradeZadowolenieButton: null,
-    },
-    upgradeDamageButtonRegion: null,
-    upgradeFireRateButtonRegion: null
+    currentMessage: "", // Dla komunikatów wyświetlanych w panelu HTML
+    messageTimer: 0,    // Timer dla tych komunikatów (jeśli chcemy auto-ukrywanie)
+
+    // uiRegions na canvasie nie są już potrzebne, bo UI jest w HTML
 };
 
 export const images = {};

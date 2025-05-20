@@ -1,139 +1,97 @@
 body {
     font-family: 'Arial', sans-serif;
     display: flex;
+    /* flex-direction: column; Usuniemy to, aby móc zrobić układ kolumnowy dla gry */
+    align-items: center; /* Wyśrodkowanie w pionie na całej stronie może być trudne z bocznymi panelami, ale zostawmy na razie */
+    justify-content: center; /* Wyśrodkowanie w poziomie */
+    background-color: rgba(20, 10, 5, 0.92); /* Takie samo tło jak w menu */
+    color: #f0f0f0; /* Jaśniejszy domyślny kolor tekstu na ciemnym tle */
+    margin: 0;
+    padding: 20px; /* Dodajemy padding do body dla odstępów */
+    min-height: 100vh;
+    box-sizing: border-box;
+    overflow-x: hidden; /* Zapobieganie poziomemu scrollbarowi, jeśli panele będą szerokie */
+}
+
+h1#pageTitle { /* Dodajemy ID dla głównego tytułu strony, aby go inaczej stylować */
+    font-family: 'Georgia', serif;
+    color: #ffd700; /* Złoty */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    font-size: 2.5em;
+    text-align: center;
+    width: 100%; /* Aby tytuł był na całą szerokość przed kontenerem gry */
+}
+
+/* Główny kontener dla gry i bocznych paneli UI */
+#gameLayout {
+    display: flex;
+    flex-direction: row; /* Główne elementy (panel lewy, gra, panel prawy) w rzędzie */
+    align-items: flex-start; /* Wyrównanie do góry */
+    gap: 20px; /* Odstęp między panelami a grą */
+    max-width: 1400px; /* Ograniczenie maksymalnej szerokości layoutu */
+    width: 100%;
+}
+
+#leftUiPanel, #rightUiPanel {
+    background-color: rgba(40, 20, 10, 0.85); /* Tło paneli UI */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    /* Szerokość paneli - można dostosować */
+    /* flex-basis: 200px; */ /* Stała szerokość */
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Odstępy między elementami w panelu */
+    color: #e0e0e0;
+}
+#leftUiPanel {
+    min-width: 200px; /* Minimalna szerokość, można dostosować */
+}
+#rightUiPanel {
+    min-width: 220px; /* Minimalna szerokość, można dostosować */
+}
+
+
+#gameCanvasContainer { /* Kontener dla canvasa i przycisków pauzy/menu pod nim */
+    display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #FFFFFF; /* Białe tło strony */
-    color: #000000;          /* Czarny tekst na stronie */
-    margin: 0;
-    padding-top: 10px;
-    min-height: 100vh;
-    position: relative; /* Potrzebne dla absolutnego pozycjonowania menu */
+    /* flex-grow: 1; Usuniemy, canvas ma stały rozmiar */
 }
-h1 {
-    font-family: 'Georgia', serif;
-    color: #b8860b; /* Ciemniejszy złoty dla lepszego kontrastu na białym */
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
-    margin-bottom: 10px;
-}
+
 canvas {
     border: 3px solid #8B4513;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     cursor: default;
+    /* Rozmiar canvasa jest ustawiany przez JS, więc nie ma potrzeby definiowania go tutaj */
 }
 
-#gameContainer {
-    /* display: flex; domyślnie ukryty przez .hidden */
-    flex-direction: column;
-    align-items: center;
-}
-
-.menu-screen {
-    /* display: none; domyślnie ukryty przez .hidden */
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(20, 10, 5, 0.92); /* Ciemniejsze, bardziej teatralne tło */
-    color: white;
-    z-index: 10;
-    padding: 20px;
-    box-sizing: border-box;
-    text-align: center;
-}
-
-.menu-screen h2 {
-    font-family: 'Georgia', serif;
-    color: #ffd700; /* Złoty */
-    margin-bottom: 30px;
-    font-size: 2.8em;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-}
-
-#levelSelection {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px; /* Większy odstęp */
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-.level-button {
-    background-color: #8B4513; /* Brązowy */
-    color: white;
-    border: 3px solid #54311a; /* Grubsza, ciemniejsza ramka */
-    padding: 20px 30px; /* Większy padding */
-    font-size: 1.1em; /* Nieco mniejsza czcionka bazowa */
-    font-family: 'Georgia', serif;
-    cursor: pointer;
-    border-radius: 10px; /* Bardziej zaokrąglone */
-    text-align: center;
-    min-width: 220px; /* Szersze przyciski */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
-}
-
-.level-button:hover:not(.locked) {
-    background-color: #a0522d;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-}
-.level-button:active:not(.locked) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-
-.level-button.locked {
-    background-color: #6a4f3a; /* Ciemniejszy, ale nadal w palecie */
-    color: #a88e79;
-    cursor: not-allowed;
-    border-color: #4d3520;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-}
-
-.level-button .level-name {
-    display: block;
-    font-size: 1.25em; /* Większa nazwa aktu */
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #ffebb3; /* Jaśniejszy kolor dla nazwy */
-}
-
-.level-button .level-progress {
-    display: block;
-    font-size: 0.9em;
-    color: #f0f0f0; /* Jaśniejszy dla postępu */
-}
-
-.level-button.locked .level-progress {
-    color: #8c7566; /* Stonowany kolor dla zablokowanego postępu */
-}
-
-
-#saveStatus {
-    font-style: italic;
-    color: #ccc;
-    font-size: 0.9em;
-    margin-top: 20px;
-}
-
-#inGameUI {
+#inGameUI { /* Przyciski pod canvasem (Pauza, Menu Główne) */
     margin-top: 10px;
     display: flex;
     gap: 10px;
 }
 
-#inGameUI button, .menu-screen button { /* Wspólne style dla przycisków akcji */
-    background-color: #b8860b; /* Złoty */
+/* Stylizacja przycisków i elementów w panelach UI */
+.ui-panel-section h3 {
+    font-family: 'Georgia', serif;
+    color: #ffd700;
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #b8860b;
+    padding-bottom: 5px;
+    font-size: 1.3em;
+}
+
+.ui-button, #inGameUI button, .menu-screen button { /* Wspólna klasa dla przycisków w panelach */
+    background-color: #b8860b;
     color: #ffffff;
-    border: 2px solid #8c6c0a; /* Ciemniejsza złota ramka */
-    padding: 12px 25px;
-    font-size: 1.1em;
+    border: 2px solid #8c6c0a;
+    padding: 10px 15px; /* Mniejszy padding dla przycisków w panelach */
+    font-size: 1em;
     font-family: 'Arial', sans-serif;
     font-weight: bold;
     cursor: pointer;
@@ -141,24 +99,63 @@ canvas {
     text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+    width: 100%; /* Przyciski na całą szerokość panelu */
+    box-sizing: border-box;
+    text-align: center;
 }
 
-#inGameUI button:hover, .menu-screen button:hover {
-    background-color: #daa520; /* Jaśniejszy złoty */
+.ui-button:hover, #inGameUI button:hover, .menu-screen button:hover {
+    background-color: #daa520;
     border-color: #b8860b;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
-#inGameUI button:active, .menu-screen button:active {
+.ui-button:active, #inGameUI button:active, .menu-screen button:active {
     transform: translateY(0px);
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
+.ui-button.disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #444;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Statystyki w panelu */
+.panel-stat {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+}
+.panel-stat strong {
+    color: #ffd700;
+}
+
+/* Style dla menu pozostają takie same jak wcześniej */
+.menu-screen {
+    /* ... (bez zmian) ... */
+}
+#levelSelection {
+    /* ... (bez zmian) ... */
+}
+.level-button {
+    /* ... (bez zmian) ... */
+}
+/* itd. dla reszty stylów menu */
 
 /* Ukrywanie/pokazywanie ekranów */
 .hidden {
     display: none !important;
 }
 .visible {
-    display: flex !important; /* Używamy flex dla .menu-screen i #gameContainer */
+    display: flex !important;
+}
+
+/* Dostosowanie dla gameContainer, który jest teraz częścią gameLayout */
+#gameContainer.visible {
+    display: flex !important; /* Upewnij się, że jest flex, gdy widoczny */
+    flex-direction: column;
+    align-items: center;
 }

@@ -3,31 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teatr Tower Defense - Kompletna Wersja!</title>
+    <title>Teatr Tower Defense</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="gameContainer" class="hidden"> <!-- Początkowo ukryty -->
-        <h1>Teatr Tower Defense - Akt <span id="currentActHeader">1</span></h1>
-        <canvas id="gameCanvas"></canvas>
-        <div id="inGameUI">
-            <button id="pauseButton">Pauza</button>
-            <button id="returnToMenuButtonGame" class="hidden">Menu Główne</button> <!-- Początkowo ukryty, inna nazwa id, by uniknąć konfliktu -->
+    <h1 id="pageTitle">Teatr Tower Defense</h1> <!-- Główny tytuł strony -->
+
+    <div id="gameLayout" class="hidden"> <!-- Kontener dla gry i UI, początkowo ukryty -->
+        <div id="leftUiPanel">
+            <div class="ui-panel-section">
+                <h3>Statystyki Gry</h3>
+                <p class="panel-stat">Akt: <strong id="uiCurrentAct">1</strong></p>
+                <p class="panel-stat">Fala: <strong id="uiCurrentWave">- / -</strong></p>
+                <p class="panel-stat">Aplauz: <strong id="uiAplauz">0</strong></p>
+                <p class="panel-stat">Zadowolenie: <strong id="uiAudienceSatisfaction">0 / 0</strong></p>
+            </div>
+             <div class="ui-panel-section">
+                <h3>Wieże</h3>
+                <button id="uiButtonBileter" class="ui-button">Bileter (<span class="cost">0</span> Ap.)</button>
+                <button id="uiButtonOswietleniowiec" class="ui-button">Oświetleniowiec (<span class="cost">0</span> Ap.)</button>
+            </div>
+            <div class="ui-panel-section">
+                <h3>Ulepszenia Globalne</h3>
+                <button id="uiButtonUpgradeSatisfaction" class="ui-button">Zadowolenie+ (<span class="cost">0</span> Ap.)</button>
+            </div>
+        </div>
+
+        <div id="gameCanvasContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div id="inGameUI"> <!-- Przyciski pod canvasem -->
+                <button id="pauseButton" class="ui-button">Pauza</button>
+                <button id="returnToMenuButtonGame" class="ui-button hidden">Menu Główne</button>
+            </div>
+        </div>
+
+        <div id="rightUiPanel">
+            <div class="ui-panel-section">
+                <h3>Akcje</h3>
+                <button id="uiButtonStartWave" class="ui-button">Start Fali</button>
+            </div>
+            <div id="towerUpgradePanel" class="ui-panel-section hidden"> <!-- Panel ulepszeń wieży -->
+                <h3 id="upgradePanelTowerName">Ulepsz Wieżę</h3>
+                <button id="uiButtonUpgradeDamage" class="ui-button">Obrażenia+ (<span class="cost">0</span> Ap.)</button>
+                <button id="uiButtonUpgradeFireRate" class="ui-button">Szybkostrzelność+ (<span class="cost">0</span> Ap.)</button>
+                <button id="uiButtonSellTower" class="ui-button">Sprzedaj (<span class="value">0</span> Ap.)</button>
+            </div>
+            <div class="ui-panel-section">
+                <h3>Komunikaty</h3>
+                <div id="uiMessages" style="min-height: 50px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
+                    <!-- Komunikaty będą tu wstawiane przez JS -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="mainMenu" class="menu-screen visible"> <!-- Początkowo widoczne -->
+    <div id="mainMenu" class="menu-screen visible"> <!-- Menu główne, początkowo widoczne -->
         <h2>Wybierz Akt</h2>
-        <div id="levelSelection">
-            <!-- Poziomy będą generowane przez JS -->
-        </div>
+        <div id="levelSelection"></div>
         <p id="saveStatus">Postęp gry jest zapisywany automatycznie.</p>
     </div>
 
-    <div id="pauseMenu" class="menu-screen hidden"> <!-- Początkowo ukryty -->
+    <div id="pauseMenu" class="menu-screen hidden">
         <h2>Pauza</h2>
-        <button id="resumeButton">Wznów</button>
-        <button id="menuFromPauseButton">Menu Główne</button>
+        <button id="resumeButton" class="ui-button">Wznów</button>
+        <button id="menuFromPauseButton" class="ui-button">Menu Główne</button>
     </div>
 
     <script type="module" src="js/main.js"></script>

@@ -7,15 +7,17 @@ export const UI_FONT_MEDIUM = "bold 15px Arial";
 export const UI_FONT_SMALL = "13px Arial";
 export const UI_FONT_TINY = `bold 11px Arial`;
 
+// Te stałe UI_BUTTON mogą już nie być tak istotne, skoro UI jest w HTML,
+// ale zostawiam na razie, mogą się przydać do logiki lub jeśli coś wróci na canvas.
 export const UI_BUTTON_HEIGHT = 55;
 export const UI_BUTTON_WIDTH = 140;
 export const UI_PADDING = 10;
-export const UPGRADE_PANEL_WIDTH = 200;
+export const UPGRADE_PANEL_WIDTH = 200; // Jeśli panel ulepszeń byłby na canvas
 export const UPGRADE_PANEL_HEIGHT = 120;
 export const UPGRADE_BUTTON_HEIGHT = 35;
 
-export const UI_BOTTOM_PANEL_HEIGHT = UI_BUTTON_HEIGHT + UI_PADDING * 2;
-export const MAX_GAME_ROW = ROWS - Math.ceil(UI_BOTTOM_PANEL_HEIGHT / TILE_SIZE) -1;
+export const UI_BOTTOM_PANEL_HEIGHT = UI_BUTTON_HEIGHT + UI_PADDING * 2; // Dla UI na canvasie
+export const MAX_GAME_ROW = ROWS - Math.ceil(UI_BOTTOM_PANEL_HEIGHT / TILE_SIZE) -1; // Jeśli UI na canvasie zajmuje miejsce
 
 export const WAVES_PER_LEVEL = 10;
 export const MAX_ZADOWOLENIE_UPGRADE_LEVEL = 5;
