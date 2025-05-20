@@ -2,87 +2,108 @@ body {
     font-family: 'Arial', sans-serif;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Wyśrodkowuje #pageTitle, #mainMenu, #gameLayout poziomo */
+    align-items: center; 
     justify-content: flex-start; 
-    background-color: rgba(20, 10, 5, 0.92);
-    color: #f0f0f0;
+    background-color: rgba(20, 10, 5, 0.92); /* Ciemne tło strony */
+    color: #f0f0f0; /* Jasny domyślny kolor tekstu */
     margin: 0;
     padding: 20px;
     min-height: 100vh;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow-x: hidden; /* Zapobieganie poziomemu scrollbarowi */
 }
 
 h1#pageTitle {
     font-family: 'Georgia', serif;
-    color: #ffd700;
+    color: #ffd700; /* Złoty */
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     margin-bottom: 20px;
     font-size: 2.5em;
     text-align: center;
 }
 
+/* --- Główny układ gry z panelami --- */
 #gameLayout {
-    display: flex; /* Kontrolowane przez .hidden/.visible */
+    display: flex; /* Domyślnie ukryty przez JS, pokazywany z klasą .visible */
     flex-direction: row;
-    align-items: flex-start;
+    align-items: flex-start; /* Panele i canvas wyrównane do góry */
     gap: 20px;
-    max-width: 1400px; /* Maksymalna szerokość całego układu gry */
+    max-width: 1400px; 
     width: 100%;
-    margin-top: 20px;
+    margin-top: 20px; /* Odstęp od tytułu strony */
 }
 
 #leftUiPanel, #rightUiPanel {
-    background-color: rgba(40, 20, 10, 0.85);
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    background-color: rgba(40, 20, 10, 0.88); /* Nieco jaśniejsze niż tło body */
+    padding: 20px; /* Więcej paddingu */
+    border-radius: 10px; /* Bardziej zaokrąglone */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4); /* Mocniejszy cień */
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px; /* Większy odstęp między sekcjami */
     color: #e0e0e0;
 }
 #leftUiPanel {
-    min-width: 200px;
-    max-width: 250px;
+    min-width: 220px; /* Trochę szerszy */
+    max-width: 280px;
 }
 #rightUiPanel {
-    min-width: 220px;
-    max-width: 280px;
+    min-width: 240px;
+    max-width: 300px;
 }
 
 #gameCanvasContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Canvas sam w sobie zdefiniuje swoją szerokość, więc ten kontener się dostosuje */
+    flex-grow: 1; /* Pozwól kontenerowi canvasa zająć dostępną przestrzeń */
 }
 
 canvas {
-    border: 3px solid #8B4513;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border: 4px solid #7a3d0f; /* Grubsza, ciemniejsza ramka */
+    box-shadow: 0 0 20px rgba(0,0,0,0.3); /* Bardziej rozmyty cień */
     cursor: default;
+    background-color: #f0e6d2; /* Domyślny kolor tła canvasa, jeśli bgColor z levelData nie działa */
 }
 
-#inGameUI {
-    margin-top: 10px;
+#inGameUI { /* Przyciski pod canvasem */
+    margin-top: 15px;
     display: flex;
-    gap: 10px;
+    gap: 15px;
+    width: 100%; /* Aby przyciski mogły się rozciągnąć */
+    justify-content: center; /* Wyśrodkowanie przycisków, jeśli nie zajmują całej szerokości */
+}
+#inGameUI .ui-button {
+    width: auto; /* Pozwól przyciskom "Pauza" i "Menu Główne" mieć naturalną szerokość */
+    min-width: 120px; /* Minimalna szerokość dla czytelności */
+    padding: 10px 25px; /* Większy padding dla tych przycisków */
+}
+
+
+/* --- Style dla sekcji i elementów w panelach UI --- */
+.ui-panel-section {
+    border-bottom: 1px dashed rgba(255, 215, 0, 0.2); /* Subtelny separator */
+    padding-bottom: 15px;
+}
+.ui-panel-section:last-child {
+    border-bottom: none; /* Usuń separator dla ostatniej sekcji */
 }
 
 .ui-panel-section h3 {
     font-family: 'Georgia', serif;
-    color: #ffd700;
+    color: #ffd700; /* Złoty */
     margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #b8860b;
-    padding-bottom: 5px;
-    font-size: 1.3em;
+    margin-bottom: 12px; /* Większy odstęp */
+    /* border-bottom: 1px solid #b8860b; Usunięte, jest separator na całej sekcji */
+    /* padding-bottom: 5px; */
+    font-size: 1.4em; /* Nieco większy */
+    text-align: left; /* Wyrównanie do lewej dla nagłówków sekcji */
 }
 
-.ui-button, #inGameUI button, .menu-screen button {
+.ui-button, /* .menu-screen button będzie osobno, bo może mieć inne szerokości */
+#inGameUI button { 
     background-color: #b8860b;
     color: #ffffff;
     border: 2px solid #8c6c0a;
@@ -94,17 +115,17 @@ canvas {
     border-radius: 8px;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
-    width: 100%;
+    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+    width: 100%; /* Domyślnie przyciski w panelach zajmują całą szerokość */
     box-sizing: border-box;
     text-align: center;
 }
 
 .ui-button:hover, #inGameUI button:hover, .menu-screen button:hover {
     background-color: #daa520;
-    border-color: #b8860b;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border-color: #ffd700; /* Jaśniejsza ramka przy hover */
+    transform: translateY(-2px); /* Większe uniesienie */
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
 }
 .ui-button:active, #inGameUI button:active, .menu-screen button:active {
     transform: translateY(0px);
@@ -112,76 +133,140 @@ canvas {
 }
 
 .ui-button.disabled {
-    background-color: #555 !important;
-    color: #999 !important;
+    background-color: #524230 !important; /* Ciemniejszy, ale w palecie */
+    color: #8c7566 !important;
     cursor: not-allowed !important;
-    border-color: #444 !important;
-    box-shadow: none !important;
+    border-color: #4d3520 !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2) !important;
     transform: none !important;
 }
 
 .panel-stat {
-    font-size: 1.1em;
-    margin-bottom: 8px;
+    font-size: 1.05em; /* Nieco większe statystyki */
+    margin-bottom: 10px;
+    line-height: 1.4;
 }
 .panel-stat strong {
     color: #ffd700;
+    font-weight: bold;
+}
+#uiMessages {
+    min-height: 60px; /* Trochę więcej miejsca */
+    background: rgba(0,0,0,0.25);
+    padding: 8px 10px;
+    border-radius: 4px;
+    color: #ffd700;
+    font-weight: bold;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0; /* JS będzie kontrolować opacity */
+    font-size: 0.95em;
+    line-height: 1.4;
+    display: flex; /* Dla lepszego wyrównania tekstu, jeśli jest wieloliniowy */
+    align-items: center;
+    justify-content: center;
 }
 
-/* --- Style dla Menu --- */
+/* --- Style dla przycisków zakupu wież z ikonkami --- */
+.tower-buy-button {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Większy odstęp */
+    justify-content: flex-start;
+    text-align: left; /* Tekst przycisku do lewej */
+    padding: 8px 10px; /* Mniejszy padding pionowy dla tych przycisków */
+}
+
+.tower-buy-button img {
+    width: 32px; 
+    height: 32px;
+    object-fit: contain;
+    vertical-align: middle;
+    flex-shrink: 0; /* Zapobiega kurczeniu się obrazka */
+}
+
+.tower-buy-button .cost {
+    margin-left: auto; /* Koszt na prawą stronę */
+    padding-left: 10px;
+    font-size: 0.9em;
+    color: #f0e6d2; /* Jaśniejszy kolor dla kosztu */
+}
+
+.tower-buy-button.selected-for-build {
+    background-color: #c8763b !important; /* Bardziej pomarańczowy brąz */
+    border-color: #ffb76e !important;
+    box-shadow: 0 0 10px rgba(255, 183, 110, 0.6) !important;
+}
+
+
+/* --- Style dla Menu (główne i pauzy) --- */
 .menu-screen {
-    display: flex; /* Kontrolowane przez .hidden/.visible, ale domyślnie flex */
+    display: flex; /* Kontrolowane przez .hidden/.visible */
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 600px; /* Zmniejszyłem trochę dla bardziej zwartego wyglądu menu */
-    margin-top: 30px;
-    background-color: rgba(40, 20, 10, 0.9); /* Nieco jaśniejsze niż tło body */
+    max-width: 650px; /* Trochę szersze menu */
+    margin: 30px auto 0 auto; /* Wyśrodkowanie i margines górny */
+    background-color: rgba(40, 20, 10, 0.92);
     color: white;
     z-index: 10;
-    padding: 30px;
+    padding: 35px; /* Więcej paddingu */
     box-sizing: border-box;
     text-align: center;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    border-radius: 12px; /* Bardziej zaokrąglone */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
 }
+/* Specyficzne dla menu pauzy, jeśli jest nad grą */
+#pauseMenu.menu-screen {
+    position: absolute; /* Aby było nad canvasem */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 0; /* Usuń margines, bo jest pozycjonowane absolutnie */
+    width: auto; /* Szerokość dostosuje się do zawartości */
+    min-width: 350px; /* Minimalna szerokość dla czytelności */
+    max-width: 500px;
+}
+
 
 .menu-screen h2 {
     font-family: 'Georgia', serif;
     color: #ffd700;
     margin-top: 0;
-    margin-bottom: 30px;
-    font-size: 2.5em; /* Trochę mniejszy nagłówek menu */
+    margin-bottom: 35px; /* Większy odstęp */
+    font-size: 2.6em;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 #levelSelection {
     display: flex;
-    flex-direction: column; /* Przyciski jeden pod drugim */
-    gap: 15px;
+    flex-direction: column;
+    gap: 18px; /* Nieco większy odstęp */
     justify-content: center;
-    align-items: center; /* Wyśrodkowuje przyciski w kontenerze */
+    align-items: center;
     margin-bottom: 30px;
-    width: 100%; /* Kontener zajmuje całą szerokość .menu-screen (do max-width) */
+    width: 100%;
 }
 
 .level-button {
     background-color: #8B4513;
     color: white;
     border: 3px solid #54311a;
-    padding: 15px 20px; /* Dostosowany padding */
-    font-size: 1.1em;
+    padding: 18px 25px;
+    font-size: 1.15em; /* Nieco większa czcionka */
     font-family: 'Georgia', serif;
     cursor: pointer;
     border-radius: 10px;
-    text-align: center;
-    min-width: 300px; /* Stała minimalna szerokość */
-    max-width: 90%;   /* Maksymalnie 90% szerokości rodzica (#levelSelection) */
-    width: auto;      /* Szerokość dostosuje się do zawartości, ale ograniczona przez min/max */
+    text-align: left; /* Tekst do lewej dla lepszego czytania nazwy aktu */
+    min-width: 320px;
+    max-width: 95%;
+    width: auto;
     box-sizing: border-box;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+    display: flex; /* Dla lepszego ułożenia nazwy i postępu */
+    justify-content: space-between; /* Nazwa po lewej, postęp po prawej */
+    align-items: center;
 }
 
 .level-button:hover:not(.locked) {
@@ -204,17 +289,19 @@ canvas {
 }
 
 .level-button .level-name {
-    display: block;
-    font-size: 1.2em; /* Nieco większa nazwa aktu */
+    /* display: block; Już niepotrzebne, bo button jest flex */
+    font-size: 1.1em; /* Dostosuj rozmiar */
     font-weight: bold;
-    margin-bottom: 8px;
+    /* margin-bottom: 8px; Już niepotrzebne */
     color: #ffebb3;
+    margin-right: 10px; /* Odstęp od postępu */
 }
 
 .level-button .level-progress {
-    display: block;
+    /* display: block; Już niepotrzebne */
     font-size: 0.9em;
     color: #f0f0f0;
+    white-space: nowrap; /* Zapobiega łamaniu tekstu postępu */
 }
 
 .level-button.locked .level-progress {
@@ -228,39 +315,16 @@ canvas {
     margin-top: 20px;
 }
 
-/* Ukrywanie/pokazywanie ekranów */
+.menu-screen .ui-button { /* Style dla przycisków Wznów/Menu Główne w menu pauzy */
+    width: auto; /* Szerokość dopasowana do tekstu */
+    min-width: 180px; /* Minimalna szerokość */
+    margin-top: 10px; /* Odstęp między przyciskami w menu pauzy */
+}
+
+
 .hidden {
     display: none !important;
 }
 .visible {
     display: flex !important;
 }
-
-
-.tower-buy-button {
-    display: flex; /* Aby ułożyć ikonkę i tekst obok siebie */
-    align-items: center; /* Wyrównanie w pionie */
-    gap: 8px; /* Odstęp między ikonką a tekstem */
-    justify-content: flex-start; /* Wyrównanie zawartości do lewej */
-    padding-left: 10px; /* Mniejszy padding z lewej, jeśli obrazek jest blisko */
-}
-
-.tower-buy-button img {
-    width: 32px; /* Dostosuj rozmiar ikonki */
-    height: 32px;
-    object-fit: contain; /* Aby obrazek się nie rozciągał */
-    margin-right: 5px; /* Mały margines po prawej stronie obrazka */
-}
-
-.tower-buy-button span.cost {
-    margin-left: auto; /* Przesuwa koszt na prawą stronę przycisku, jeśli chcesz */
-    padding-right: 5px; /* Daje trochę miejsca od prawej krawędzi */
-}
-
-/* Opcjonalnie: podświetlenie aktywnego przycisku wyboru wieży */
-.tower-buy-button.selected-for-build {
-    background-color: #daa520; /* Jaśniejszy kolor, gdy wybrany */
-    border-color: #ffd700;
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
-}
-
