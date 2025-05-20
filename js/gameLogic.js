@@ -38,9 +38,9 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     
     const currentLevelProg = state.levelProgress[state.currentLevelIndex];
     if (startFromWave === 0 && (currentLevelProg === undefined || currentLevelProg === -1 || currentLevelProg >= C.WAVES_PER_LEVEL)) {
-        state.levelProgress[state.currentLevelIndex] = -1; // Nierozpoczęty
+        state.levelProgress[state.currentLevelIndex] = -1;
     }
-    // saveGameProgress(state); // Zapiszemy po pierwszej akcji lub starcie fali
+    saveGameProgress(state);
 }
 
 export function spawnEnemy(type, level = 1) {
@@ -105,7 +105,7 @@ export function buildTower(spotXGrid, spotYGrid, type) {
             image: images[definition.imageKey], renderSize: definition.renderSize
         });
         showMessage(state, `${definition.imageKey === 'bileterTowerIcon' ? 'Bileter' : 'Reflektor'} postawiony!`, 90);
-        saveGameProgress(state); // Zapisz aplauz
+        saveGameProgress(state);
         return true;
     } else {
         showMessage(state, "Za mało Aplauzu na tę wieżę!", 120); return false;
@@ -158,10 +158,14 @@ export function updateTowers() {
         if (tower.fireCooldown > 0) tower.fireCooldown--;
         else {
             const target = findTarget(tower);
-            if (target) { fireProjectile(tower, target); tower.fireCooldown = tower.currentFireRate; }
+            if (target) { 
+                fireProjectile(tower, target); // Wywołanie fireProjectile
+                tower.fireCooldown = tower.currentFireRate; 
+            }
         }
     });
 }
+
 function findTarget(tower) {
     let closestEnemy = null; let minDistance = tower.range;
     state.enemies.forEach(enemy => {
@@ -172,24 +176,48 @@ function findTarget(tower) {
     });
     return closestEnemy;
 }
+
 function fireProjectile(tower, target) {
     const projectileData = C.projectileTypes[tower.projectileType];
+    if (!projectileData) {
+        console.error("[LOG-POCISK] Brak danych dla typu pocisku:", tower.projectileType); // LOG 1
+        return;
+    }
+    const projectileImage = images[projectileData.imageKey];
+    if (!projectileImage) {
+        console.error("[LOG-POCISK] Brak obrazka dla pocisku (klucz):", projectileData.imageKey); // LOG 2
+    } else if (projectileImage.error) {
+        console.error("[LOG-POCISK] Błąd ładowania obrazka dla pocisku:", projectileData.imageKey, projectileImage.src); // LOG 3
+    }
+
     const fireY = (tower.y + C.TILE_SIZE / 2 - tower.definition.renderSize) + tower.definition.renderSize * 0.4; 
-    state.projectiles.push({
+    const newProjectile = {
         x: tower.x, y: fireY, target: target, type: tower.projectileType, speed: projectileData.speed,
-        damage: tower.currentDamage, image: images[projectileData.imageKey],
+        damage: tower.currentDamage, image: projectileImage, // Użyj projectileImage
         width: projectileData.width, height: projectileData.height,
         angle: Math.atan2(target.y - fireY, target.x - tower.x)
-    });
+    };
+    state.projectiles.push(newProjectile);
+    console.log("[LOG-POCISK] Wystrzelono:", JSON.parse(JSON.stringify(newProjectile)), "Obrazek:", (projectileImage ? projectileImage.src : "BRAK"), "Liczba pocisków:", state.projectiles.length); // LOG 4
 }
+
 export function updateProjectiles() {
+    // if (state.projectiles.length > 0) console.log("[LOG-POCISK] Aktualizacja, pociski:", state.projectiles.length); // LOG 5 (może być dużo logów)
     for (let i = state.projectiles.length - 1; i >= 0; i--) {
         const p = state.projectiles[i];
-        if (!p.target || p.target.hp <= 0) { state.projectiles.splice(i, 1); continue; }
+        // if (i === 0 && state.projectiles.length > 0) console.log(`[LOG-POCISK] Aktualizacja pocisku ${i}: X=${p.x.toFixed(1)}, Y=${p.y.toFixed(1)}, Cel HP: ${p.target ? p.target.hp : 'BRAK'}`); // LOG 6 (loguj tylko pierwszy)
+
+        if (!p.target || p.target.hp <= 0) { 
+            // console.log("[LOG-POCISK] Usuwanie pocisku - brak celu lub cel martwy"); // LOG 7
+            state.projectiles.splice(i, 1); 
+            continue; 
+        }
         const dx = p.target.x - p.x; const dy = p.target.y - p.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < p.speed) {
-            p.target.hp -= p.damage; state.projectiles.splice(i, 1);
+            // console.log("[LOG-POCISK] Trafienie! Obrażenia:", p.damage); // LOG 8
+            p.target.hp -= p.damage; 
+            state.projectiles.splice(i, 1);
             if (p.target.hp <= 0) handleEnemyDefeated(p.target);
         } else {
             p.x += (dx / distance) * p.speed; p.y += (dy / distance) * p.speed;
@@ -311,5 +339,5 @@ export function sellTower(towerToSell) {
     const spot = state.currentTowerSpots.find(s => s.x === towerToSell.xGrid && s.y === towerToSell.yGrid);
     if (spot) spot.occupied = false;
     showMessage(state, `Sprzedano wieżę za ${sellValue} Aplauzu.`, 120);
-    saveGameProgress(state); // Zapisz stan aplauzu
+    saveGameProgress(state);
 }
