@@ -36,17 +36,26 @@ const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame')
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 
 function updateUiStats() {
-    if (!C.levelData[state.currentLevelIndex] && state.gameScreen !== 'menu') { // Dodatkowe zabezpieczenie dla menu
-        console.warn("Próba aktualizacji UI bez załadowanych danych poziomu.");
+    if (!C.levelData[state.currentLevelIndex] && state.gameScreen !== 'menu') {
         return;
     }
-    if (state.gameScreen !== 'menu') { // Aktualizuj tylko jeśli nie w menu głównym
+    if (state.gameScreen !== 'menu') {
         uiCurrentAct.textContent = state.currentLevelIndex + 1;
-        uiCurrentWave.textContent = `${state.currentWaveNumber > 0 ? state.currentWaveNumber : (state.levelProgress[state.currentLevelIndex] === -1 || state.levelProgress[state.currentLevelIndex] === undefined || state.levelProgress[state.currentLevelIndex] === 0 ? '-' : '0')}/${C.WAVES_PER_LEVEL}`;
+        let waveDisplay;
+        if (state.currentWaveNumber > 0) {
+            waveDisplay = state.currentWaveNumber;
+        } else {
+            const progress = state.levelProgress[state.currentLevelIndex];
+            if (progress === undefined || progress === -1) {
+                waveDisplay = '-';
+            } else {
+                waveDisplay = '0';
+            }
+        }
+        uiCurrentWave.textContent = `${waveDisplay}/${C.WAVES_PER_LEVEL}`;
         uiAplauz.textContent = state.aplauz;
         uiAudienceSatisfaction.textContent = `${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`;
     }
-
 
     uiButtonBileter.querySelector('.cost').textContent = C.towerDefinitions.bileter.cost;
     uiButtonOswietleniowiec.querySelector('.cost').textContent = C.towerDefinitions.oswietleniowiec.cost;
@@ -69,15 +78,11 @@ function showUiMessage(message) {
         uiMessages.textContent = message;
         uiMessages.style.opacity = '1';
     } else {
-        // Stopniowe znikanie wiadomości, jeśli timer dobiegł końca
-        if (uiMessages.textContent !== "") { // Tylko jeśli jest co ukrywać
+        if (uiMessages.textContent !== "") {
             uiMessages.style.opacity = '0';
-            // Dajmy czas na animację opacity zanim wyczyścimy tekst
             setTimeout(() => {
-                if (uiMessages.style.opacity === '0') { // Sprawdź, czy nadal ma być ukryte
-                    uiMessages.textContent = "";
-                }
-            }, 300); // Czas zgodny z transition w CSS (jeśli jest)
+                if (uiMessages.style.opacity === '0') uiMessages.textContent = '';
+            }, 300);
         }
     }
 }
@@ -112,6 +117,17 @@ function updateTowerUpgradePanel() {
     }
 }
 
+function updateSelectedTowerButtonUI() {
+    uiButtonBileter.classList.remove('selected-for-build');
+    uiButtonOswietleniowiec.classList.remove('selected-for-build');
+
+    if (state.selectedTowerType === 'bileter') {
+        uiButtonBileter.classList.add('selected-for-build');
+    } else if (state.selectedTowerType === 'oswietleniowiec') {
+        uiButtonOswietleniowiec.classList.add('selected-for-build');
+    }
+}
+
 function showScreen(screenName) {
     mainMenuScreen.classList.add('hidden');
     mainMenuScreen.classList.remove('visible');
@@ -135,6 +151,7 @@ function showScreen(screenName) {
         pauseButton.classList.remove('hidden');
         updateUiStats();
         updateTowerUpgradePanel();
+        updateSelectedTowerButtonUI(); // Zdejmij podświetlenie przy starcie poziomu
     } else if (screenName === 'paused') {
         gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
@@ -161,7 +178,7 @@ function renderLevelSelection() {
         let progressText;
         if (progress >= C.WAVES_PER_LEVEL) {
             progressText = "(Ukończono ✔️)";
-        } else if (progress >= 0) { // Zmienione z >0 na >=0 aby pokazać 0/X
+        } else if (progress >= 0) {
             progressText = `(Fale: ${progress}/${C.WAVES_PER_LEVEL})`;
         } else {
             progressText = "(Nierozpoczęty)";
@@ -187,7 +204,7 @@ function renderLevelSelection() {
 function startGameLevel(levelIndex, startFromWave = 0) {
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
-    if (animationFrameId === null) { // Uruchom pętlę, jeśli nie jest już aktywna
+    if (animationFrameId === null) {
         gameLoop();
     }
 }
@@ -217,8 +234,8 @@ function preloadImagesAndStart() {
 }
 
 function initGame() {
-    canvas.width = C.COLS * C.TILE_SIZE;   // <<< WAŻNE: Przywrócone
-    canvas.height = C.ROWS * C.TILE_SIZE;  // <<< WAŻNE: Przywrócone
+    canvas.width = C.COLS * C.TILE_SIZE;
+    canvas.height = C.ROWS * C.TILE_SIZE;
     showScreen('menu');
 }
 
@@ -239,7 +256,7 @@ function gameLoop() {
         Drawing.drawProjectiles(ctx);
         Drawing.drawUI(ctx);
         Drawing.drawWaveIntro(ctx);
-        showUiMessage(state.currentMessage || "Pauza"); // Pokaż wiadomość pauzy
+        showUiMessage(state.currentMessage || "Pauza");
         animationFrameId = requestAnimationFrame(gameLoop);
         return;
     }
@@ -286,15 +303,19 @@ function gameLoop() {
         updateTowerUpgradePanel();
         if (state.messageTimer > 0 && state.currentMessage) {
             showUiMessage(state.currentMessage);
-        } else if ((!state.currentMessage || state.messageTimer <= 0) && uiMessages.textContent !== "") { // Wyczyść tylko jeśli coś jest
-             if(state.currentMessage !== "Pauza"){ // Nie czyść wiadomości o pauzie od razu
+            if (!state.isPaused && state.currentMessage !== "Pauza") {
+                 state.messageTimer--;
+            }
+        } else if (state.messageTimer <= 0 && uiMessages.textContent !== "") {
+            if (!(state.currentMessage === "Pauza" && state.isPaused)) {
                 showUiMessage("");
-             }
+                state.currentMessage = "";
+            }
         }
     }
 
     if (state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
-        showScreen(state.gameScreen); // Zaktualizuj stan przycisków pauzy/menu
+        showScreen(state.gameScreen);
     }
     
     if (state.gameScreen !== 'menu') {
@@ -306,28 +327,38 @@ function gameLoop() {
 
 // Event Listeners
 uiButtonBileter.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused) state.selectedTowerType = 'bileter';
+    if (state.gameScreen === 'playing' && !state.isPaused) {
+        state.selectedTowerType = 'bileter';
+        state.selectedTowerForUpgrade = null;
+        updateTowerUpgradePanel();
+        updateSelectedTowerButtonUI();
+    }
 });
 uiButtonOswietleniowiec.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused) state.selectedTowerType = 'oswietleniowiec';
+    if (state.gameScreen === 'playing' && !state.isPaused) {
+        state.selectedTowerType = 'oswietleniowiec';
+        state.selectedTowerForUpgrade = null;
+        updateTowerUpgradePanel();
+        updateSelectedTowerButtonUI();
+    }
 });
 uiButtonUpgradeSatisfaction.addEventListener('click', () => {
     if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) {
         GameLogic.upgradeZadowolenie();
-        updateUiStats();
+        updateUiStats(); // Odświeża też przycisk ulepszenia zadowolenia
     }
 });
 uiButtonStartWave.addEventListener('click', () => {
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
         GameLogic.prepareNextWave();
-        updateUiStats();
+        updateUiStats(); // Aktualizuje stan przycisku Start Fali
     }
 });
 uiButtonUpgradeDamage.addEventListener('click', () => {
     if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
         GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage');
         updateTowerUpgradePanel();
-        updateUiStats();
+        updateUiStats(); // Aplauz mógł się zmienić
     }
 });
 uiButtonUpgradeFireRate.addEventListener('click', () => {
@@ -362,6 +393,10 @@ resumeButton.addEventListener('click', () => {
 function goToMainMenu() {
     state.isPaused = false;
     state.gameOver = false;
+    state.selectedTowerType = null; // Zresetuj wybór wieży do budowy
+    state.selectedTowerForUpgrade = null; // Zresetuj wybór wieży do ulepszenia
+    updateSelectedTowerButtonUI();
+    updateTowerUpgradePanel();
     showScreen('menu');
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
@@ -377,12 +412,14 @@ canvas.addEventListener('click', (event) => {
     const gridX = Math.floor(clickX / C.TILE_SIZE);
     const gridY = Math.floor(clickY / C.TILE_SIZE);
 
-    if (gridY < C.ROWS && gridX < C.COLS) { // Upewnijmy się, że kliknięcie jest w granicach canvasa
+    if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >= 0) {
         const clickedTower = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY);
+        
         if (clickedTower) {
             state.selectedTowerForUpgrade = clickedTower;
             state.selectedTowerType = null;
             updateTowerUpgradePanel();
+            updateSelectedTowerButtonUI();
             return;
         }
 
@@ -391,22 +428,21 @@ canvas.addEventListener('click', (event) => {
             if (spot) {
                 if (spot.occupied) {
                     Utils.showMessage(state, "To miejsce jest już zajęte!", 120);
-                    showUiMessage(state.currentMessage); // Pokaż od razu
                 } else {
-                    const towerCost = C.towerDefinitions[state.selectedTowerType].cost;
-                    if (state.aplauz >= towerCost) {
-                        if (GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) {
-                            state.selectedTowerType = null;
-                        }
-                    } else {
-                        Utils.showMessage(state, "Za mało Aplauzu na tę wieżę!", 120);
-                        showUiMessage(state.currentMessage);
+                    if (GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) {
+                        // Po udanej budowie można odznaczyć, jeśli chcemy budować pojedynczo
+                        // state.selectedTowerType = null;
+                        // updateSelectedTowerButtonUI();
                     }
                 }
+            } else {
+                Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
             }
+            showUiMessage(state.currentMessage); // Zawsze pokaż komunikat po próbie
+            return; 
         }
         
-        if (!clickedTower && !state.selectedTowerType) { // Kliknięcie na puste pole bez wybranej wieży do budowy
+        if (!clickedTower && !state.selectedTowerType) {
             state.selectedTowerForUpgrade = null;
             updateTowerUpgradePanel();
         }
@@ -425,7 +461,7 @@ canvas.addEventListener('mousemove', (event) => {
     const gridX = Math.floor(mouseX / C.TILE_SIZE);
     const gridY = Math.floor(mouseY / C.TILE_SIZE);
 
-    if (gridY < C.ROWS && gridX < C.COLS) {
+    if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >=0) { // Sprawdź granice
         if (state.selectedTowerType) {
             const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY && !s.occupied);
             if (spot) {

@@ -235,3 +235,32 @@ canvas {
 .visible {
     display: flex !important;
 }
+
+
+.tower-buy-button {
+    display: flex; /* Aby ułożyć ikonkę i tekst obok siebie */
+    align-items: center; /* Wyrównanie w pionie */
+    gap: 8px; /* Odstęp między ikonką a tekstem */
+    justify-content: flex-start; /* Wyrównanie zawartości do lewej */
+    padding-left: 10px; /* Mniejszy padding z lewej, jeśli obrazek jest blisko */
+}
+
+.tower-buy-button img {
+    width: 32px; /* Dostosuj rozmiar ikonki */
+    height: 32px;
+    object-fit: contain; /* Aby obrazek się nie rozciągał */
+    margin-right: 5px; /* Mały margines po prawej stronie obrazka */
+}
+
+.tower-buy-button span.cost {
+    margin-left: auto; /* Przesuwa koszt na prawą stronę przycisku, jeśli chcesz */
+    padding-right: 5px; /* Daje trochę miejsca od prawej krawędzi */
+}
+
+/* Opcjonalnie: podświetlenie aktywnego przycisku wyboru wieży */
+.tower-buy-button.selected-for-build {
+    background-color: #daa520; /* Jaśniejszy kolor, gdy wybrany */
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+}
+
