@@ -7,8 +7,28 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Teatr Tower Defense - Akt <span id="currentActHeader">1</span></h1>
-    <canvas id="gameCanvas"></canvas>
+    <div id="gameContainer" class="hidden"> <!-- Początkowo ukryty -->
+        <h1>Teatr Tower Defense - Akt <span id="currentActHeader">1</span></h1>
+        <canvas id="gameCanvas"></canvas>
+        <div id="inGameUI">
+            <button id="pauseButton">Pauza</button>
+            <button id="returnToMenuButtonGame" class="hidden">Menu Główne</button> <!-- Początkowo ukryty, inna nazwa id, by uniknąć konfliktu -->
+        </div>
+    </div>
+
+    <div id="mainMenu" class="menu-screen visible"> <!-- Początkowo widoczne -->
+        <h2>Wybierz Akt</h2>
+        <div id="levelSelection">
+            <!-- Poziomy będą generowane przez JS -->
+        </div>
+        <p id="saveStatus">Postęp gry jest zapisywany automatycznie.</p>
+    </div>
+
+    <div id="pauseMenu" class="menu-screen hidden"> <!-- Początkowo ukryty -->
+        <h2>Pauza</h2>
+        <button id="resumeButton">Wznów</button>
+        <button id="menuFromPauseButton">Menu Główne</button>
+    </div>
 
     <script type="module" src="js/main.js"></script>
 </body>

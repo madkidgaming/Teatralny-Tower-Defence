@@ -8,6 +8,7 @@ body {
     margin: 0;
     padding-top: 10px;
     min-height: 100vh;
+    position: relative; /* Potrzebne dla absolutnego pozycjonowania menu */
 }
 h1 {
     font-family: 'Georgia', serif;
@@ -19,4 +20,145 @@ canvas {
     border: 3px solid #8B4513;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     cursor: default;
+}
+
+#gameContainer {
+    /* display: flex; domyślnie ukryty przez .hidden */
+    flex-direction: column;
+    align-items: center;
+}
+
+.menu-screen {
+    /* display: none; domyślnie ukryty przez .hidden */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(20, 10, 5, 0.92); /* Ciemniejsze, bardziej teatralne tło */
+    color: white;
+    z-index: 10;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.menu-screen h2 {
+    font-family: 'Georgia', serif;
+    color: #ffd700; /* Złoty */
+    margin-bottom: 30px;
+    font-size: 2.8em;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+#levelSelection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px; /* Większy odstęp */
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.level-button {
+    background-color: #8B4513; /* Brązowy */
+    color: white;
+    border: 3px solid #54311a; /* Grubsza, ciemniejsza ramka */
+    padding: 20px 30px; /* Większy padding */
+    font-size: 1.1em; /* Nieco mniejsza czcionka bazowa */
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    border-radius: 10px; /* Bardziej zaokrąglone */
+    text-align: center;
+    min-width: 220px; /* Szersze przyciski */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+}
+
+.level-button:hover:not(.locked) {
+    background-color: #a0522d;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+.level-button:active:not(.locked) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+
+.level-button.locked {
+    background-color: #6a4f3a; /* Ciemniejszy, ale nadal w palecie */
+    color: #a88e79;
+    cursor: not-allowed;
+    border-color: #4d3520;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+.level-button .level-name {
+    display: block;
+    font-size: 1.25em; /* Większa nazwa aktu */
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #ffebb3; /* Jaśniejszy kolor dla nazwy */
+}
+
+.level-button .level-progress {
+    display: block;
+    font-size: 0.9em;
+    color: #f0f0f0; /* Jaśniejszy dla postępu */
+}
+
+.level-button.locked .level-progress {
+    color: #8c7566; /* Stonowany kolor dla zablokowanego postępu */
+}
+
+
+#saveStatus {
+    font-style: italic;
+    color: #ccc;
+    font-size: 0.9em;
+    margin-top: 20px;
+}
+
+#inGameUI {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+#inGameUI button, .menu-screen button { /* Wspólne style dla przycisków akcji */
+    background-color: #b8860b; /* Złoty */
+    color: #ffffff;
+    border: 2px solid #8c6c0a; /* Ciemniejsza złota ramka */
+    padding: 12px 25px;
+    font-size: 1.1em;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+}
+
+#inGameUI button:hover, .menu-screen button:hover {
+    background-color: #daa520; /* Jaśniejszy złoty */
+    border-color: #b8860b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+#inGameUI button:active, .menu-screen button:active {
+    transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+
+/* Ukrywanie/pokazywanie ekranów */
+.hidden {
+    display: none !important;
+}
+.visible {
+    display: flex !important; /* Używamy flex dla .menu-screen i #gameContainer */
 }
