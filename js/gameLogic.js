@@ -16,13 +16,12 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.currentPath = JSON.parse(JSON.stringify(level.path));
     state.currentTowerSpots = level.towerSpots.map(spot => ({...spot, occupied: false}));
 
-    // ZMIANA: Dodajemy bonusowy aplauz i resetujemy go
     state.aplauz = (250 + state.currentLevelIndex * 75) + state.currentAplauzBonusForNextLevel;
-    state.currentAplauzBonusForNextLevel = 0; // Resetuj bonus po użyciu
+    state.currentAplauzBonusForNextLevel = 0; 
 
-    state.maxZadowolenieWidowni = 100; // Domyślne max zadowolenie na start poziomu
+    state.maxZadowolenieWidowni = 100; 
     state.zadowolenieWidowni = state.maxZadowolenieWidowni;
-    state.initialMaxAudienceSatisfaction = state.maxZadowolenieWidowni; // ZMIANA: Zapisz początkowe max zadowolenie
+    state.initialMaxAudienceSatisfaction = state.maxZadowolenieWidowni; 
     state.zadowolenieUpgradeLevel = 0;
 
     state.currentWaveNumber = startFromWave;
@@ -180,7 +179,6 @@ export function upgradeZadowolenie() {
             state.zadowolenieWidowni += upgradeData.bonus; 
             state.zadowolenieUpgradeLevel++;
             showMessage(state, `Zadowolenie Widowni ulepszone do ${state.maxZadowolenieWidowni}!`, 90);
-            // Ważne: initialMaxAudienceSatisfaction pozostaje niezmienione, aby system gwiazdek działał poprawnie
             saveGameProgress(state);
         } else {
             showMessage(state, "Za mało Aplauzu na ulepszenie Zadowolenia!", 120);
@@ -276,15 +274,15 @@ export function updateProjectiles() {
 export function handleEnemyDefeated(enemy) { 
     if (!enemy.isDying) { 
         state.aplauz += (enemy.reward * enemy.level);
+        // console.log(`[HANDLE_DEFEAT] Wróg ${enemy.id} pokonany przez wieżę. Oznaczanie isDying.`);
         enemy.isDying = true;
         enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
         enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
-    }
+    } 
+    // else { console.log(`[HANDLE_DEFEAT_SKIP] Wróg ${enemy.id} był już oznaczony jako isDying.`); }
 }
 
-// ZMIANA: Modyfikacja funkcji completeLevel
 export function completeLevel() {
-    // Zbieranie danych do podsumowania
     state.lastLevelStats.completed = true;
     state.lastLevelStats.levelName = C.levelData[state.currentLevelIndex]?.name || `Akt ${state.currentLevelIndex + 1}`;
     state.lastLevelStats.finalSatisfaction = state.zadowolenieWidowni;
@@ -296,7 +294,7 @@ export function completeLevel() {
     let totalSellValue = 0;
     state.towers.forEach(tower => {
         const towerDef = C.towerDefinitions[tower.type];
-        let sellValue = Math.floor(towerDef.cost * 0.75); // Bazowa wartość sprzedaży
+        let sellValue = Math.floor(towerDef.cost * 0.75); 
         for(let i = 0; i < tower.damageLevel; i++) sellValue += Math.floor(towerDef.upgrades.damage[i].cost * 0.5);
         for(let i = 0; i < tower.fireRateLevel; i++) sellValue += Math.floor(towerDef.upgrades.fireRate[i].cost * 0.5);
         totalSellValue += sellValue;
@@ -304,7 +302,6 @@ export function completeLevel() {
     state.lastLevelStats.totalTowerValue = totalSellValue;
     state.lastLevelStats.remainingAplauz = state.aplauz;
     
-    // Obliczanie gwiazdek (tymczasowo proste, można rozbudować)
     if (state.zadowolenieWidowni === state.initialMaxAudienceSatisfaction) {
         state.lastLevelStats.stars = 3;
     } else if (state.zadowolenieWidowni >= 0.6 * state.initialMaxAudienceSatisfaction) {
@@ -312,23 +309,20 @@ export function completeLevel() {
     } else if (state.zadowolenieWidowni > 0) {
         state.lastLevelStats.stars = 1;
     } else {
-        state.lastLevelStats.stars = 0; // Przegrana, ale dotarła do completeLevel - dziwne, ale zabezpieczmy
+        state.lastLevelStats.stars = 0;
     }
 
-    // Obliczanie bonusu aplauzu
     state.lastLevelStats.aplauzBonusForNextLevel = state.aplauz + totalSellValue;
-    state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel; // Przekaż do następnego poziomu
+    state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel; 
 
-    // Aktualizacja ogólnego postępu gry
-    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; // Oznacz poziom jako ukończony
+    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; 
     if (state.currentLevelIndex < C.levelData.length - 1) {
-        state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2); // Odblokuj następny poziom
+        state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2); 
     }
-    saveGameProgress(state); // Zapisz postęp (odblokowane poziomy, ukończone fale)
+    saveGameProgress(state); 
 
-    state.gameOver = true; // Oznacza koniec tego konkretnego poziomu (sukcesem)
-    state.gameScreen = 'levelCompleteScreen'; // Ustaw nowy stan dla ekranu podsumowania HTML
-    // Wiadomość "Akt ukończony" będzie teraz częścią ekranu podsumowania
+    state.gameOver = true; 
+    state.gameScreen = 'levelCompleteScreen'; 
 }
 
 
@@ -343,7 +337,10 @@ export function prepareNextWave() {
 }
 
 export function startNextWaveActual() {
-    state.showingWaveIntro = false; state.currentWaveNumber++; state.waveInProgress = true;
+    console.log("[START_NEXT_WAVE_ACTUAL] Faktyczne rozpoczynanie fali."); // Dodane logowanie
+    state.showingWaveIntro = false; 
+    state.currentWaveNumber++; 
+    state.waveInProgress = true;
     showMessage(state, `Fala ${state.currentWaveNumber} rozpoczęta!`, 60);
     
     const waveToRecord = state.currentWaveNumber === 1 ? 0 : state.currentWaveNumber -1;
@@ -399,17 +396,22 @@ export function handleWaveSpawning() {
     }
 }
 
+// Zmienna globalna z main.js musi być dostępna, jeśli endGame ją modyfikuje
+// W tym przypadku autoStartTimerId jest w main.js, więc to wywołanie nie zadziała bezpośrednio
+// Lepiej zarządzać tym timerem w main.js, np. przy zmianie gameScreen.
+// Na razie usuwam odwołanie do autoStartTimerId z tego pliku.
+// clearTimeout(autoStartTimerId); 
 export function endGame(isWin) {
-    if (isWin) { // Jeśli wygrana, completeLevel powinno być wywołane wcześniej
+    if (isWin) { 
         console.warn("endGame(true) wywołane, ale completeLevel powinno obsłużyć wygraną.");
         return;
     }
-    clearTimeout(autoStartTimerId); // Anuluj auto-start przy przegranej (zdefiniujemy autoStartTimerId w main.js)
+    // Anulowanie timera automatycznego startu powinno być w main.js, gdy zmienia się state.gameScreen
     state.gameOver = true; 
     state.waveInProgress = false;
     showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 300);
     saveGameProgress(state); 
-    state.gameScreen = 'levelLost'; // Użyjemy tego do wyświetlenia ekranu przegranej w HTML
+    state.gameScreen = 'levelLost'; 
 }
 
 export function togglePauseGame() {

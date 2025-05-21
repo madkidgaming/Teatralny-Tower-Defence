@@ -3,7 +3,7 @@ export const gameState = {
     aplauz: 250,
     zadowolenieWidowni: 100,
     maxZadowolenieWidowni: 100,
-    initialMaxAudienceSatisfaction: 100, // ZMIANA: Do śledzenia początkowego max zadowolenia na poziomie
+    initialMaxAudienceSatisfaction: 100, // Do śledzenia początkowego max zadowolenia na poziomie
     zadowolenieUpgradeLevel: 0,
     currentWaveNumber: 0,
     gameOver: false, 
@@ -35,8 +35,8 @@ export const gameState = {
     selectedTowerForUpgrade: null,
 
     autoStartNextWaveEnabled: true, 
+    isDevModeActive: false,
 
-    // ZMIANA: Dane dla ekranu podsumowania aktu
     lastLevelStats: {
         completed: false,
         levelName: "",
@@ -48,7 +48,7 @@ export const gameState = {
         remainingAplauz: 0,
         aplauzBonusForNextLevel: 0,
     },
-    currentAplauzBonusForNextLevel: 0, // Bonus przekazywany do następnego poziomu
+    currentAplauzBonusForNextLevel: 0, 
 
     currentMessage: "", 
     messageTimer: 0,    
