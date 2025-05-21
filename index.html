@@ -64,16 +64,41 @@
         </div>
     </div>
 
-    <div id="mainMenu" class="menu-screen visible"> <!-- Menu główne, początkowo widoczne -->
-        <h2>Wybierz Akt</h2>
-        <div id="levelSelection">
-            <!-- Poziomy będą generowane przez JS -->
-        </div>
-        <button id="newGameButton" class="ui-button">Nowa Gra</button> <!-- ZMIANA: DODANY PRZYCISK -->
-        <p id="saveStatus">Postęp gry jest zapisywany automatycznie.</p>
+    <div id="mainMenu" class="menu-screen visible">
+        <h2>Menu Główne</h2>
+        <button id="continueGameButton" class="ui-button">Kontynuuj</button>
+        <button id="newGameButtonFromMenu" class="ui-button">Nowa Gra</button>
+        <button id="levelSelectButton" class="ui-button">Wybór Poziomu</button>
+        <button id="creditsButton" class="ui-button">Autorzy</button>
+        <p id="saveStatusMainMenu" style="margin-top: 20px;">Postęp gry jest zapisywany automatycznie.</p>
     </div>
 
-    <div id="pauseMenu" class="menu-screen hidden"> <!-- Ekran pauzy, początkowo ukryty -->
+    <div id="levelSelectionScreen" class="menu-screen hidden">
+        <h2>Wybierz Akt</h2>
+        <div id="levelSelectionContainer">
+            <!-- Poziomy będą generowane przez JS tutaj -->
+        </div>
+        <button id="backToMainMenuFromLevelSelection" class="ui-button">Powrót do Menu</button>
+        <p id="saveStatusLevelSelection" style="margin-top: 20px;">Postęp gry jest zapisywany automatycznie.</p>
+    </div>
+
+    <!-- ZMIANA: Zaktualizowana sekcja Autorzy -->
+    <div id="creditsScreen" class="menu-screen hidden">
+        <h2>Autorzy</h2>
+        <p><strong>Koncepcja, programowanie, grafika oraz projekt gry:</strong></p>
+        <p style="font-size: 1.2em; color: #ffd700; margin-top: 5px; margin-bottom: 20px;">Piotr Józefiak</p>
+        
+        <p><strong>Wykorzystane zasoby zewnętrzne:</strong></p>
+        <p>Czcionki: Google Fonts (Cinzel Decorative, Merriweather)</p>
+        <p>Biblioteka animacji: GSAP (GreenSock Animation Platform)</p>
+        <p>Ikony wież/przeciwników: (jeśli są zewnętrzne, np. z kaliskie.org, można tu wspomnieć)</p>
+        <p>Wzór tła strony: SVGBackgrounds.com (zmodyfikowany)</p>
+        <br>
+        <p>Teatr Tower Defense © 2024 Piotr Józefiak</p>
+        <button id="backToMainMenuFromCredits" class="ui-button">Powrót do Menu</button>
+    </div>
+
+    <div id="pauseMenu" class="menu-screen hidden">
         <h2>Pauza</h2>
         <button id="resumeButton" class="ui-button">Wznów</button>
         <button id="menuFromPauseButton" class="ui-button">Menu Główne</button>

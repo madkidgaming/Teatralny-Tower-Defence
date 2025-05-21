@@ -11,9 +11,24 @@ const ctx = canvas.getContext('2d');
 
 const pageTitle = document.getElementById('pageTitle');
 const gameLayout = document.getElementById('gameLayout');
+
+// ZMIANA: Odniesienia do nowych elementów menu i ekranów
 const mainMenuScreen = document.getElementById('mainMenu');
-const levelSelectionContainer = document.getElementById('levelSelection');
-const newGameButton = document.getElementById('newGameButton'); // ZMIANA: Dodano odniesienie do przycisku
+const levelSelectionScreen = document.getElementById('levelSelectionScreen');
+const creditsScreen = document.getElementById('creditsScreen');
+const levelSelectionContainer = document.getElementById('levelSelectionContainer'); // Wcześniej osobna stała
+
+const continueGameButton = document.getElementById('continueGameButton');
+const newGameButtonFromMenu = document.getElementById('newGameButtonFromMenu'); // Zmienione ID
+const levelSelectButton = document.getElementById('levelSelectButton');
+const creditsButton = document.getElementById('creditsButton');
+const backToMainMenuFromLevelSelection = document.getElementById('backToMainMenuFromLevelSelection');
+const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCredits');
+
+const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
+const saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
+
+
 const pauseMenuScreen = document.getElementById('pauseMenu');
 
 const uiCurrentAct = document.getElementById('uiCurrentAct');
@@ -37,10 +52,10 @@ const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame')
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 
 function updateUiStats() {
-    if (!C.levelData[state.currentLevelIndex] && state.gameScreen !== 'menu') {
+    if (!C.levelData[state.currentLevelIndex] && state.gameScreen !== 'menu' && state.gameScreen !== 'levelSelection' && state.gameScreen !== 'credits') {
         return;
     }
-    if (state.gameScreen !== 'menu') {
+     if (state.gameScreen === 'playing' || state.gameScreen === 'paused' || state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
         uiCurrentAct.textContent = state.currentLevelIndex + 1;
         let waveDisplay;
         if (state.currentWaveNumber > 0) {
@@ -50,7 +65,7 @@ function updateUiStats() {
             if (progress === undefined || progress === -1) {
                 waveDisplay = '-';
             } else {
-                waveDisplay = '0'; // Pokazuje 0 jeśli postęp to 0 (przed pierwszą falą)
+                waveDisplay = '0';
             }
         }
         uiCurrentWave.textContent = `${waveDisplay}/${C.WAVES_PER_LEVEL}`;
@@ -58,7 +73,6 @@ function updateUiStats() {
         uiAudienceSatisfaction.textContent = `${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`;
     }
 
-    // Aktualizacja kosztów na przyciskach zawsze, nawet w menu (np. po załadowaniu gry)
     if (C.towerDefinitions.bileter) {
         uiButtonBileter.querySelector('.cost').textContent = C.towerDefinitions.bileter.cost;
     }
@@ -94,7 +108,7 @@ function showUiMessage(message) {
 }
 
 function updateTowerUpgradePanel() {
-    if (state.selectedTowerForUpgrade && C.towerDefinitions[state.selectedTowerForUpgrade.type]) { // Dodatkowe sprawdzenie
+    if (state.selectedTowerForUpgrade && C.towerDefinitions[state.selectedTowerForUpgrade.type]) {
         towerUpgradePanel.classList.remove('hidden');
         const tower = state.selectedTowerForUpgrade;
         const towerDef = C.towerDefinitions[tower.type];
@@ -134,35 +148,53 @@ function updateSelectedTowerButtonUI() {
     }
 }
 
+// ZMIANA: Zmodyfikowana funkcja showScreen
 function showScreen(screenName) {
+    // Ukryj wszystkie główne ekrany/layouty
     mainMenuScreen.classList.add('hidden');
     mainMenuScreen.classList.remove('visible');
+    levelSelectionScreen.classList.add('hidden');
+    levelSelectionScreen.classList.remove('visible');
+    creditsScreen.classList.add('hidden');
+    creditsScreen.classList.remove('visible');
     gameLayout.classList.add('hidden');
     gameLayout.classList.remove('visible');
     pauseMenuScreen.classList.add('hidden');
     pauseMenuScreen.classList.remove('visible');
 
+    // Ustawienia wspólne dla wszystkich ekranów menu
+    if (['menu', 'levelSelection', 'credits'].includes(screenName)) {
+        pageTitle.textContent = "Teatr Tower Defense";
+        // Aktualizacja statusu zapisu
+        const currentSaveStatusEl = screenName === 'menu' ? saveStatusMainMenu :
+                                 screenName === 'levelSelection' ? saveStatusLevelSelection :
+                                 null; // creditsScreen nie ma saveStatus
+
+        if (currentSaveStatusEl) {
+            if (!currentSaveStatusEl.textContent.toLowerCase().includes("błąd") &&
+                !currentSaveStatusEl.textContent.toLowerCase().includes("nowa gra") &&
+                !currentSaveStatusEl.textContent.toLowerCase().includes("wyczyszczony")) {
+                currentSaveStatusEl.textContent = "Postęp gry jest zapisywany automatycznie.";
+            }
+        }
+    }
+
+
     if (screenName === 'menu') {
         mainMenuScreen.classList.remove('hidden');
         mainMenuScreen.classList.add('visible');
-        pageTitle.textContent = "Teatr Tower Defense";
-        renderLevelSelection();
-        // ZMIANA: Uaktualnienie komunikatu o zapisie przy wyświetlaniu menu
-        const saveStatusEl = document.getElementById('saveStatus');
-        if (saveStatusEl) {
-            // Tekst jest zarządzany głównie przez saveGameProgress i loadGameProgress,
-            // ale tutaj możemy ustawić domyślny, jeśli nic innego go nie nadpisało.
-            // Jeśli ostatni komunikat to był błąd lub info o nowej grze, nie nadpisujemy go od razu.
-            if (!saveStatusEl.textContent.toLowerCase().includes("błąd") && 
-                !saveStatusEl.textContent.toLowerCase().includes("nowa gra") &&
-                !saveStatusEl.textContent.toLowerCase().includes("wyczyszczony")) {
-                 saveStatusEl.textContent = "Postęp gry jest zapisywany automatycznie.";
-            }
-        }
+        updateContinueButtonState(); // Zaktualizuj stan przycisku "Kontynuuj"
+    } else if (screenName === 'levelSelection') {
+        levelSelectionScreen.classList.remove('hidden');
+        levelSelectionScreen.classList.add('visible');
+        renderLevelSelection(); // Renderuj listę poziomów
+    } else if (screenName === 'credits') {
+        creditsScreen.classList.remove('hidden');
+        creditsScreen.classList.add('visible');
     } else if (screenName === 'playing') {
         gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
-        if (C.levelData && C.levelData[state.currentLevelIndex]) { // Sprawdź, czy C.levelData istnieje
+        if (C.levelData && C.levelData[state.currentLevelIndex]) {
              pageTitle.textContent = `Teatr Tower Defense - Akt ${state.currentLevelIndex + 1}`;
         }
         returnToMenuButtonGame.classList.add('hidden');
@@ -185,9 +217,10 @@ function showScreen(screenName) {
     state.gameScreen = screenName;
 }
 
+// ZMIANA: renderLevelSelection teraz renderuje do nowego kontenera
 function renderLevelSelection() {
-    levelSelectionContainer.innerHTML = '';
-    if (!C.levelData) { // Dodatkowe zabezpieczenie
+    levelSelectionContainer.innerHTML = ''; // Używamy nowego kontenera
+    if (!C.levelData) {
         console.error("C.levelData is not defined in renderLevelSelection");
         return;
     }
@@ -231,8 +264,23 @@ function startGameLevel(levelIndex, startFromWave = 0) {
     }
 }
 
+// ZMIANA: Logika dla przycisku Kontynuuj
+function updateContinueButtonState() {
+    // Prosta logika: Kontynuuj jest aktywne, jeśli jest jakikolwiek zapisany postęp
+    // (czyli localStorage nie jest pusty lub `state.unlockedLevels > 1` lub `Object.keys(state.levelProgress).length > 0`)
+    // Dla uproszczenia, sprawdzimy, czy `levelProgress` nie jest pusty LUB odblokowano więcej niż 1 poziom
+    const hasProgress = state.unlockedLevels > 1 || Object.keys(state.levelProgress).length > 0;
+    if (hasProgress) {
+        continueGameButton.classList.remove('disabled');
+        continueGameButton.disabled = false;
+    } else {
+        continueGameButton.classList.add('disabled');
+        continueGameButton.disabled = true;
+    }
+}
+
 function preloadImagesAndStart() {
-    Storage.loadGameProgress(state);
+    Storage.loadGameProgress(state); // Ładuje zapisany stan gry
     setTotalImagesToLoad(Object.keys(C.imageSources).length);
 
     for (const key in C.imageSources) {
@@ -258,13 +306,14 @@ function preloadImagesAndStart() {
 function initGame() {
     canvas.width = C.COLS * C.TILE_SIZE;
     canvas.height = C.ROWS * C.TILE_SIZE;
-    showScreen('menu');
+    showScreen('menu'); // Zaczynamy od nowego menu głównego
 }
 
 let animationFrameId = null;
 
 function gameLoop() {
-    if (state.gameScreen === 'menu') {
+    // ZMIANA: Dostosowanie warunków gameLoop do nowych ekranów menu
+    if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits') {
         animationFrameId = null; return;
     }
     
@@ -311,8 +360,11 @@ function gameLoop() {
         showScreen(state.gameScreen);
     }
     
-    if (state.gameScreen !== 'menu') animationFrameId = requestAnimationFrame(gameLoop);
-    else animationFrameId = null;
+    if (state.gameScreen !== 'menu' && state.gameScreen !== 'levelSelection' && state.gameScreen !== 'credits') {
+        animationFrameId = requestAnimationFrame(gameLoop);
+    } else {
+        animationFrameId = null;
+    }
 }
 
 uiButtonBileter.addEventListener('click', () => {
@@ -368,42 +420,64 @@ resumeButton.addEventListener('click', () => {
         if (!animationFrameId) gameLoop();
     }
 });
+
+// ZMIANA: Zmodyfikowana funkcja goToMainMenu
 function goToMainMenu() {
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
-    updateSelectedTowerButtonUI(); updateTowerUpgradePanel();
-    showScreen('menu');
+    // updateSelectedTowerButtonUI(); // Niepotrzebne, bo UI gry jest ukrywane
+    // updateTowerUpgradePanel(); // Niepotrzebne
+    showScreen('menu'); // Pokazuje nowe menu główne
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
 menuFromPauseButton.addEventListener('click', goToMainMenu);
 
-// ZMIANA: Dodano Event Listener dla przycisku Nowa Gra
-newGameButton.addEventListener('click', () => {
+// ZMIANA: Nowe event listenery dla przycisków menu
+continueGameButton.addEventListener('click', () => {
+    if (!continueGameButton.disabled) {
+        // Logika kontynuacji: na razie po prostu przechodzi do wyboru poziomu
+        // W przyszłości można tu dodać logikę wczytania ostatnio granego, niedokończonego poziomu
+        showScreen('levelSelection');
+    }
+});
+
+newGameButtonFromMenu.addEventListener('click', () => {
     if (confirm("Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.")) {
-        // Resetowanie stanu gry
         state.unlockedLevels = 1;
-        state.levelProgress = {}; // Resetuje postęp dla wszystkich poziomów
-
-        // Zapisanie zresetowanego stanu
-        Storage.saveGameProgress(state); // Ta funkcja powinna też aktualizować saveStatusEl
-
-        // Odświeżenie widoku wyboru poziomów, aby pokazać zresetowany stan
-        renderLevelSelection();
-
-        // Informacja dla gracza przez system komunikatów (jeśli chcemy na canvasie/globalnie)
-        // Utils.showMessage(state, "Rozpoczęto nową grę. Wybierz Akt 1.", 180);
-        // lub bezpośrednio w panelu HTML, jeśli jest widoczny
-        // showUiMessage("Rozpoczęto nową grę. Wybierz Akt 1.");
+        state.levelProgress = {};
+        Storage.saveGameProgress(state);
         
-        // Ustawienie komunikatu w menu głównym
-        const saveStatusEl = document.getElementById('saveStatus');
-        if (saveStatusEl) {
-            saveStatusEl.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
+        if (saveStatusMainMenu) {
+            saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
         }
-        
+        if (saveStatusLevelSelection && levelSelectionScreen.classList.contains('visible')) {
+            saveStatusLevelSelection.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
+        }
+
+        updateContinueButtonState(); // Zaktualizuj stan przycisku "Kontynuuj"
+        if (levelSelectionScreen.classList.contains('visible')) {
+            renderLevelSelection(); // Jeśli ekran wyboru poziomu był widoczny, odśwież go
+        }
         console.log("Nowa gra rozpoczęta. Stan zresetowany:", state.unlockedLevels, state.levelProgress);
     }
 });
+
+levelSelectButton.addEventListener('click', () => {
+    showScreen('levelSelection');
+});
+
+creditsButton.addEventListener('click', () => {
+    showScreen('credits');
+});
+
+backToMainMenuFromLevelSelection.addEventListener('click', () => {
+    showScreen('menu');
+});
+
+backToMainMenuFromCredits.addEventListener('click', () => {
+    showScreen('menu');
+});
+
 
 canvas.addEventListener('click', (event) => {
     if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') return;
