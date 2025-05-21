@@ -42,6 +42,7 @@ const customConfirmCancelButton = document.getElementById('customConfirmCancelBu
 if (!customConfirmOverlay || !customConfirmTitle || !customConfirmMessage || !customConfirmOkButton || !customConfirmCancelButton) {
     console.error("CRITICAL: One or more custom confirm dialog DOM elements are missing! Check IDs in index.html and main.js.");
 }
+console.log("Initial check: customConfirmOverlay element:", customConfirmOverlay);
 
 
 let confirmResolve = null;
@@ -68,11 +69,13 @@ const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 
 
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
+    console.log("[showCustomConfirm] Function called. Overlay element:", customConfirmOverlay);
     return new Promise((resolve) => {
-        confirmResolve = resolve;
+        confirmResolve = resolve; 
 
         if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
-            resolve(false);
+            console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
+            resolve(false); 
             return;
         }
 
@@ -81,36 +84,45 @@ function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
 
         customConfirmOverlay.classList.remove('hidden');
         customConfirmOverlay.classList.add('visible');
+        console.log("[showCustomConfirm] Overlay classes set. Should be visible now.");
     });
 }
 
 function hideCustomConfirm() {
+    console.log("[hideCustomConfirm] Function called.");
     if (customConfirmOverlay) {
         customConfirmOverlay.classList.remove('visible');
         setTimeout(() => {
             customConfirmOverlay.classList.add('hidden');
+            console.log("[hideCustomConfirm] Overlay classes set to hidden after timeout.");
         }, 300);
     }
     confirmResolve = null;
 }
 
 customConfirmOkButton.addEventListener('click', () => {
+    console.log("[customConfirmOkButton] OK Clicked.");
     if (confirmResolve) {
+        console.log("[customConfirmOkButton] Resolving promise with true.");
         confirmResolve(true);
     }
     hideCustomConfirm();
 });
 
 customConfirmCancelButton.addEventListener('click', () => {
+    console.log("[customConfirmCancelButton] Cancel Clicked.");
     if (confirmResolve) {
+        console.log("[customConfirmCancelButton] Resolving promise with false.");
         confirmResolve(false);
     }
     hideCustomConfirm();
 });
 
 customConfirmOverlay.addEventListener('click', (event) => {
-    if (event.target === customConfirmOverlay) {
+    if (event.target === customConfirmOverlay) { 
+        console.log("[customConfirmOverlay] Clicked outside modal box.");
         if (confirmResolve) {
+            console.log("[customConfirmOverlay] Resolving promise with false (clicked outside).");
             confirmResolve(false);
         }
         hideCustomConfirm();
@@ -118,7 +130,9 @@ customConfirmOverlay.addEventListener('click', (event) => {
 });
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && customConfirmOverlay && customConfirmOverlay.classList.contains('visible')) {
+        console.log("[customConfirmOverlay] Escape key pressed.");
         if (confirmResolve) {
+            console.log("[customConfirmOverlay] Resolving promise with false (Escape key).");
             confirmResolve(false);
         }
         hideCustomConfirm();
@@ -232,18 +246,26 @@ function updateSelectedTowerButtonUI() {
 }
 
 function showScreen(screenName) {
-    mainMenuScreen.classList.add('hidden');
+    // Ukryj wszystkie główne kontenery ekranów na początku
     mainMenuScreen.classList.remove('visible');
-    levelSelectionScreen.classList.add('hidden');
+    mainMenuScreen.classList.add('hidden');
+
     levelSelectionScreen.classList.remove('visible');
-    creditsScreen.classList.add('hidden');
+    levelSelectionScreen.classList.add('hidden');
+
     creditsScreen.classList.remove('visible');
-    levelCompleteScreen.classList.add('hidden');
+    creditsScreen.classList.add('hidden');
+
     levelCompleteScreen.classList.remove('visible');
-    gameLayout.classList.add('hidden');
+    levelCompleteScreen.classList.add('hidden');
+
     gameLayout.classList.remove('visible');
-    pauseMenuScreen.classList.add('hidden');
+    gameLayout.classList.add('hidden');
+
     pauseMenuScreen.classList.remove('visible');
+    pauseMenuScreen.classList.add('hidden');
+
+    console.log(`[showScreen] Attempting to switch to screen: ${screenName}`);
 
     if (['menu', 'levelSelection', 'credits', 'levelCompleteScreen'].includes(screenName)) {
         pageTitle.textContent = "Teatr Tower Defense";
@@ -260,6 +282,7 @@ function showScreen(screenName) {
         }
     }
 
+    // Pokaż wybrany ekran
     if (screenName === 'menu') {
         mainMenuScreen.classList.remove('hidden');
         mainMenuScreen.classList.add('visible');
@@ -272,9 +295,15 @@ function showScreen(screenName) {
         creditsScreen.classList.remove('hidden');
         creditsScreen.classList.add('visible');
     } else if (screenName === 'levelCompleteScreen') {
-        levelCompleteScreen.classList.remove('hidden');
-        levelCompleteScreen.classList.add('visible');
-        renderLevelCompleteSummary();
+        console.log("[showScreen] Processing 'levelCompleteScreen'. Element:", levelCompleteScreen);
+        if (levelCompleteScreen) { 
+            levelCompleteScreen.classList.remove('hidden');
+            levelCompleteScreen.classList.add('visible');
+            renderLevelCompleteSummary();
+            console.log("[showScreen] levelCompleteScreen should now be visible.");
+        } else {
+            console.error("[showScreen] CRITICAL: levelCompleteScreen element is null!");
+        }
     } else if (screenName === 'playing') {
         gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
@@ -287,21 +316,21 @@ function showScreen(screenName) {
         updateTowerUpgradePanel();
         updateSelectedTowerButtonUI();
     } else if (screenName === 'paused') {
-        gameLayout.classList.remove('hidden');
+        gameLayout.classList.remove('hidden'); 
         gameLayout.classList.add('visible');
         pauseMenuScreen.classList.remove('hidden');
         pauseMenuScreen.classList.add('visible');
     } else if (screenName === 'levelLost') {
-        gameLayout.classList.remove('hidden');
+        gameLayout.classList.remove('hidden'); 
         gameLayout.classList.add('visible');
-        returnToMenuButtonGame.classList.remove('hidden');
+        returnToMenuButtonGame.classList.remove('hidden'); 
         pauseButton.classList.add('hidden');
         showUiMessage(state.currentMessage);
         updateUiStats();
     }
-    state.gameScreen = screenName;
-    console.log(`[showScreen] Switched to screen: ${screenName}`);
+    state.gameScreen = screenName; 
 }
+
 
 function renderLevelCompleteSummary() {
     const stats = state.lastLevelStats;
@@ -373,16 +402,19 @@ function renderLevelSelection() {
 }
 
 function startGameLevel(levelIndex, startFromWave = 0) {
+    console.log(`[startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
     if (animationFrameId === null) {
+        console.log("[startGameLevel] animationFrameId is null, starting gameLoop.");
         gameLoop();
     } else {
-        cancelAnimationFrame(animationFrameId); // Anuluj istniejącą pętlę, jeśli istnieje
-        animationFrameId = null; // Zresetuj ID
-        gameLoop(); // Rozpocznij nową pętlę
+        console.log("[startGameLevel] animationFrameId is NOT null (" + animationFrameId + "), cancelling and restarting gameLoop.");
+        cancelAnimationFrame(animationFrameId); 
+        animationFrameId = null; 
+        gameLoop(); 
     }
 }
 
@@ -651,7 +683,7 @@ resumeButton.addEventListener('click', () => {
     if (state.isPaused) {
         GameLogic.togglePauseGame();
         showScreen('playing');
-        if (!animationFrameId) { // Jeśli pętla została zatrzymana, uruchom ją ponownie
+        if (!animationFrameId) { 
             gameLoop();
         }
     }
@@ -661,7 +693,7 @@ function goToMainMenu() {
     clearTimeout(autoStartTimerId);
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
-    if (animationFrameId) { // Zatrzymaj pętlę gry, jeśli działa
+    if (animationFrameId) { 
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
     }
@@ -682,10 +714,14 @@ nextLevelButton.addEventListener('click', () => {
 continueGameButton.addEventListener('click', () => { if (!continueGameButton.disabled) showScreen('levelSelection'); });
 
 newGameButtonFromMenu.addEventListener('click', async () => {
+    console.log("[NewGameButton] Clicked.");
     try {
+        console.log("[NewGameButton] Calling showCustomConfirm...");
         const confirmed = await showCustomConfirm("Rozpocząć Nową Grę?", "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.");
+        console.log("[NewGameButton] showCustomConfirm promise resolved. Confirmed value:", confirmed);
 
         if (confirmed) {
+            console.log("[NewGameButton] Confirmed: true. Resetting game state and starting new game.");
             clearTimeout(autoStartTimerId);
             state.autoStartNextWaveEnabled = true;
             state.currentAplauzBonusForNextLevel = 0;
@@ -694,7 +730,11 @@ newGameButtonFromMenu.addEventListener('click', async () => {
             Storage.saveGameProgress(state);
             if (saveStatusMainMenu) saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
             updateContinueButtonState();
+            console.log("[NewGameButton] Calling startGameLevel(0, 0)...");
             startGameLevel(0, 0);
+            console.log("[NewGameButton] startGameLevel(0, 0) finished.");
+        } else {
+            console.log("[NewGameButton] Confirmed: false, or dialog dismissed. No action taken.");
         }
     } catch (error) {
         console.error("[NewGameButton] Error during new game process:", error);
