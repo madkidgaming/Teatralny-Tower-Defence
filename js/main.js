@@ -300,7 +300,6 @@ function showScreen(screenName) {
         updateUiStats();
     }
     state.gameScreen = screenName;
-    // LOG: Dodaj logowanie przy zmianie ekranu, zwłaszcza na levelCompleteScreen
     console.log(`[showScreen] Switched to screen: ${screenName}`);
 }
 
@@ -381,9 +380,9 @@ function startGameLevel(levelIndex, startFromWave = 0) {
     if (animationFrameId === null) {
         gameLoop();
     } else {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-        gameLoop();
+        cancelAnimationFrame(animationFrameId); // Anuluj istniejącą pętlę, jeśli istnieje
+        animationFrameId = null; // Zresetuj ID
+        gameLoop(); // Rozpocznij nową pętlę
     }
 }
 
@@ -433,19 +432,25 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
+    // console.log(`Game Loop Start. Screen: ${state.gameScreen}, Paused: ${state.isPaused}, AnimID: ${animationFrameId}, gameOver: ${state.gameOver}`);
+
+    if (state.gameScreen === 'levelCompleteScreen') {
+        console.log("[gameLoop START] Detected gameScreen is 'levelCompleteScreen'. Stopping loop and showing screen.");
+        animationFrameId = null;
+        showScreen('levelCompleteScreen');
+        return;
+    }
+    if (state.gameScreen === 'levelLost') {
+        console.log("[gameLoop START] Detected gameScreen is 'levelLost'. Stopping loop and showing screen.");
+        animationFrameId = null;
+        showScreen('levelLost');
+        return;
+    }
+
     if (state.gameScreen === 'menu' ||
         state.gameScreen === 'levelSelection' ||
         state.gameScreen === 'credits') {
         animationFrameId = null;
-        return;
-    }
-
-    if (state.gameScreen === 'levelCompleteScreen') {
-        // LOG: Sprawdź, czy pętla zatrzymuje się tutaj po ustawieniu ekranu
-        console.log("[gameLoop] state.gameScreen is 'levelCompleteScreen'. Stopping gameLoop for this screen.");
-        animationFrameId = null;
-        // showScreen('levelCompleteScreen') zostało już wywołane, UI powinno być aktualne
-        // updateUiStats(); // Może być potrzebne, jeśli jakieś UI jest nadal aktywne/widoczne w tle
         return;
     }
 
@@ -490,19 +495,6 @@ function gameLoop() {
         return;
     }
 
-    if (state.gameScreen === 'levelLost') {
-        Drawing.drawBackgroundAndPath(ctx);
-        Drawing.drawTowerSpots(ctx);
-        renderGameObjectsSorted();
-        Drawing.drawProjectiles(ctx);
-        Drawing.drawEffects(ctx);
-        Drawing.drawUI(ctx);
-        showUiMessage(state.currentMessage);
-        updateUiStats();
-        animationFrameId = requestAnimationFrame(gameLoop);
-        return;
-    }
-
     if (state.gameScreen === 'playing' && !state.isPaused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -542,7 +534,6 @@ function gameLoop() {
                     onComplete: () => {
                         const index = state.enemies.indexOf(enemy);
                         if (index > -1) state.enemies.splice(index, 1);
-                        // LOG: Sprawdź, czy checkWaveCompletion jest wywoływane po ostatnim wrogu
                         console.log(`[GSAP onComplete] Enemy ${enemy.id} animation finished. Calling checkWaveCompletion.`);
                         checkWaveCompletion();
                     }
@@ -588,50 +579,37 @@ function gameLoop() {
         }
     }
 
-    // Sprawdzanie po logice, czy stan gry się zmienił i wymaga reakcji (przejścia do ekranu)
-    // Ta sekcja jest kluczowa dla przejścia na ekran podsumowania
-    if (state.gameScreen === 'levelCompleteScreen' && animationFrameId !== null) {
-        console.log("[gameLoop post-logic] Detected gameScreen is 'levelCompleteScreen'. Stopping loop and showing screen.");
-        animationFrameId = null;
-        showScreen('levelCompleteScreen'); // To powinno wyświetlić ekran
-        return; // Zakończ tę iterację pętli
+    if (animationFrameId !== null) {
+        animationFrameId = requestAnimationFrame(gameLoop);
     }
-    if (state.gameScreen === 'levelLost' && animationFrameId !== null) {
-        animationFrameId = null;
-        showScreen('levelLost');
-        return;
-    }
-
-    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function checkWaveCompletion() {
-    console.log(`[checkWaveCompletion] Called. WaveInProgress: ${state.waveInProgress}, CurrentWave: ${state.currentWaveNumber}, Enemies: ${state.enemies.filter(e => !e.isDeathAnimationStarted || e.currentAlpha > 0).length}, SpawnsLeft: ${state.currentWaveSpawnsLeft}`); // LOG
+    console.log(`[checkWaveCompletion] Called. WaveInProgress: ${state.waveInProgress}, CurrentWave: ${state.currentWaveNumber}, Enemies: ${state.enemies.filter(e => !e.isDeathAnimationStarted || e.currentAlpha > 0).length}, SpawnsLeft: ${state.currentWaveSpawnsLeft}`);
 
     if (!state.waveInProgress) {
-        console.log("[checkWaveCompletion] Wave not in progress. Returning."); // LOG
+        console.log("[checkWaveCompletion] Wave not in progress. Returning.");
         return;
     }
 
     const activeOrAnimatingEnemies = state.enemies.filter(e => !e.isDeathAnimationStarted || e.currentAlpha > 0);
 
     if (activeOrAnimatingEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
-        console.log(`[checkWaveCompletion] All enemies cleared for wave ${state.currentWaveNumber}.`); // LOG
+        console.log(`[checkWaveCompletion] All enemies cleared for wave ${state.currentWaveNumber}.`);
         state.waveInProgress = false;
         state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
         Storage.saveGameProgress(state);
 
         if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-            console.log(`[checkWaveCompletion] Last wave (${state.currentWaveNumber}) completed. Calling GameLogic.completeLevel().`); // LOG
-            GameLogic.completeLevel(); // To powinno ustawić state.gameScreen na 'levelCompleteScreen'
-                                      // i state.gameOver na true
+            console.log(`[checkWaveCompletion] Last wave (${state.currentWaveNumber}) completed. Calling GameLogic.completeLevel().`);
+            GameLogic.completeLevel();
         } else {
             Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna za chwilę...`, 180);
             if (state.autoStartNextWaveEnabled) prepareAutoStartNextWave(5);
         }
         updateUiStats();
     } else {
-        console.log(`[checkWaveCompletion] Wave ${state.currentWaveNumber} not fully cleared. Active/Animating: ${activeOrAnimatingEnemies.length}, SpawnsLeft: ${state.currentWaveSpawnsLeft}`); // LOG
+        console.log(`[checkWaveCompletion] Wave ${state.currentWaveNumber} not fully cleared. Active/Animating: ${activeOrAnimatingEnemies.length}, SpawnsLeft: ${state.currentWaveSpawnsLeft}`);
     }
 }
 
@@ -673,7 +651,7 @@ resumeButton.addEventListener('click', () => {
     if (state.isPaused) {
         GameLogic.togglePauseGame();
         showScreen('playing');
-        if (!animationFrameId) {
+        if (!animationFrameId) { // Jeśli pętla została zatrzymana, uruchom ją ponownie
             gameLoop();
         }
     }
@@ -683,7 +661,7 @@ function goToMainMenu() {
     clearTimeout(autoStartTimerId);
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
-    if (animationFrameId) {
+    if (animationFrameId) { // Zatrzymaj pętlę gry, jeśli działa
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
     }
@@ -776,9 +754,8 @@ document.addEventListener('keydown', (event) => {
             event.preventDefault();
             if (state.waveInProgress || state.showingWaveIntro) {
                 Utils.showMessage(state, "Kończenie obecnej fali... (DEV)", 90);
-                state.enemies.forEach(enemy => enemy.hp = 0); // Trigger defeat
+                state.enemies.forEach(enemy => enemy.hp = 0);
                 state.currentWaveSpawnsLeft = 0;
-                 // Let GSAP onComplete and checkWaveCompletion handle the rest
             } else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && state.gameScreen === 'playing' && !state.gameOver) {
                 Utils.showMessage(state, "Przeskakiwanie do następnej fali... (DEV)", 90);
                 clearTimeout(autoStartTimerId);
