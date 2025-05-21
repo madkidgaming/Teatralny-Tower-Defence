@@ -25,7 +25,7 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.enemies.length = 0;
     state.towers.length = 0;
     state.projectiles.length = 0;
-    state.effects = state.effects || []; // Upewnij się, że tablica efektów istnieje
+    state.effects = state.effects || []; 
     state.effects.length = 0;
     state.gameOver = false;
     state.waveInProgress = false;
@@ -49,6 +49,7 @@ export function spawnEnemy(type, level = 1) {
     const baseStats = C.baseEnemyStats[type];
     const img = images[baseStats.imageKey];
     state.enemies.push({
+        id: Date.now() + Math.random().toString(36).substring(2, 7) + '_enemy', // ZMIANA: Dodano unikalne ID
         type: type, level: level, 
         x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2,
         y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
@@ -56,8 +57,8 @@ export function spawnEnemy(type, level = 1) {
         speed: baseStats.speed * (1 - (level - 1) * 0.05), pathIndex: 0,
         image: img, width: baseStats.width, height: baseStats.height,
         reward: baseStats.aplauzReward,
-        isDying: false, // Dodajemy flagę
-        isDeathAnimationStarted: false // Dodajemy flagę
+        isDying: false, 
+        isDeathAnimationStarted: false 
     });
 }
 
@@ -65,15 +66,13 @@ export function updateEnemies() {
     for (let i = state.enemies.length - 1; i >= 0; i--) {
         const enemy = state.enemies[i];
 
-        // Jeśli wróg jest w trakcie animacji śmierci, nie aktualizuj jego logiki (np. ruchu)
-        if (enemy.isDying) {
+        if (enemy.isDying) { // Jeśli wróg jest w trakcie animacji śmierci, pomiń jego logikę
             continue;
         }
 
-        if (enemy.hp <= 0 && !enemy.isDying) { // ZMIANA: Sprawdzamy też !isDying
+        if (enemy.hp <= 0 && !enemy.isDying) { 
             handleEnemyDefeated(enemy);
-            // Nie usuwamy go tutaj, animacja to zrobi
-            continue; // Przejdź do następnego wroga
+            continue; 
         }
 
         if (enemy.pathIndex < state.currentPath.length - 1) {
@@ -90,10 +89,9 @@ export function updateEnemies() {
                 enemy.y += (dy / distance) * enemy.speed;
             }
         } else {
-            // Wróg dotarł do końca, ale nie usuwaj go jeśli już umiera (choć to mało prawdopodobne)
-            if (!enemy.isDying) {
+            if (!enemy.isDying) { // Upewnij się, że nie usuwasz wroga, który już jest oznaczony jako umierający
                 state.zadowolenieWidowni--; 
-                state.enemies.splice(i, 1); // Tutaj usuwamy od razu, bo nie ma animacji przegranej dla pojedynczego wroga
+                state.enemies.splice(i, 1); 
                 if (state.zadowolenieWidowni <= 0) {
                     state.zadowolenieWidowni = 0; endGame(false);
                 }
@@ -117,14 +115,14 @@ export function buildTower(spotXGrid, spotYGrid, type) {
         }
         state.aplauz -= definition.cost; spot.occupied = true;
         
-        const newTower = { // ZMIANA: Przechowujemy nową wieżę w zmiennej
-            id: Date.now() + Math.random(), xGrid: spotXGrid, yGrid: spotYGrid,
+        const newTower = { 
+            id: Date.now() + Math.random().toString(36).substring(2, 7) + '_tower', // ZMIANA: Dodano unikalne ID
+            xGrid: spotXGrid, yGrid: spotYGrid,
             x: spotXGrid * C.TILE_SIZE + C.TILE_SIZE / 2, y: spotYGrid * C.TILE_SIZE + C.TILE_SIZE / 2, 
             type: type, definition: definition, damageLevel: 0, fireRateLevel: 0, 
             currentDamage: definition.baseDamage, currentFireRate: definition.baseFireRate,
             range: definition.range, fireCooldown: 0, projectileType: definition.projectileType,
             image: images[definition.imageKey], renderSize: definition.renderSize,
-            // ZMIANA: Dodajemy właściwości dla animacji pojawiania się
             currentScale: 0.1, 
             currentAlpha: 0,   
             currentRotation: -45, 
@@ -197,7 +195,6 @@ export function updateTowers() {
 function findTarget(tower) {
     let closestEnemy = null; let minDistance = tower.range;
     state.enemies.forEach(enemy => {
-        // ZMIANA: Ignoruj wrogów, którzy są w trakcie animacji śmierci
         if (enemy.hp <= 0 || enemy.isDying) return;
         const dx = enemy.x - tower.x; const dy = enemy.y - tower.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -209,14 +206,14 @@ function findTarget(tower) {
 function fireProjectile(tower, target) {
     const projectileData = C.projectileTypes[tower.projectileType];
     if (!projectileData) {
-        console.error("[LOG-POCISK] Brak danych dla typu pocisku:", tower.projectileType); 
+        console.error("Brak danych dla typu pocisku:", tower.projectileType); 
         return;
     }
     const projectileImage = images[projectileData.imageKey];
     if (!projectileImage) {
-        console.error("[LOG-POCISK] Brak obrazka dla pocisku (klucz):", projectileData.imageKey); 
+        console.error("Brak obrazka dla pocisku (klucz):", projectileData.imageKey); 
     } else if (projectileImage.error) {
-        console.error("[LOG-POCISK] Błąd ładowania obrazka dla pocisku:", projectileData.imageKey, projectileImage.src); 
+        console.error("Błąd ładowania obrazka dla pocisku:", projectileData.imageKey, projectileImage.src); 
     }
 
     const fireY = (tower.y + C.TILE_SIZE / 2 - tower.definition.renderSize) + tower.definition.renderSize * 0.4; 
@@ -233,7 +230,7 @@ export function updateProjectiles() {
     for (let i = state.projectiles.length - 1; i >= 0; i--) {
         const p = state.projectiles[i];
 
-        if (!p.target || p.target.hp <= 0 || p.target.isDying) { // ZMIANA: Dodano p.target.isDying
+        if (!p.target || p.target.hp <= 0 || p.target.isDying) { 
             state.projectiles.splice(i, 1); 
             continue; 
         }
@@ -242,7 +239,20 @@ export function updateProjectiles() {
         if (distance < p.speed) {
             p.target.hp -= p.damage; 
             state.projectiles.splice(i, 1);
-            if (p.target.hp <= 0 && !p.target.isDying) { // ZMIANA: Sprawdź !p.target.isDying
+            // Dodanie efektu trafienia
+            const hitEffect = { 
+                x: p.target.x, 
+                y: p.target.y, 
+                scale: 0,
+                alpha: 1, 
+                durationFrames: 20, // Czas trwania w klatkach (ok. 0.33s przy 60fps)
+                maxScale: C.TILE_SIZE * 0.25,
+                color: p.type === 'laser' ? 'rgba(255,255,100,0.9)' : 'rgba(220,220,220,0.8)',
+                isNew: true // Flaga dla main.js do uruchomienia animacji GSAP
+            };
+            state.effects.push(hitEffect); 
+
+            if (p.target.hp <= 0 && !p.target.isDying) { 
                 handleEnemyDefeated(p.target);
             }
         } else {
@@ -252,21 +262,17 @@ export function updateProjectiles() {
     }
 }
 
-// ZMIANA: Zmodyfikowana funkcja handleEnemyDefeated
-export function handleEnemyDefeated(enemy) { // Dodano export, jeśli będzie wywoływana z main.js
+export function handleEnemyDefeated(enemy) { 
     state.aplauz += (enemy.reward * enemy.level);
     
     if (!enemy.isDying) { 
+        // console.log(`[HANDLE_DEFEAT] Oznaczanie wroga ${enemy.id} jako isDying.`); // Logowanie przeniesione do main.js lub usunięte dla czystości
         enemy.isDying = true;
-        // Inicjalizacja wartości dla GSAP, jeśli nie istnieją (GSAP i tak je nadpisze)
         enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
         enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
     }
-    // Usunięcie z tablicy i sprawdzenie końca fali odbędzie się w main.js po animacji GSAP
 }
 
-
-// ZMIANA: completeLevel teraz jest eksportowane, aby mogło być wywołane z main.js
 export function completeLevel() {
     showMessage(state, `Akt ${state.currentLevelIndex + 1} ukończony! Brawo!`, 240);
     state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL;
@@ -274,7 +280,7 @@ export function completeLevel() {
         state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2);
     }
     saveGameProgress(state);
-    state.gameOver = true; // Oznacza koniec tego poziomu (sukces)
+    state.gameOver = true; 
     state.gameScreen = 'levelComplete';
 }
 
@@ -327,8 +333,8 @@ export function handleWaveSpawning() {
             if (enemyToSpawnData.isBoss) {
                 const bossBaseStats = C.baseEnemyStats[enemyToSpawnData.type];
                 const bossImg = images[bossBaseStats.imageKey];
-                // Dodaj flagi isDying i isDeathAnimationStarted dla bossów
                 const newBoss = {
+                    id: Date.now() + Math.random().toString(36).substring(2, 7) + '_boss', // ZMIANA: Dodano unikalne ID
                     type: enemyToSpawnData.type, level: enemyToSpawnData.level,
                     x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2, y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
                     hp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier,
@@ -346,7 +352,7 @@ export function handleWaveSpawning() {
 }
 
 export function endGame(isWin) {
-    if (isWin) return; // Sukces jest obsługiwany przez completeLevel
+    if (isWin) return; 
     state.gameOver = true; state.waveInProgress = false;
     showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 300);
     saveGameProgress(state); state.gameScreen = 'levelLost';
@@ -370,6 +376,6 @@ export function sellTower(towerToSell) {
     const spot = state.currentTowerSpots.find(s => s.x === towerToSell.xGrid && s.y === towerToSell.yGrid);
     if (spot) spot.occupied = false;
     showMessage(state, `Sprzedano wieżę za ${sellValue} Aplauzu.`, 120);
-    state.selectedTowerForUpgrade = null; // Odznacz wieżę po sprzedaży
+    state.selectedTowerForUpgrade = null; 
     saveGameProgress(state);
 }

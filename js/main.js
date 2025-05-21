@@ -367,7 +367,7 @@ function gameLoop() {
         const gameObjectsToRender = [];
         state.towers.forEach(t => gameObjectsToRender.push({ ...t, entityType: 'tower', renderY: t.y + C.TILE_SIZE / 2 }));
         state.enemies.forEach(e => {
-            const enemyFeetY = e.y + (e.height * (e.currentScale || 1)) / 2;
+            const enemyFeetY = e.y + (e.height * (e.currentScale !== undefined ? e.currentScale : 1)) / 2;
             gameObjectsToRender.push({ ...e, entityType: 'enemy', renderY: enemyFeetY });
         });
         
@@ -398,7 +398,7 @@ function gameLoop() {
     if (state.isPaused && state.gameScreen === 'paused') {
         Drawing.drawBackgroundAndPath(ctx); 
         Drawing.drawTowerSpots(ctx);
-        renderGameObjectsSorted(); // Użycie pomocniczej funkcji
+        renderGameObjectsSorted(); 
         Drawing.drawProjectiles(ctx); 
         Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx); 
@@ -410,7 +410,7 @@ function gameLoop() {
     if (state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
         Drawing.drawBackgroundAndPath(ctx);
         Drawing.drawTowerSpots(ctx);
-        renderGameObjectsSorted(); // Użycie pomocniczej funkcji
+        renderGameObjectsSorted(); 
         Drawing.drawProjectiles(ctx); 
         Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx);
@@ -431,25 +431,61 @@ function gameLoop() {
             }
         });
 
+        // Animacja efektów trafienia
+        for (let i = state.effects.length - 1; i >= 0; i--) {
+            const effect = state.effects[i];
+            if (effect.isNew) { 
+                effect.isNew = false; // Uruchom animację tylko raz
+                gsap.to(effect, { 
+                    duration: (effect.durationFrames || 20) / 60, 
+                    scale: effect.maxScale, 
+                    alpha: 0, 
+                    ease: "expo.out", 
+                    onComplete: () => {
+                        const index = state.effects.indexOf(effect);
+                        if (index > -1) state.effects.splice(index, 1);
+                    }
+                });
+            }
+        }
+
+        // ZMIANA: Dodano logowanie przed i wewnątrz onComplete animacji śmierci wroga
         for (let i = state.enemies.length - 1; i >= 0; i--) {
             const enemy = state.enemies[i];
             if (enemy.isDying && !enemy.isDeathAnimationStarted) { 
                 enemy.isDeathAnimationStarted = true;
+                console.log(`[ANIM_DEATH_START] Rozpoczynanie animacji dla wroga ${enemy.id}`);
                 gsap.to(enemy, {
                     duration: 0.5, currentAlpha: 0,
                     currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3,
                     ease: "power2.in",
                     onComplete: () => {
+                        console.log(`[ANIM_DEATH_END] Enemy ID: ${enemy.id} animacja zakończona. Usuwanie.`);
                         const index = state.enemies.indexOf(enemy);
-                        if (index > -1) state.enemies.splice(index, 1);
-                        // Sprawdzenie końca fali/poziomu musi uwzględniać tylko wrogów, którzy nie są już w trakcie animacji śmierci
-                        const activeEnemies = state.enemies.filter(e => !e.isDying || !e.isDeathAnimationStarted);
-                        if (state.waveInProgress && activeEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
+                        if (index > -1) {
+                            state.enemies.splice(index, 1);
+                            console.log(`[ANIM_DEATH_END] Usunięto. Pozostało wrogów w state.enemies: ${state.enemies.length}`);
+                        } else {
+                            console.warn(`[ANIM_DEATH_END] Nie znaleziono Enemy ID: ${enemy.id} do usunięcia po animacji.`);
+                        }
+                        
+                        const activeEnemiesCount = state.enemies.reduce((count, e_loop) => (e_loop.isDying && e_loop.isDeathAnimationStarted) ? count : count + 1, 0);
+                        console.log(`[END_WAVE_CHECK] waveInProgress: ${state.waveInProgress}, activeEnemiesCount (po usunięciu tego): ${activeEnemiesCount}, currentWaveSpawnsLeft: ${state.currentWaveSpawnsLeft}`);
+                        
+                        if (state.waveInProgress && activeEnemiesCount === 0 && state.currentWaveSpawnsLeft === 0) {
+                            console.log("[END_WAVE_CHECK] Warunki końca fali SPEŁNIONE!");
                             state.waveInProgress = false;
                             state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
                             Storage.saveGameProgress(state); 
-                            if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) GameLogic.completeLevel();
-                            else Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
+                            if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
+                                console.log("[END_WAVE_CHECK] Koniec poziomu!");
+                                GameLogic.completeLevel();
+                            } else {
+                                console.log(`[END_WAVE_CHECK] Fala ${state.currentWaveNumber} pokonana!`);
+                                Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
+                            }
+                        } else {
+                            if (state.waveInProgress) console.log("[END_WAVE_CHECK] Warunki końca fali NIE spełnione.");
                         }
                     }
                 });
@@ -465,7 +501,7 @@ function gameLoop() {
         
         Drawing.drawBackgroundAndPath(ctx); 
         Drawing.drawTowerSpots(ctx);    
-        renderGameObjectsSorted(); // Użycie pomocniczej funkcji
+        renderGameObjectsSorted(); 
         
         Drawing.drawProjectiles(ctx); 
         Drawing.drawEffects(ctx);     
