@@ -71,11 +71,11 @@ const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
     console.log("[showCustomConfirm] Function called. Overlay element:", customConfirmOverlay);
     return new Promise((resolve) => {
-        confirmResolve = resolve; 
+        confirmResolve = resolve;
 
         if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
             console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
-            resolve(false); 
+            resolve(false);
             return;
         }
 
@@ -119,7 +119,7 @@ customConfirmCancelButton.addEventListener('click', () => {
 });
 
 customConfirmOverlay.addEventListener('click', (event) => {
-    if (event.target === customConfirmOverlay) { 
+    if (event.target === customConfirmOverlay) {
         console.log("[customConfirmOverlay] Clicked outside modal box.");
         if (confirmResolve) {
             console.log("[customConfirmOverlay] Resolving promise with false (clicked outside).");
@@ -296,7 +296,7 @@ function showScreen(screenName) {
         creditsScreen.classList.add('visible');
     } else if (screenName === 'levelCompleteScreen') {
         console.log("[showScreen] Processing 'levelCompleteScreen'. Element:", levelCompleteScreen);
-        if (levelCompleteScreen) { 
+        if (levelCompleteScreen) {
             levelCompleteScreen.classList.remove('hidden');
             levelCompleteScreen.classList.add('visible');
             renderLevelCompleteSummary();
@@ -316,19 +316,19 @@ function showScreen(screenName) {
         updateTowerUpgradePanel();
         updateSelectedTowerButtonUI();
     } else if (screenName === 'paused') {
-        gameLayout.classList.remove('hidden'); 
+        gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
         pauseMenuScreen.classList.remove('hidden');
         pauseMenuScreen.classList.add('visible');
     } else if (screenName === 'levelLost') {
-        gameLayout.classList.remove('hidden'); 
+        gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
-        returnToMenuButtonGame.classList.remove('hidden'); 
+        returnToMenuButtonGame.classList.remove('hidden');
         pauseButton.classList.add('hidden');
         showUiMessage(state.currentMessage);
         updateUiStats();
     }
-    state.gameScreen = screenName; 
+    state.gameScreen = screenName;
 }
 
 
@@ -407,15 +407,14 @@ function startGameLevel(levelIndex, startFromWave = 0) {
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
-    if (animationFrameId === null) {
-        console.log("[startGameLevel] animationFrameId is null, starting gameLoop.");
-        gameLoop();
-    } else {
-        console.log("[startGameLevel] animationFrameId is NOT null (" + animationFrameId + "), cancelling and restarting gameLoop.");
-        cancelAnimationFrame(animationFrameId); 
-        animationFrameId = null; 
-        gameLoop(); 
+
+    if (animationFrameId) { 
+        cancelAnimationFrame(animationFrameId);
+        console.log("[startGameLevel] Warning: animationFrameId was not null. Cancelled existing frame.");
     }
+    animationFrameId = null; 
+    console.log("[startGameLevel] Starting new gameLoop.");
+    gameLoop(); 
 }
 
 function updateContinueButtonState() {
@@ -668,23 +667,41 @@ uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'play
 uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); }});
 uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); updateUiStats(); }});
 uiButtonStartWave.addEventListener('click', () => {
+    console.log("[uiButtonStartWave] Clicked. Current wave:", state.currentWaveNumber, "WaveInProgress:", state.waveInProgress, "ShowingIntro:", state.showingWaveIntro);
     clearTimeout(autoStartTimerId);
     Utils.showMessage(state, "");
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
+        console.log("[uiButtonStartWave] Conditions met, calling prepareNextWave.");
         GameLogic.prepareNextWave();
         updateUiStats();
+    } else {
+        console.log("[uiButtonStartWave] Conditions NOT met for starting wave.");
     }
 });
 uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); updateTowerUpgradePanel(); updateUiStats(); }});
 uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); updateTowerUpgradePanel(); updateUiStats(); }});
 uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); updateTowerUpgradePanel(); updateUiStats(); }});
-pauseButton.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { GameLogic.togglePauseGame(); showScreen('paused'); }});
+
+pauseButton.addEventListener('click', () => {
+    if (state.gameScreen === 'playing' && !state.isPaused) {
+        GameLogic.togglePauseGame();
+        showScreen('paused');
+        // Pętla gameLoop powinna kontynuować działanie w stanie 'paused', ale rysować tylko statyczny obraz
+        // Nie ma potrzeby zatrzymywać animationFrameId tutaj, bo gameLoop sam obsłuży stan pauzy
+    }
+});
+
 resumeButton.addEventListener('click', () => {
     if (state.isPaused) {
-        GameLogic.togglePauseGame();
+        GameLogic.togglePauseGame(); // isPaused staje się false
         showScreen('playing');
-        if (!animationFrameId) { 
+        // Jeśli pętla była wstrzymana, powinna naturalnie wznowić pełne działanie
+        // Jeśli animationFrameId byłby null (co nie powinno się zdarzyć przy pauzie), to:
+        if (animationFrameId === null) {
+            console.log("[resumeButton] animationFrameId is null, restarting gameLoop.");
             gameLoop();
+        } else {
+            console.log("[resumeButton] animationFrameId is NOT null, gameLoop should resume automatically.");
         }
     }
 });
@@ -693,10 +710,11 @@ function goToMainMenu() {
     clearTimeout(autoStartTimerId);
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
-    if (animationFrameId) { 
+    if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
+        console.log("[goToMainMenu] Cancelled animationFrameId:", animationFrameId);
     }
+    animationFrameId = null;
     showScreen('menu');
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
