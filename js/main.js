@@ -1,7 +1,7 @@
 // js/main.js
 import * as C from './config.js';
 import { gameState as state, images, incrementImagesLoadedCount, imagesLoadedCount, totalImagesToLoad, setTotalImagesToLoad } from './state.js';
-import * as Storage from './storage.js';
+import *লাইনেStorage from './storage.js';
 import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
 import * as GameLogic from './gameLogic.js';
@@ -413,6 +413,7 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
+    // console.log("Game Loop Tick, screen:", state.gameScreen, "paused:", state.isPaused, "intro:", state.showingWaveIntro, "waveTimer:", state.waveIntroTimer); // DEBUG LOG
     if (state.gameScreen === 'menu' || 
         state.gameScreen === 'levelSelection' || 
         state.gameScreen === 'credits') { 
@@ -421,11 +422,8 @@ function gameLoop() {
     }
 
     if (state.gameScreen === 'levelCompleteScreen') {
-        // Ekran podsumowania jest już wyświetlony przez showScreen, pętla gry nie jest tu potrzebna.
-        // Ewentualne animacje na tym ekranie byłyby zarządzane przez GSAP bezpośrednio
-        // przy jego pokazywaniu w renderLevelCompleteSummary lub osobnej funkcji.
         animationFrameId = null; 
-        updateUiStats(); // Upewnij się, że statystyki w tle (jeśli widoczne) są OK.
+        updateUiStats(); 
         return;
     }
     
@@ -528,18 +526,27 @@ function gameLoop() {
             }
         }
 
+        // ZMIANA: Logika zarządzania intro fali i startem fali
+        if (state.showingWaveIntro) {
+            if (!state.isPaused) { // Upewnijmy się, że pauza blokuje timer
+                state.waveIntroTimer--;
+            }
+            if (state.waveIntroTimer <= 0) { // Gdy timer dojdzie do zera
+                GameLogic.startNextWaveActual(); // Rozpocznij faktyczną falę
+                // `showingWaveIntro` stanie się `false` wewnątrz `startNextWaveActual`
+            }
+        } else { // Jeśli nie ma intra (showingWaveIntro jest false)
+            if (state.waveInProgress) { // I jeśli fala jest w toku
+                GameLogic.handleWaveSpawning(); // Kontynuuj spawnowanie wrogów
+            }
+            // Sprawdzanie ukończenia fali jest teraz głównie w `checkWaveCompletion`
+            // wywoływanym przez `onComplete` animacji śmierci wroga GSAP
+            // lub gdy wróg dotrze do bazy (co też prowadzi do animacji śmierci i `checkWaveCompletion`)
+        }
+
         GameLogic.updateEnemies(); 
         GameLogic.updateTowers(); 
         GameLogic.updateProjectiles();
-
-        if (!state.showingWaveIntro) {
-             GameLogic.handleWaveSpawning();
-             if (state.currentWaveSpawnsLeft === 0 && state.enemies.filter(e => !e.isDying).length === 0 && state.waveInProgress) {
-                 checkWaveCompletion();
-             }
-        } else if (state.waveIntroTimer <= 0 && !state.isPaused) {
-            GameLogic.startNextWaveActual();
-        }
         
         Drawing.drawBackgroundAndPath(ctx); 
         Drawing.drawTowerSpots(ctx);    
@@ -547,7 +554,7 @@ function gameLoop() {
         Drawing.drawProjectiles(ctx); 
         Drawing.drawEffects(ctx);     
         Drawing.drawUI(ctx);          
-        Drawing.drawWaveIntro(ctx);   
+        Drawing.drawWaveIntro(ctx); // Rysuje intro, jeśli `showingWaveIntro` jest true i timer >= 0
 
         updateUiStats(); 
         updateTowerUpgradePanel();
@@ -562,7 +569,6 @@ function gameLoop() {
         }
     }
     
-    // Sprawdzanie po logice, czy stan gry się zmienił i wymaga reakcji (przejścia do ekranu)
     if (state.gameScreen === 'levelCompleteScreen' && animationFrameId !== null) {
         animationFrameId = null; 
         showScreen('levelCompleteScreen'); 
@@ -574,11 +580,8 @@ function gameLoop() {
         return;
     }
 
-    // Kontynuuj pętlę, jeśli żaden z powyższych warunków zatrzymania nie został spełniony
-    // i gra nie jest w stanie, który sam zatrzymuje pętlę na początku.
-    if (animationFrameId !== null) { // Dodatkowy warunek, aby upewnić się, że nie restartujemy już zatrzymanej pętli
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }
+    // ZMIANA: Usunięto zbędny warunek if (animationFrameId !== null)
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function checkWaveCompletion() {
@@ -592,8 +595,7 @@ function checkWaveCompletion() {
         Storage.saveGameProgress(state); 
         
         if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-            GameLogic.completeLevel(); // To ustawi state.gameScreen na 'levelCompleteScreen'
-            // showScreen() zostanie wywołane w gameLoop po wykryciu zmiany stanu
+            GameLogic.completeLevel(); 
         } else {
             Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna za chwilę...`, 180);
             if (state.autoStartNextWaveEnabled) prepareAutoStartNextWave(5); 
@@ -705,7 +707,7 @@ document.addEventListener('keydown', (event) => {
         updateUiStats(); 
     }
 
-    if (state.isDevModeActive && (state.gameScreen === 'playing' || state.gameScreen === 'paused') && !customConfirmOverlay.classList.contains('visible') ) { // Dodano sprawdzenie, czy dialog nie jest aktywny
+    if (state.isDevModeActive && (state.gameScreen === 'playing' || state.gameScreen === 'paused') && !customConfirmOverlay.classList.contains('visible') ) { 
         if (event.shiftKey && event.key === 'M') { 
             event.preventDefault();
             state.aplauz += 1000;
@@ -717,10 +719,9 @@ document.addEventListener('keydown', (event) => {
                 Utils.showMessage(state, "Kończenie obecnej fali... (DEV)", 90);
                 state.enemies.forEach(enemy => enemy.hp = 0); 
                 state.currentWaveSpawnsLeft = 0; 
-                 // Pozwól logice w checkWaveCompletion/onComplete animacji zakończyć falę.
-            } else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && state.gameScreen === 'playing' && !state.gameOver) { // Upewnij się, że gra się toczy
+            } else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && state.gameScreen === 'playing' && !state.gameOver) { 
                 Utils.showMessage(state, "Przeskakiwanie do następnej fali... (DEV)", 90);
-                clearTimeout(autoStartTimerId); // Anuluj automatyczny start, jeśli był
+                clearTimeout(autoStartTimerId); 
                 GameLogic.prepareNextWave(); 
             } else {
                 Utils.showMessage(state, "Nie można rozpocząć/przeskoczyć fali. (DEV)", 90);
@@ -734,8 +735,8 @@ document.addEventListener('keydown', (event) => {
             });
             Storage.saveGameProgress(state);
             Utils.showMessage(state, "Wszystkie akty odblokowane i ukończone! (DEV)", 120);
-            if (state.gameScreen === 'playing' && !state.gameOver) GameLogic.completeLevel(); // To ustawi gameScreen na 'levelCompleteScreen'
-            else if (state.gameScreen !== 'menu') showScreen('menu'); // Jeśli nie w grze, wróć do menu po odblokowaniu
+            if (state.gameScreen === 'playing' && !state.gameOver) GameLogic.completeLevel(); 
+            else if (state.gameScreen !== 'menu') showScreen('menu'); 
             updateUiStats();
         } else if (event.shiftKey && event.key === 'H') { 
              event.preventDefault();
