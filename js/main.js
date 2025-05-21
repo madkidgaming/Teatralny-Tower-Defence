@@ -39,6 +39,13 @@ const customConfirmMessage = document.getElementById('customConfirmMessage');
 const customConfirmOkButton = document.getElementById('customConfirmOkButton');
 const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
 
+// Early check for confirm dialog elements
+if (!customConfirmOverlay || !customConfirmTitle || !customConfirmMessage || !customConfirmOkButton || !customConfirmCancelButton) {
+    console.error("CRITICAL: One or more custom confirm dialog DOM elements are missing! Check IDs in index.html and main.js.");
+}
+console.log("Initial check: customConfirmOverlay element:", customConfirmOverlay);
+
+
 let confirmResolve = null;
 
 const uiCurrentAct = document.getElementById('uiCurrentAct');
@@ -63,48 +70,70 @@ const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 
 
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
+    console.log("[showCustomConfirm] Function called. Overlay element:", customConfirmOverlay);
     return new Promise((resolve) => {
-        confirmResolve = resolve;
+        confirmResolve = resolve; // Store the resolve function
+
+        if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
+            console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
+            resolve(false); // Cannot show dialog, resolve as if cancelled
+            return;
+        }
+
         customConfirmTitle.textContent = title;
         customConfirmMessage.textContent = message;
+
         customConfirmOverlay.classList.remove('hidden');
         customConfirmOverlay.classList.add('visible');
+        console.log("[showCustomConfirm] Overlay classes set. Should be visible now.");
     });
 }
 
 function hideCustomConfirm() {
-    customConfirmOverlay.classList.remove('visible');
-    setTimeout(() => {
-        customConfirmOverlay.classList.add('hidden');
-    }, 300);
+    console.log("[hideCustomConfirm] Function called.");
+    if (customConfirmOverlay) {
+        customConfirmOverlay.classList.remove('visible');
+        setTimeout(() => {
+            customConfirmOverlay.classList.add('hidden');
+            console.log("[hideCustomConfirm] Overlay classes set to hidden after timeout.");
+        }, 300);
+    }
     confirmResolve = null;
 }
 
 customConfirmOkButton.addEventListener('click', () => {
+    console.log("[customConfirmOkButton] OK Clicked.");
     if (confirmResolve) {
+        console.log("[customConfirmOkButton] Resolving promise with true.");
         confirmResolve(true);
     }
     hideCustomConfirm();
 });
 
 customConfirmCancelButton.addEventListener('click', () => {
+    console.log("[customConfirmCancelButton] Cancel Clicked.");
     if (confirmResolve) {
+        console.log("[customConfirmCancelButton] Resolving promise with false.");
         confirmResolve(false);
     }
     hideCustomConfirm();
 });
 
 customConfirmOverlay.addEventListener('click', (event) => {
-    if (event.target === customConfirmOverlay) {
+    if (event.target === customConfirmOverlay) { // Click on overlay itself
+        console.log("[customConfirmOverlay] Clicked outside modal box.");
         if (confirmResolve) {
+            console.log("[customConfirmOverlay] Resolving promise with false (clicked outside).");
             confirmResolve(false);
         }
         hideCustomConfirm();
     }
 });
 document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && customConfirmOverlay.classList.contains('visible')) {
+    if (event.key === 'Escape' && customConfirmOverlay && customConfirmOverlay.classList.contains('visible')) {
+        console.log("[customConfirmOverlay] Escape key pressed.");
         if (confirmResolve) {
+            console.log("[customConfirmOverlay] Resolving promise with false (Escape key).");
             confirmResolve(false);
         }
         hideCustomConfirm();
@@ -358,15 +387,26 @@ function renderLevelSelection() {
 }
 
 function startGameLevel(levelIndex, startFromWave = 0) {
+    console.log(`[startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
     if (animationFrameId === null) {
-        console.log("[startGameLevel] animationFrameId is null, starting gameLoop."); // LOG
+        console.log("[startGameLevel] animationFrameId is null, starting gameLoop.");
         gameLoop();
     } else {
-        console.log("[startGameLevel] animationFrameId is NOT null, gameLoop should be running."); // LOG
+        console.log("[startGameLevel] animationFrameId is NOT null (" + animationFrameId + "), gameLoop should be running or restart if needed.");
+        // If gameLoop was stopped by menu, it needs restart.
+        // Requesting a new frame if one is already pending is harmless.
+        // However, if it was truly stopped, it needs a direct call.
+        // The logic in gameLoop itself should handle setting animationFrameId to null when it stops for menus.
+        // So if it's not null here, it might mean it's paused or in another non-menu state.
+        // For safety, if we are SURE we want to start it (e.g. coming from menu), this is okay.
+        cancelAnimationFrame(animationFrameId); // Cancel existing one just in case
+        animationFrameId = null; // Explicitly set to null
+        console.log("[startGameLevel] Cancelled old animationFrameId, starting new gameLoop.");
+        gameLoop(); // And start it fresh
     }
 }
 
@@ -416,18 +456,14 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
-    // console.log(`Game Loop Start. Screen: ${state.gameScreen}, Paused: ${state.isPaused}, AnimID: ${animationFrameId}`); // LOG
-
     if (state.gameScreen === 'menu' ||
         state.gameScreen === 'levelSelection' ||
         state.gameScreen === 'credits') {
-        // console.log(`[gameLoop] Exiting for screen: ${state.gameScreen}. Setting animationFrameId to null.`); // LOG
         animationFrameId = null;
         return;
     }
 
     if (state.gameScreen === 'levelCompleteScreen') {
-        // console.log(`[gameLoop] Exiting for screen: levelCompleteScreen. Setting animationFrameId to null.`); // LOG
         animationFrameId = null;
         updateUiStats();
         return;
@@ -488,7 +524,6 @@ function gameLoop() {
     }
 
     if (state.gameScreen === 'playing' && !state.isPaused) {
-        // console.log(`[gameLoop] Executing 'playing' state logic. WaveIntro: ${state.showingWaveIntro}, Timer: ${state.waveIntroTimer}`); // LOG
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         state.towers.forEach(tower => {
@@ -534,12 +569,10 @@ function gameLoop() {
         }
 
         if (state.showingWaveIntro) {
-             // console.log(`[gameLoop] Wave Intro Active. Timer: ${state.waveIntroTimer}, Paused: ${state.isPaused}`); // LOG
             if (!state.isPaused) {
                 state.waveIntroTimer--;
             }
             if (state.waveIntroTimer <= 0) {
-                 console.log(`[gameLoop] Wave Intro Timer reached zero. Calling startNextWaveActual.`); // LOG
                 GameLogic.startNextWaveActual();
             }
         } else {
@@ -574,13 +607,11 @@ function gameLoop() {
     }
 
     if (state.gameScreen === 'levelCompleteScreen' && animationFrameId !== null) {
-        // console.log("[gameLoop] Transitioning to levelCompleteScreen post-logic."); // LOG
         animationFrameId = null;
         showScreen('levelCompleteScreen');
         return;
     }
     if (state.gameScreen === 'levelLost' && animationFrameId !== null) {
-        // console.log("[gameLoop] Transitioning to levelLost post-logic."); // LOG
         animationFrameId = null;
         showScreen('levelLost');
         return;
@@ -632,27 +663,37 @@ uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'play
 uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); }});
 uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); updateUiStats(); }});
 uiButtonStartWave.addEventListener('click', () => {
-    console.log("[uiButtonStartWave] Clicked. Current wave:", state.currentWaveNumber, "WaveInProgress:", state.waveInProgress, "ShowingIntro:", state.showingWaveIntro); // LOG
     clearTimeout(autoStartTimerId);
     Utils.showMessage(state, "");
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
-        console.log("[uiButtonStartWave] Conditions met, calling prepareNextWave."); // LOG
         GameLogic.prepareNextWave();
         updateUiStats();
-    } else {
-        console.log("[uiButtonStartWave] Conditions NOT met for starting wave."); // LOG
     }
 });
 uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); updateTowerUpgradePanel(); updateUiStats(); }});
 uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); updateTowerUpgradePanel(); updateUiStats(); }});
 uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); updateTowerUpgradePanel(); updateUiStats(); }});
 pauseButton.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { GameLogic.togglePauseGame(); showScreen('paused'); }});
-resumeButton.addEventListener('click', () => { if (state.isPaused) { GameLogic.togglePauseGame(); showScreen('playing'); if (!animationFrameId) { console.log("[resumeButton] animationFrameId is null, restarting gameLoop."); gameLoop(); } }});
+resumeButton.addEventListener('click', () => {
+    if (state.isPaused) {
+        GameLogic.togglePauseGame();
+        showScreen('playing');
+        if (!animationFrameId) {
+            console.log("[resumeButton] animationFrameId is null, restarting gameLoop.");
+            gameLoop();
+        }
+    }
+});
 
 function goToMainMenu() {
     clearTimeout(autoStartTimerId);
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+        console.log("[goToMainMenu] Cancelled animationFrameId.");
+    }
     showScreen('menu');
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
@@ -668,17 +709,35 @@ nextLevelButton.addEventListener('click', () => {
 });
 
 continueGameButton.addEventListener('click', () => { if (!continueGameButton.disabled) showScreen('levelSelection'); });
+
 newGameButtonFromMenu.addEventListener('click', async () => {
-    const confirmed = await showCustomConfirm("Rozpocząć Nową Grę?", "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.");
-    if (confirmed) {
-        clearTimeout(autoStartTimerId); state.autoStartNextWaveEnabled = true;
-        state.currentAplauzBonusForNextLevel = 0;
-        state.unlockedLevels = 1; state.levelProgress = {}; Storage.saveGameProgress(state);
-        if (saveStatusMainMenu) saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
-        updateContinueButtonState();
-        startGameLevel(0, 0);
+    console.log("[NewGameButton] Clicked.");
+    try {
+        console.log("[NewGameButton] Calling showCustomConfirm...");
+        const confirmed = await showCustomConfirm("Rozpocząć Nową Grę?", "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.");
+        console.log("[NewGameButton] showCustomConfirm promise resolved. Confirmed value:", confirmed);
+
+        if (confirmed) {
+            console.log("[NewGameButton] Confirmed: true. Resetting game state and starting new game.");
+            clearTimeout(autoStartTimerId);
+            state.autoStartNextWaveEnabled = true;
+            state.currentAplauzBonusForNextLevel = 0;
+            state.unlockedLevels = 1;
+            state.levelProgress = {};
+            Storage.saveGameProgress(state);
+            if (saveStatusMainMenu) saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
+            updateContinueButtonState();
+            console.log("[NewGameButton] Calling startGameLevel(0, 0)...");
+            startGameLevel(0, 0);
+            console.log("[NewGameButton] startGameLevel(0, 0) finished.");
+        } else {
+            console.log("[NewGameButton] Confirmed: false, or dialog dismissed. No action taken.");
+        }
+    } catch (error) {
+        console.error("[NewGameButton] Error during new game process:", error);
     }
 });
+
 levelSelectButton.addEventListener('click', () => showScreen('levelSelection'));
 creditsButton.addEventListener('click', () => showScreen('credits'));
 backToMainMenuFromLevelSelection.addEventListener('click', () => showScreen('menu'));
@@ -723,7 +782,7 @@ document.addEventListener('keydown', (event) => {
         updateUiStats();
     }
 
-    if (state.isDevModeActive && (state.gameScreen === 'playing' || state.gameScreen === 'paused') && !customConfirmOverlay.classList.contains('visible') ) {
+    if (state.isDevModeActive && (state.gameScreen === 'playing' || state.gameScreen === 'paused') && customConfirmOverlay && !customConfirmOverlay.classList.contains('visible') ) {
         if (event.shiftKey && event.key === 'M') {
             event.preventDefault();
             state.aplauz += 1000;
