@@ -404,3 +404,87 @@ canvas {
     background: linear-gradient(to bottom, #8c8c8c, #606060);
     border-color: #707070;
 }
+
+/* ZMIANA: Style dla ekranu podsumowania aktu */
+#levelCompleteScreen h2 {
+    font-size: 2.4em; /* Trochę mniejszy niż główne menu */
+    margin-bottom: 25px;
+}
+
+.star-rating {
+    margin-bottom: 25px;
+    font-size: 2.5em; /* Rozmiar gwiazdek (będą to znaki tekstowe lub obrazki) */
+    color: #ffd700; /* Kolor gwiazdek */
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.star-rating .star {
+    /* Styl dla pojedynczej gwiazdki, jeśli używamy np. <span> */
+    opacity: 0.3; /* Gwiazdki domyślnie "puste" */
+}
+
+.star-rating .star.filled {
+    opacity: 1; /* Gwiazdki "pełne" */
+}
+
+.summary-section {
+    background-color: rgba(0,0,0,0.2);
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    width: 90%;
+    max-width: 450px;
+    box-sizing: border-box;
+}
+
+.summary-section h3 {
+    font-family: 'Cinzel Decorative', cursive;
+    color: #f0e0c0; /* Jaśniejszy kolor dla podtytułów sekcji */
+    font-size: 1.4em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    padding-bottom: 8px;
+    text-align: left;
+}
+
+.summary-section p {
+    font-size: 1em;
+    line-height: 1.7;
+    margin-bottom: 8px;
+    text-align: left;
+    color: #d0bfa6;
+}
+
+.summary-section p strong {
+    color: #ffd700;
+    float: right; /* Wyrównanie wartości do prawej */
+}
+
+.summary-section .total-bonus {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 215, 0, 0.2);
+}
+.summary-section .total-bonus strong {
+    color: #4CAF50; /* Zielony dla łącznego bonusu */
+}
+
+#levelCompleteScreen .ui-button {
+    margin-top: 10px; /* Mniejszy margines dla przycisków na tym ekranie */
+    min-width: 220px;
+}
+
+/* Dodatkowy styl, jeśli nie masz obrazków gwiazd i chcesz użyć znaków unicode */
+/* Możesz też użyć font-awesome lub SVG */
+.star-rating .star::before {
+    content: '☆'; /* Pusta gwiazdka */
+}
+.star-rating .star.filled::before {
+    content: '★'; /* Pełna gwiazdka */
+}

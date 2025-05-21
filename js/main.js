@@ -15,6 +15,7 @@ const gameLayout = document.getElementById('gameLayout');
 const mainMenuScreen = document.getElementById('mainMenu');
 const levelSelectionScreen = document.getElementById('levelSelectionScreen');
 const creditsScreen = document.getElementById('creditsScreen');
+const levelCompleteScreen = document.getElementById('levelCompleteScreen'); 
 const levelSelectionContainer = document.getElementById('levelSelectionContainer');
 
 const continueGameButton = document.getElementById('continueGameButton');
@@ -23,6 +24,9 @@ const levelSelectButton = document.getElementById('levelSelectButton');
 const creditsButton = document.getElementById('creditsButton');
 const backToMainMenuFromLevelSelection = document.getElementById('backToMainMenuFromLevelSelection');
 const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCredits');
+const nextLevelButton = document.getElementById('nextLevelButton'); 
+const backToMenuFromSummary = document.getElementById('backToMenuFromSummary'); 
+
 
 const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
 const saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
@@ -109,13 +113,20 @@ document.addEventListener('keydown', (event) => {
 
 
 function updateUiStats() {
-    if (!C.levelData[state.currentLevelIndex] && state.gameScreen !== 'menu' && state.gameScreen !== 'levelSelection' && state.gameScreen !== 'credits') {
+    if (!C.levelData[state.currentLevelIndex] && 
+        state.gameScreen !== 'menu' && 
+        state.gameScreen !== 'levelSelection' && 
+        state.gameScreen !== 'credits' && 
+        state.gameScreen !== 'levelCompleteScreen') {
         return;
     }
-     if (state.gameScreen === 'playing' || state.gameScreen === 'paused' || state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
+
+     if (state.gameScreen === 'playing' || state.gameScreen === 'paused' || state.gameScreen === 'levelLost') {
         uiCurrentAct.textContent = state.currentLevelIndex + 1;
         let waveDisplay;
-        if (state.currentWaveNumber > 0) {
+        if (state.currentWaveNumber > C.WAVES_PER_LEVEL) { // Obsługa sytuacji, gdyby currentWaveNumber przekroczyło max
+            waveDisplay = C.WAVES_PER_LEVEL;
+        } else if (state.currentWaveNumber > 0) {
             waveDisplay = state.currentWaveNumber;
         } else {
             const progress = state.levelProgress[state.currentLevelIndex];
@@ -129,6 +140,7 @@ function updateUiStats() {
         uiAplauz.textContent = state.aplauz;
         uiAudienceSatisfaction.textContent = `${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`;
     }
+
 
     if (C.towerDefinitions.bileter) {
         uiButtonBileter.querySelector('.cost').textContent = C.towerDefinitions.bileter.cost;
@@ -145,7 +157,8 @@ function updateUiStats() {
         uiButtonUpgradeSatisfaction.classList.add('disabled');
     }
 
-    const isStartWaveDisabled = state.gameOver || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL;
+    // Przycisk Start Fali powinien być nieaktywny także na ekranie podsumowania
+    const isStartWaveDisabled = state.gameOver || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL || state.gameScreen === 'levelCompleteScreen';
     if (isStartWaveDisabled) uiButtonStartWave.classList.add('disabled');
     else uiButtonStartWave.classList.remove('disabled');
 }
@@ -212,12 +225,14 @@ function showScreen(screenName) {
     levelSelectionScreen.classList.remove('visible');
     creditsScreen.classList.add('hidden');
     creditsScreen.classList.remove('visible');
+    levelCompleteScreen.classList.add('hidden'); 
+    levelCompleteScreen.classList.remove('visible');
     gameLayout.classList.add('hidden');
     gameLayout.classList.remove('visible');
     pauseMenuScreen.classList.add('hidden');
     pauseMenuScreen.classList.remove('visible');
 
-    if (['menu', 'levelSelection', 'credits'].includes(screenName)) {
+    if (['menu', 'levelSelection', 'credits', 'levelCompleteScreen'].includes(screenName)) { 
         pageTitle.textContent = "Teatr Tower Defense";
         const currentSaveStatusEl = screenName === 'menu' ? saveStatusMainMenu :
                                  screenName === 'levelSelection' ? saveStatusLevelSelection :
@@ -243,6 +258,10 @@ function showScreen(screenName) {
     } else if (screenName === 'credits') {
         creditsScreen.classList.remove('hidden');
         creditsScreen.classList.add('visible');
+    } else if (screenName === 'levelCompleteScreen') { 
+        levelCompleteScreen.classList.remove('hidden');
+        levelCompleteScreen.classList.add('visible');
+        renderLevelCompleteSummary(); 
     } else if (screenName === 'playing') {
         gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
@@ -259,15 +278,47 @@ function showScreen(screenName) {
         gameLayout.classList.add('visible');
         pauseMenuScreen.classList.remove('hidden');
         pauseMenuScreen.classList.add('visible');
-    } else if (screenName === 'levelComplete' || screenName === 'levelLost') {
-        gameLayout.classList.remove('hidden');
+    } else if (screenName === 'levelLost') { 
+        gameLayout.classList.remove('hidden'); 
         gameLayout.classList.add('visible');
         returnToMenuButtonGame.classList.remove('hidden');
         pauseButton.classList.add('hidden');
+        showUiMessage(state.currentMessage); 
         updateUiStats();
     }
     state.gameScreen = screenName;
 }
+
+function renderLevelCompleteSummary() {
+    const stats = state.lastLevelStats;
+    document.getElementById('levelCompleteTitle').textContent = `${stats.levelName || 'Akt ' + (state.currentLevelIndex +1)} Ukończony!`;
+    
+    const starContainer = document.getElementById('starRatingContainer');
+    starContainer.innerHTML = ''; 
+    for (let i = 0; i < 3; i++) {
+        const starSpan = document.createElement('span');
+        starSpan.classList.add('star');
+        if (i < stats.stars) {
+            starSpan.classList.add('filled');
+        }
+        starContainer.appendChild(starSpan);
+    }
+
+    document.getElementById('summaryLevelName').textContent = stats.levelName || `Akt ${state.currentLevelIndex + 1}`;
+    document.getElementById('summarySatisfaction').textContent = `${stats.finalSatisfaction} / ${stats.initialMaxSatisfaction}`;
+    document.getElementById('summaryBileterTowers').textContent = stats.towersBuilt.bileter;
+    document.getElementById('summaryOswietleniowiecTowers').textContent = stats.towersBuilt.oswietleniowiec;
+    document.getElementById('summaryRemainingAplauz').textContent = stats.remainingAplauz;
+    document.getElementById('summaryTowerValue').textContent = stats.totalTowerValue;
+    document.getElementById('summaryAplauzBonus').textContent = stats.aplauzBonusForNextLevel;
+
+    if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) { 
+        nextLevelButton.classList.remove('hidden');
+    } else {
+        nextLevelButton.classList.add('hidden'); 
+    }
+}
+
 
 function renderLevelSelection() {
     levelSelectionContainer.innerHTML = ''; 
@@ -308,8 +359,8 @@ function renderLevelSelection() {
 }
 
 function startGameLevel(levelIndex, startFromWave = 0) {
-    clearTimeout(autoStartTimerId); // Anuluj automatyczny start, jeśli gracz manualnie zaczyna poziom
-    state.autoStartNextWaveEnabled = true; // Można to też uzależnić od ustawień gracza
+    clearTimeout(autoStartTimerId); 
+    state.autoStartNextWaveEnabled = true; 
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
     if (animationFrameId === null) {
@@ -359,14 +410,14 @@ function initGame() {
 }
 
 let animationFrameId = null;
-// ZMIANA: Przeniesiono zmienne autoStart timera globalnie w module
 let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
-
+// PRZYWRÓCONA PEŁNA FUNKCJA gameLoop
 function gameLoop() {
-    if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits') {
-        animationFrameId = null; return;
+    if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits' || state.gameScreen === 'levelCompleteScreen') { 
+        animationFrameId = null; 
+        return;
     }
     
     const renderGameObjectsSorted = () => {
@@ -376,7 +427,6 @@ function gameLoop() {
             const enemyFeetY = e.y + (e.height * (e.currentScale !== undefined ? e.currentScale : 1)) / 2;
             gameObjectsToRender.push({ ...e, entityType: 'enemy', renderY: enemyFeetY });
         });
-        
         const baseNode = state.currentPath[state.currentPath.length -1];
         if (baseNode) {
             const baseImg = images.teatrBase;
@@ -386,14 +436,11 @@ function gameLoop() {
                  baseRenderHeight = (baseImg.height / baseImg.width) * baseRenderWidth;
             }
             gameObjectsToRender.push({
-                entityType: 'base',
-                draw: () => Drawing.drawTheaterBase(ctx),
+                entityType: 'base', draw: () => Drawing.drawTheaterBase(ctx),
                 renderY: (baseNode.y + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8 + baseRenderHeight 
             });
         }
-
         gameObjectsToRender.sort((a, b) => a.renderY - b.renderY);
-
         gameObjectsToRender.forEach(obj => {
             if (obj.entityType === 'tower') Drawing.drawSingleTower(ctx, obj);
             else if (obj.entityType === 'enemy') Drawing.drawSingleEnemy(ctx, obj);
@@ -410,18 +457,21 @@ function gameLoop() {
         Drawing.drawUI(ctx); 
         Drawing.drawWaveIntro(ctx); 
         showUiMessage(state.currentMessage || "Pauza");
-        animationFrameId = requestAnimationFrame(gameLoop); return;
+        animationFrameId = requestAnimationFrame(gameLoop); 
+        return;
     }
 
-    if (state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
-        Drawing.drawBackgroundAndPath(ctx);
+    if (state.gameScreen === 'levelLost') { 
+        Drawing.drawBackgroundAndPath(ctx); 
         Drawing.drawTowerSpots(ctx);
         renderGameObjectsSorted(); 
         Drawing.drawProjectiles(ctx); 
         Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx);
-        showUiMessage(state.currentMessage); updateUiStats();
-        animationFrameId = requestAnimationFrame(gameLoop); return;
+        showUiMessage(state.currentMessage); 
+        updateUiStats();
+        animationFrameId = requestAnimationFrame(gameLoop); 
+        return;
     }
     
     if (state.gameScreen === 'playing' && !state.isPaused) {
@@ -430,10 +480,7 @@ function gameLoop() {
         state.towers.forEach(tower => {
             if (tower.isAnimatingIn) {
                 tower.isAnimatingIn = false; 
-                gsap.to(tower, {
-                    duration: 0.6, currentScale: 1, currentAlpha: 1, currentRotation: 0,
-                    ease: "back.out(1.7)",
-                });
+                gsap.to(tower, { duration: 0.6, currentScale: 1, currentAlpha: 1, currentRotation: 0, ease: "back.out(1.7)" });
             }
         });
 
@@ -458,20 +505,20 @@ function gameLoop() {
             const enemy = state.enemies[i];
             if (enemy.isDying && !enemy.isDeathAnimationStarted) { 
                 enemy.isDeathAnimationStarted = true;
-                console.log(`[ANIM_DEATH_START] Rozpoczynanie animacji dla wroga ${enemy.id}`);
-                gsap.to(enemy, {
-                    duration: 0.5, currentAlpha: 0,
-                    currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3,
+                // console.log(`[ANIM_DEATH_START] Rozpoczynanie animacji dla wroga ${enemy.id}`);
+                gsap.to(enemy, { 
+                    duration: 0.5, 
+                    currentAlpha: 0, 
+                    currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3, 
                     ease: "power2.in",
                     onComplete: () => {
-                        console.log(`[ANIM_DEATH_END] Enemy ID: ${enemy.id} animacja zakończona. Usuwanie.`);
+                        // console.log(`[ANIM_DEATH_END] Enemy ID: ${enemy.id} animacja zakończona. Usuwanie.`);
                         const index = state.enemies.indexOf(enemy);
                         if (index > -1) {
                             state.enemies.splice(index, 1);
-                            console.log(`[ANIM_DEATH_END] Usunięto. Pozostało wrogów w state.enemies: ${state.enemies.length}`);
-                        } else {
-                            console.warn(`[ANIM_DEATH_END] Nie znaleziono Enemy ID: ${enemy.id} do usunięcia po animacji.`);
-                        }
+                            // console.log(`[ANIM_DEATH_END] Usunięto. Pozostało wrogów w state.enemies: ${state.enemies.length}`);
+                        } 
+                        // else { console.warn(`[ANIM_DEATH_END] Nie znaleziono Enemy ID: ${enemy.id} do usunięcia.`); }
                         checkWaveCompletion(); 
                     }
                 });
@@ -505,17 +552,17 @@ function gameLoop() {
             showUiMessage(state.currentMessage);
             if (!state.isPaused && state.currentMessage !== "Pauza") state.messageTimer--;
         } else if (state.messageTimer <= 0 && uiMessages.textContent !== "") {
-            if (!(state.currentMessage === "Pauza" && state.isPaused)) {
-                showUiMessage(""); state.currentMessage = "";
+            if (!(state.currentMessage === "Pauza" && state.isPaused)) { 
+                showUiMessage(""); 
+                state.currentMessage = ""; 
             }
         }
     }
-
-    if (state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
-        showScreen(state.gameScreen);
-    }
     
-    if (state.gameScreen !== 'menu' && state.gameScreen !== 'levelSelection' && state.gameScreen !== 'credits') {
+    if (state.gameScreen !== 'menu' && 
+        state.gameScreen !== 'levelSelection' && 
+        state.gameScreen !== 'credits' && 
+        state.gameScreen !== 'levelCompleteScreen') {
         animationFrameId = requestAnimationFrame(gameLoop);
     } else {
         animationFrameId = null;
@@ -523,217 +570,122 @@ function gameLoop() {
 }
 
 function checkWaveCompletion() {
-    if (!state.waveInProgress) {
-        return;
-    }
+    if (!state.waveInProgress) return;
+    
     const activeOrAnimatingEnemies = state.enemies.filter(e => !e.isDeathAnimationStarted || e.currentAlpha > 0);
-    console.log(`[CHECK_WAVE_COMPLETION] activeOrAnimatingEnemies: ${activeOrAnimatingEnemies.length}, spawnsLeft: ${state.currentWaveSpawnsLeft}`);
+    // console.log(`[CHECK_WAVE_COMPLETION] activeOrAnimatingEnemies: ${activeOrAnimatingEnemies.length}, spawnsLeft: ${state.currentWaveSpawnsLeft}`);
 
     if (activeOrAnimatingEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
-        console.log("[CHECK_WAVE_COMPLETION] Warunki końca fali SPEŁNIONE!");
+        // console.log("[CHECK_WAVE_COMPLETION] Warunki końca fali SPEŁNIONE!");
         state.waveInProgress = false; 
         state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
         Storage.saveGameProgress(state); 
         
         if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-            console.log("[CHECK_WAVE_COMPLETION] Koniec poziomu!");
+            // console.log("[CHECK_WAVE_COMPLETION] Koniec poziomu!");
             GameLogic.completeLevel(); 
         } else {
-            console.log(`[CHECK_WAVE_COMPLETION] Fala ${state.currentWaveNumber} pokonana!`);
+            // console.log(`[CHECK_WAVE_COMPLETION] Fala ${state.currentWaveNumber} pokonana!`);
             Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna za chwilę...`, 180);
-            if (state.autoStartNextWaveEnabled) { 
-                prepareAutoStartNextWave(5); 
-            }
+            if (state.autoStartNextWaveEnabled) prepareAutoStartNextWave(5); 
         }
         updateUiStats(); 
-    } else {
-        if (state.waveInProgress) console.log("[CHECK_WAVE_COMPLETION] Warunki końca fali NIE spełnione.");
-    }
+    } 
+    // else { if (state.waveInProgress) console.log("[CHECK_WAVE_COMPLETION] Warunki końca fali NIE spełnione."); }
 }
 
 function prepareAutoStartNextWave(seconds) {
     if (state.gameOver || state.gameScreen !== 'playing' || state.isPaused || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-        clearTimeout(autoStartTimerId); // Anuluj, jeśli warunki nie są spełnione
-        return; 
+        clearTimeout(autoStartTimerId); return; 
     }
     clearTimeout(autoStartTimerId); 
     autoStartCountdown = seconds;
-    console.log(`Automatyczne rozpoczęcie następnej fali za ${autoStartCountdown}s...`);
-    Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65 * seconds + 100); // +100ms marginesu
-    
+    // console.log(`Automatyczne rozpoczęcie następnej fali za ${autoStartCountdown}s...`);
+    Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65 * seconds + 100); 
     function countdownTick() {
         if (state.isPaused || state.gameScreen !== 'playing' || state.waveInProgress || state.showingWaveIntro || state.gameOver) { 
-            console.log("Automatyczny start przerwany (pauza/zmiana ekranu/fala w toku/koniec gry).");
-            Utils.showMessage(state, ""); 
-            clearTimeout(autoStartTimerId);
-            return;
+            // console.log("Automatyczny start przerwany.");
+            Utils.showMessage(state, ""); clearTimeout(autoStartTimerId); return;
         }
         autoStartCountdown--;
-        Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65); // Aktualizuj co sekundę
-        if (autoStartCountdown > 0) {
-            autoStartTimerId = setTimeout(countdownTick, 1000);
-        } else {
-            Utils.showMessage(state, `Rozpoczynanie fali...`, 60);
-            GameLogic.prepareNextWave(); 
-            updateUiStats(); 
-        }
+        Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65); 
+        if (autoStartCountdown > 0) autoStartTimerId = setTimeout(countdownTick, 1000);
+        else { Utils.showMessage(state, `Rozpoczynanie fali...`, 60); GameLogic.prepareNextWave(); updateUiStats(); }
     }
     autoStartTimerId = setTimeout(countdownTick, 1000);
 }
 
-
-uiButtonBileter.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused) {
-        state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null;
-        updateTowerUpgradePanel(); updateSelectedTowerButtonUI();
-    }
-});
-uiButtonOswietleniowiec.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused) {
-        state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null;
-        updateTowerUpgradePanel(); updateSelectedTowerButtonUI();
-    }
-});
-uiButtonUpgradeSatisfaction.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) {
-        GameLogic.upgradeZadowolenie(); updateUiStats();
-    }
-});
-uiButtonStartWave.addEventListener('click', () => {
-    clearTimeout(autoStartTimerId); // Anuluj automatyczny start, jeśli gracz kliknie manualnie
-    Utils.showMessage(state, ""); // Wyczyść komunikat odliczania
-    if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
-        GameLogic.prepareNextWave(); updateUiStats();
-    }
-});
-uiButtonUpgradeDamage.addEventListener('click', () => {
-    if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage');
-        updateTowerUpgradePanel(); updateUiStats();
-    }
-});
-uiButtonUpgradeFireRate.addEventListener('click', () => {
-    if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate');
-        updateTowerUpgradePanel(); updateUiStats();
-    }
-});
-uiButtonSellTower.addEventListener('click', () => {
-    if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.sellTower(state.selectedTowerForUpgrade); 
-        updateTowerUpgradePanel(); updateUiStats();
-    }
-});
-
-pauseButton.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.togglePauseGame(); showScreen('paused');
-    }
-});
-resumeButton.addEventListener('click', () => {
-    if (state.isPaused) {
-        GameLogic.togglePauseGame(); showScreen('playing');
-        if (!animationFrameId) gameLoop();
-    }
-});
+uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); }});
+uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); }});
+uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); updateUiStats(); }});
+uiButtonStartWave.addEventListener('click', () => { clearTimeout(autoStartTimerId); Utils.showMessage(state, ""); if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) { GameLogic.prepareNextWave(); updateUiStats(); }});
+uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); updateTowerUpgradePanel(); updateUiStats(); }});
+uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); updateTowerUpgradePanel(); updateUiStats(); }});
+uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); updateTowerUpgradePanel(); updateUiStats(); }});
+pauseButton.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { GameLogic.togglePauseGame(); showScreen('paused'); }});
+resumeButton.addEventListener('click', () => { if (state.isPaused) { GameLogic.togglePauseGame(); showScreen('playing'); if (!animationFrameId) gameLoop(); }});
 
 function goToMainMenu() {
-    clearTimeout(autoStartTimerId); // Anuluj auto-start przy powrocie do menu
+    clearTimeout(autoStartTimerId); 
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
     showScreen('menu'); 
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
 menuFromPauseButton.addEventListener('click', goToMainMenu);
+backToMenuFromSummary.addEventListener('click', goToMainMenu); 
 
-continueGameButton.addEventListener('click', () => {
-    if (!continueGameButton.disabled) {
-        showScreen('levelSelection');
+nextLevelButton.addEventListener('click', () => {
+    if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
+        startGameLevel(state.currentLevelIndex + 1, 0);
+    } else {
+        goToMainMenu();
     }
 });
 
+continueGameButton.addEventListener('click', () => { if (!continueGameButton.disabled) showScreen('levelSelection'); });
 newGameButtonFromMenu.addEventListener('click', async () => { 
-    const confirmed = await showCustomConfirm( 
-        "Rozpocząć Nową Grę?",
-        "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony."
-    );
-
+    const confirmed = await showCustomConfirm("Rozpocząć Nową Grę?", "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.");
     if (confirmed) {
-        clearTimeout(autoStartTimerId); 
-        state.autoStartNextWaveEnabled = true; 
-        state.unlockedLevels = 1;
-        state.levelProgress = {};
-        Storage.saveGameProgress(state);
-        
-        if (saveStatusMainMenu) {
-            saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
-        }
-        
+        clearTimeout(autoStartTimerId); state.autoStartNextWaveEnabled = true; 
+        state.currentAplauzBonusForNextLevel = 0; 
+        state.unlockedLevels = 1; state.levelProgress = {}; Storage.saveGameProgress(state);
+        if (saveStatusMainMenu) saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
         updateContinueButtonState();
-        console.log("Nowa gra rozpoczęta. Stan zresetowany:", state.unlockedLevels, state.levelProgress);
-        
         startGameLevel(0, 0); 
     }
 });
-
-levelSelectButton.addEventListener('click', () => {
-    showScreen('levelSelection');
-});
-
-creditsButton.addEventListener('click', () => {
-    showScreen('credits');
-});
-
-backToMainMenuFromLevelSelection.addEventListener('click', () => {
-    showScreen('menu');
-});
-
-backToMainMenuFromCredits.addEventListener('click', () => {
-    showScreen('menu');
-});
-
+levelSelectButton.addEventListener('click', () => showScreen('levelSelection'));
+creditsButton.addEventListener('click', () => showScreen('credits'));
+backToMainMenuFromLevelSelection.addEventListener('click', () => showScreen('menu'));
+backToMainMenuFromCredits.addEventListener('click', () => showScreen('menu'));
 
 canvas.addEventListener('click', (event) => {
     if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') return;
     const rect = canvas.getBoundingClientRect();
     const clickX = event.clientX - rect.left; const clickY = event.clientY - rect.top;
     const gridX = Math.floor(clickX / C.TILE_SIZE); const gridY = Math.floor(clickY / C.TILE_SIZE);
-
     if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >= 0) {
         const clickedTower = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY);
-        if (clickedTower) {
-            state.selectedTowerForUpgrade = clickedTower; state.selectedTowerType = null;
-            updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); return;
-        }
+        if (clickedTower) { state.selectedTowerForUpgrade = clickedTower; state.selectedTowerType = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); return; }
         if (state.selectedTowerType) {
             const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY);
-            if (spot) {
-                if (spot.occupied) Utils.showMessage(state, "To miejsce jest już zajęte!", 120);
-                else if (!GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) { /* buildTower już pokazuje wiadomość */ }
+            if (spot) { if (spot.occupied) Utils.showMessage(state, "To miejsce jest już zajęte!", 120); else if (!GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) {}
             } else Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
             return; 
         }
-        if (!clickedTower && !state.selectedTowerType) { 
-            state.selectedTowerForUpgrade = null; updateTowerUpgradePanel();
-        }
+        if (!clickedTower && !state.selectedTowerType) { state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); }
     }
 });
 canvas.addEventListener('mousemove', (event) => {
-    if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') {
-        canvas.style.cursor = 'default'; return;
-    }
+    if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') { canvas.style.cursor = 'default'; return; }
     const rect = canvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left; const mouseY = event.clientY - rect.top;
     let onCanvasActionable = false;
     const gridX = Math.floor(mouseX / C.TILE_SIZE); const gridY = Math.floor(mouseY / C.TILE_SIZE);
-
     if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >=0) {
-        if (state.selectedTowerType) {
-            const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY && !s.occupied);
-            if (spot) onCanvasActionable = true;
-        }
-        const towerOnSpot = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY);
-        if (towerOnSpot) onCanvasActionable = true;
+        if (state.selectedTowerType) { const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY && !s.occupied); if (spot) onCanvasActionable = true; }
+        const towerOnSpot = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY); if (towerOnSpot) onCanvasActionable = true;
     }
     canvas.style.cursor = onCanvasActionable ? 'pointer' : 'default';
 });

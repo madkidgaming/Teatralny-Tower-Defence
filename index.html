@@ -11,7 +11,7 @@
 <body>
     <h1 id="pageTitle">Teatr Tower Defense</h1>
 
-    <div id="gameLayout" class="hidden"> <!-- Kontener dla gry i UI, początkowo ukryty -->
+    <div id="gameLayout" class="hidden">
         <div id="leftUiPanel">
             <div class="ui-panel-section">
                 <h3>Statystyki Gry</h3>
@@ -39,7 +39,7 @@
 
         <div id="gameCanvasContainer">
             <canvas id="gameCanvas"></canvas>
-            <div id="inGameUI"> <!-- Przyciski pod canvasem -->
+            <div id="inGameUI">
                 <button id="pauseButton" class="ui-button">Pauza</button>
                 <button id="returnToMenuButtonGame" class="ui-button hidden">Menu Główne</button>
             </div>
@@ -50,7 +50,7 @@
                 <h3>Akcje</h3>
                 <button id="uiButtonStartWave" class="ui-button">Start Fali</button>
             </div>
-            <div id="towerUpgradePanel" class="ui-panel-section hidden"> <!-- Panel ulepszeń wieży -->
+            <div id="towerUpgradePanel" class="ui-panel-section hidden">
                 <h3 id="upgradePanelTowerName">Ulepsz Wieżę</h3>
                 <button id="uiButtonUpgradeDamage" class="ui-button">Obrażenia+ (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonUpgradeFireRate" class="ui-button">Szybkostrzelność+ (<span class="cost">0</span> Ap.)</button>
@@ -90,11 +90,34 @@
         <p><strong>Wykorzystane zasoby zewnętrzne:</strong></p>
         <p>Czcionki: Google Fonts (Cinzel Decorative, Merriweather)</p>
         <p>Biblioteka animacji: GSAP (GreenSock Animation Platform)</p>
-        <p>Ikony wież/przeciwników: (jeśli są zewnętrzne, np. z kaliskie.org, można tu wspomnieć)</p>
+        <p>Ikony wież/przeciwników: (np. z kaliskie.org)</p>
         <p>Wzór tła strony: SVGBackgrounds.com (zmodyfikowany)</p>
         <br>
         <p>Teatr Tower Defense © 2024 Piotr Józefiak</p>
         <button id="backToMainMenuFromCredits" class="ui-button">Powrót do Menu</button>
+    </div>
+
+    <!-- ZMIANA: Nowy ekran podsumowania aktu -->
+    <div id="levelCompleteScreen" class="menu-screen hidden">
+        <h2 id="levelCompleteTitle">Akt Ukończony!</h2>
+        <div id="starRatingContainer" class="star-rating">
+            <!-- Gwiazdki będą dodawane przez JS -->
+        </div>
+        <div class="summary-section">
+            <h3>Statystyki Aktu</h3>
+            <p>Nazwa Aktu: <strong id="summaryLevelName">-</strong></p>
+            <p>Zadowolenie Widowni: <strong id="summarySatisfaction">-</strong></p>
+            <p>Wieże Bileterów: <strong id="summaryBileterTowers">-</strong></p>
+            <p>Wieże Oświetleniowców: <strong id="summaryOswietleniowiecTowers">-</strong></p>
+        </div>
+        <div class="summary-section">
+            <h3>Bonus na Następny Akt</h3>
+            <p>Pozostały Aplauz: <strong id="summaryRemainingAplauz">-</strong> Ap.</p>
+            <p>Wartość Sprzedaży Wież: <strong id="summaryTowerValue">-</strong> Ap.</p>
+            <p class="total-bonus">Łączny Bonus Aplauzu: <strong id="summaryAplauzBonus">-</strong> Ap.</p>
+        </div>
+        <button id="nextLevelButton" class="ui-button">Następny Akt</button>
+        <button id="backToMenuFromSummary" class="ui-button">Menu Główne</button>
     </div>
 
     <div id="pauseMenu" class="menu-screen hidden">
@@ -103,7 +126,6 @@
         <button id="menuFromPauseButton" class="ui-button">Menu Główne</button>
     </div>
 
-    <!-- ZMIANA: Struktura HTML dla niestandardowego okna dialogowego -->
     <div id="customConfirmOverlay" class="custom-modal-overlay hidden">
         <div id="customConfirmBox" class="custom-modal-box">
             <h3 id="customConfirmTitle">Potwierdzenie</h3>
