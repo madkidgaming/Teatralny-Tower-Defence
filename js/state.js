@@ -3,6 +3,7 @@ export const gameState = {
     aplauz: 250,
     zadowolenieWidowni: 100,
     maxZadowolenieWidowni: 100,
+    initialMaxAudienceSatisfaction: 100, // ZMIANA: Do śledzenia początkowego max zadowolenia na poziomie
     zadowolenieUpgradeLevel: 0,
     currentWaveNumber: 0,
     gameOver: false, 
@@ -15,12 +16,12 @@ export const gameState = {
     levelProgress: {}, 
     
     isPaused: false,
-    gameScreen: 'menu', 
+    gameScreen: 'menu', // Możliwe stany: 'menu', 'levelSelection', 'credits', 'playing', 'paused', 'levelCompleteScreen', 'levelLost'
 
     enemies: [],
     towers: [],
     projectiles: [],
-    effects: [], // Dodano tablicę na efekty
+    effects: [],
 
     currentPath: [],
     currentTowerSpots: [],
@@ -33,7 +34,21 @@ export const gameState = {
     selectedTowerType: null,
     selectedTowerForUpgrade: null,
 
-    autoStartNextWaveEnabled: true, // ZMIANA: Nowa flaga dla automatycznego startu fali
+    autoStartNextWaveEnabled: true, 
+
+    // ZMIANA: Dane dla ekranu podsumowania aktu
+    lastLevelStats: {
+        completed: false,
+        levelName: "",
+        stars: 0,
+        finalSatisfaction: 0,
+        initialMaxSatisfaction: 0,
+        towersBuilt: { bileter: 0, oswietleniowiec: 0 },
+        totalTowerValue: 0,
+        remainingAplauz: 0,
+        aplauzBonusForNextLevel: 0,
+    },
+    currentAplauzBonusForNextLevel: 0, // Bonus przekazywany do następnego poziomu
 
     currentMessage: "", 
     messageTimer: 0,    

@@ -16,9 +16,13 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.currentPath = JSON.parse(JSON.stringify(level.path));
     state.currentTowerSpots = level.towerSpots.map(spot => ({...spot, occupied: false}));
 
-    state.aplauz = 250 + state.currentLevelIndex * 75;
-    state.maxZadowolenieWidowni = 100;
+    // ZMIANA: Dodajemy bonusowy aplauz i resetujemy go
+    state.aplauz = (250 + state.currentLevelIndex * 75) + state.currentAplauzBonusForNextLevel;
+    state.currentAplauzBonusForNextLevel = 0; // Resetuj bonus po użyciu
+
+    state.maxZadowolenieWidowni = 100; // Domyślne max zadowolenie na start poziomu
     state.zadowolenieWidowni = state.maxZadowolenieWidowni;
+    state.initialMaxAudienceSatisfaction = state.maxZadowolenieWidowni; // ZMIANA: Zapisz początkowe max zadowolenie
     state.zadowolenieUpgradeLevel = 0;
 
     state.currentWaveNumber = startFromWave;
@@ -88,7 +92,7 @@ export function updateEnemies() {
                 enemy.x += (dx / distance) * enemy.speed;
                 enemy.y += (dy / distance) * enemy.speed;
             }
-        } else { // Wróg dotarł do końca
+        } else { 
             state.zadowolenieWidowni--; 
             if (state.zadowolenieWidowni <= 0) {
                 state.zadowolenieWidowni = 0; 
@@ -96,7 +100,7 @@ export function updateEnemies() {
             }
             
             if (!enemy.isDying) {
-                console.log(`[BASE_REACHED] Wróg ${enemy.id} dotarł do bazy. Oznaczanie do animacji śmierci.`);
+                // console.log(`[BASE_REACHED] Wróg ${enemy.id} dotarł do bazy. Oznaczanie do animacji śmierci.`);
                 enemy.isDying = true; 
                 enemy.hp = 0; 
                 enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
@@ -176,6 +180,7 @@ export function upgradeZadowolenie() {
             state.zadowolenieWidowni += upgradeData.bonus; 
             state.zadowolenieUpgradeLevel++;
             showMessage(state, `Zadowolenie Widowni ulepszone do ${state.maxZadowolenieWidowni}!`, 90);
+            // Ważne: initialMaxAudienceSatisfaction pozostaje niezmienione, aby system gwiazdek działał poprawnie
             saveGameProgress(state);
         } else {
             showMessage(state, "Za mało Aplauzu na ulepszenie Zadowolenia!", 120);
@@ -271,25 +276,61 @@ export function updateProjectiles() {
 export function handleEnemyDefeated(enemy) { 
     if (!enemy.isDying) { 
         state.aplauz += (enemy.reward * enemy.level);
-        // console.log(`[HANDLE_DEFEAT] Wróg ${enemy.id} pokonany przez wieżę. Oznaczanie isDying.`);
         enemy.isDying = true;
         enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
         enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
-    } else {
-        // console.log(`[HANDLE_DEFEAT_SKIP] Wróg ${enemy.id} był już oznaczony jako isDying.`);
     }
 }
 
+// ZMIANA: Modyfikacja funkcji completeLevel
 export function completeLevel() {
-    showMessage(state, `Akt ${state.currentLevelIndex + 1} ukończony! Brawo!`, 240);
-    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL;
-    if (state.currentLevelIndex < C.levelData.length - 1) {
-        state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2);
+    // Zbieranie danych do podsumowania
+    state.lastLevelStats.completed = true;
+    state.lastLevelStats.levelName = C.levelData[state.currentLevelIndex]?.name || `Akt ${state.currentLevelIndex + 1}`;
+    state.lastLevelStats.finalSatisfaction = state.zadowolenieWidowni;
+    state.lastLevelStats.initialMaxSatisfaction = state.initialMaxAudienceSatisfaction;
+    
+    state.lastLevelStats.towersBuilt.bileter = state.towers.filter(t => t.type === 'bileter').length;
+    state.lastLevelStats.towersBuilt.oswietleniowiec = state.towers.filter(t => t.type === 'oswietleniowiec').length;
+    
+    let totalSellValue = 0;
+    state.towers.forEach(tower => {
+        const towerDef = C.towerDefinitions[tower.type];
+        let sellValue = Math.floor(towerDef.cost * 0.75); // Bazowa wartość sprzedaży
+        for(let i = 0; i < tower.damageLevel; i++) sellValue += Math.floor(towerDef.upgrades.damage[i].cost * 0.5);
+        for(let i = 0; i < tower.fireRateLevel; i++) sellValue += Math.floor(towerDef.upgrades.fireRate[i].cost * 0.5);
+        totalSellValue += sellValue;
+    });
+    state.lastLevelStats.totalTowerValue = totalSellValue;
+    state.lastLevelStats.remainingAplauz = state.aplauz;
+    
+    // Obliczanie gwiazdek (tymczasowo proste, można rozbudować)
+    if (state.zadowolenieWidowni === state.initialMaxAudienceSatisfaction) {
+        state.lastLevelStats.stars = 3;
+    } else if (state.zadowolenieWidowni >= 0.6 * state.initialMaxAudienceSatisfaction) {
+        state.lastLevelStats.stars = 2;
+    } else if (state.zadowolenieWidowni > 0) {
+        state.lastLevelStats.stars = 1;
+    } else {
+        state.lastLevelStats.stars = 0; // Przegrana, ale dotarła do completeLevel - dziwne, ale zabezpieczmy
     }
-    saveGameProgress(state);
-    state.gameOver = true; 
-    state.gameScreen = 'levelComplete';
+
+    // Obliczanie bonusu aplauzu
+    state.lastLevelStats.aplauzBonusForNextLevel = state.aplauz + totalSellValue;
+    state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel; // Przekaż do następnego poziomu
+
+    // Aktualizacja ogólnego postępu gry
+    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; // Oznacz poziom jako ukończony
+    if (state.currentLevelIndex < C.levelData.length - 1) {
+        state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2); // Odblokuj następny poziom
+    }
+    saveGameProgress(state); // Zapisz postęp (odblokowane poziomy, ukończone fale)
+
+    state.gameOver = true; // Oznacza koniec tego konkretnego poziomu (sukcesem)
+    state.gameScreen = 'levelCompleteScreen'; // Ustaw nowy stan dla ekranu podsumowania HTML
+    // Wiadomość "Akt ukończony" będzie teraz częścią ekranu podsumowania
 }
+
 
 export function prepareNextWave() {
     if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) return;
@@ -359,10 +400,16 @@ export function handleWaveSpawning() {
 }
 
 export function endGame(isWin) {
-    if (isWin) return; 
-    state.gameOver = true; state.waveInProgress = false;
+    if (isWin) { // Jeśli wygrana, completeLevel powinno być wywołane wcześniej
+        console.warn("endGame(true) wywołane, ale completeLevel powinno obsłużyć wygraną.");
+        return;
+    }
+    clearTimeout(autoStartTimerId); // Anuluj auto-start przy przegranej (zdefiniujemy autoStartTimerId w main.js)
+    state.gameOver = true; 
+    state.waveInProgress = false;
     showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 300);
-    saveGameProgress(state); state.gameScreen = 'levelLost';
+    saveGameProgress(state); 
+    state.gameScreen = 'levelLost'; // Użyjemy tego do wyświetlenia ekranu przegranej w HTML
 }
 
 export function togglePauseGame() {
