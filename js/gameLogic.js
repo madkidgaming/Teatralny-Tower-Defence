@@ -70,12 +70,10 @@ export function updateEnemies() {
         const enemy = state.enemies[i];
 
         if (enemy.isDying) {
-            // console.log(`[updateEnemies] Skipping dying enemy ${enemy.id}`); // Można odkomentować dla bardzo szczegółowego logowania
             continue;
         }
 
         if (enemy.hp <= 0 && !enemy.isDying) {
-            // console.log(`[updateEnemies] Enemy ${enemy.id} HP <= 0. Calling handleEnemyDefeated.`); // LOG
             handleEnemyDefeated(enemy);
             continue;
         }
@@ -93,28 +91,20 @@ export function updateEnemies() {
                 enemy.x += (dx / distance) * enemy.speed;
                 enemy.y += (dy / distance) * enemy.speed;
             }
-        } else { // Wróg dotarł do końca ścieżki
-            console.log(`[updateEnemies] Enemy ${enemy.id} (type: ${enemy.type}) reached base. Current satisfaction: ${state.zadowolenieWidowni}`); // LOG
+        } else {
             state.zadowolenieWidowni--;
-            console.log(`[updateEnemies] Satisfaction after enemy ${enemy.id} reached base: ${state.zadowolenieWidowni}`); // LOG
 
             if (state.zadowolenieWidowni <= 0) {
                 state.zadowolenieWidowni = 0;
-                console.log(`[updateEnemies] Satisfaction is 0 or less for enemy ${enemy.id}. Calling endGame(false).`); // LOG
-                endGame(false); // Gra przegrana
-                // Po endGame, wróg powinien być oznaczony do animacji śmierci przez logikę w endGame lub przez pętlę GSAP
-                // Ale na wszelki wypadek, upewnijmy się, że jest oznaczony.
+                endGame(false);
             }
 
-            if (!enemy.isDying) { // Upewnijmy się, że oznaczamy go jako umierającego, nawet jeśli gra się kończy
-                console.log(`[updateEnemies] Enemy ${enemy.id} reached base. Marking isDying=true, hp=0.`); // LOG
+            if (!enemy.isDying) {
                 enemy.isDying = true;
-                enemy.hp = 0; // To powinno również wyzwolić animację śmierci w głównej pętli gry
+                enemy.hp = 0;
                 enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
                 enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
-                // Nie usuwamy stąd, pozwalamy animacji GSAP to zrobić
             }
-            // Jeśli gra się zakończyła (gameOver=true), ta pętla może nie być już tak istotna, ale oznaczanie jest ważne dla animacji.
         }
     }
 }
@@ -273,7 +263,6 @@ export function updateProjectiles() {
             state.effects.push(hitEffect);
 
             if (p.target.hp <= 0 && !p.target.isDying) {
-                // console.log(`[updateProjectiles] Projectile hit killed enemy ${p.target.id}. Calling handleEnemyDefeated.`); // LOG
                 handleEnemyDefeated(p.target);
             }
         } else {
@@ -285,23 +274,19 @@ export function updateProjectiles() {
 
 export function handleEnemyDefeated(enemy) {
     if (enemy.isDying) {
-        // console.log(`[handleEnemyDefeated] Enemy ${enemy.id} is already dying. Skipping.`); // LOG
         return;
     }
-
-    console.log(`[handleEnemyDefeated] Enemy ${enemy.id} (type: ${enemy.type}) defeated. Aplauz before: ${state.aplauz}`); // LOG
     state.aplauz += (enemy.reward * enemy.level);
-    console.log(`[handleEnemyDefeated] Aplauz after: ${state.aplauz}. Marking enemy ${enemy.id} as isDying.`); // LOG
     enemy.isDying = true;
-    // HP already <= 0 or set to 0 by reaching base
     enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
     enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
-    // Animacja śmierci GSAP zostanie uruchomiona w głównej pętli gry
 }
 
 
 export function completeLevel() {
-    console.log(`[completeLevel] Level ${state.currentLevelIndex + 1} completed. Current satisfaction: ${state.zadowolenieWidowni}`); // LOG
+    // LOG: Dodano log na początku funkcji
+    console.log(`[GameLogic.completeLevel] Called. Current wave: ${state.currentWaveNumber}, Satisfaction: ${state.zadowolenieWidowni}`);
+
     state.lastLevelStats.completed = true;
     state.lastLevelStats.levelName = C.levelData[state.currentLevelIndex]?.name || `Akt ${state.currentLevelIndex + 1}`;
     state.lastLevelStats.finalSatisfaction = state.zadowolenieWidowni;
@@ -340,18 +325,15 @@ export function completeLevel() {
     }
     saveGameProgress(state);
 
-    state.gameOver = true; // Oznacza koniec poziomu, niekoniecznie przegraną
+    state.gameOver = true;
     state.gameScreen = 'levelCompleteScreen';
-    console.log(`[completeLevel] Set gameOver=true, gameScreen='levelCompleteScreen'. Stars: ${state.lastLevelStats.stars}`); // LOG
+    // LOG: Dodano log na końcu funkcji
+    console.log(`[GameLogic.completeLevel] Finished. Set gameOver=${state.gameOver}, gameScreen=${state.gameScreen}. Stars: ${state.lastLevelStats.stars}`);
 }
 
 
 export function prepareNextWave() {
-    if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-        console.log(`[prepareNextWave] Conditions not met. WaveInProgress: ${state.waveInProgress}, GameOver: ${state.gameOver}, Wave: ${state.currentWaveNumber}`); // LOG
-        return;
-    }
-    console.log(`[prepareNextWave] Preparing for wave ${state.currentWaveNumber + 1}. Setting showingWaveIntro=true.`); // LOG
+    if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) return;
     state.showingWaveIntro = true; state.waveIntroTimer = 180; state.waveIntroEnemies = [];
     const waveIndexForDefinition = Math.min(state.currentWaveNumber, C.waveDefinitionsBase.length - 1);
     const wavePattern = C.waveDefinitionsBase[waveIndexForDefinition];
@@ -361,7 +343,6 @@ export function prepareNextWave() {
 }
 
 export function startNextWaveActual() {
-    console.log(`[startNextWaveActual] Starting wave ${state.currentWaveNumber + 1}. Setting showingWaveIntro=false, waveInProgress=true.`); // LOG
     state.showingWaveIntro = false;
     state.currentWaveNumber++;
     state.waveInProgress = true;
@@ -392,7 +373,6 @@ export function startNextWaveActual() {
     state.currentWaveSpawnsLeft = state.currentWaveSpawns.length;
     state.spawnInterval = Math.max(35, waveData.interval * (1 - state.currentLevelIndex * 0.02) * (1 - (state.currentWaveNumber-1)*0.01) );
     state.spawnTimer = 0;
-    console.log(`[startNextWaveActual] Wave ${state.currentWaveNumber} configured. Spawns left: ${state.currentWaveSpawnsLeft}, Interval: ${state.spawnInterval}`); // LOG
 }
 
 export function handleWaveSpawning() {
@@ -422,34 +402,21 @@ export function handleWaveSpawning() {
 }
 
 export function endGame(isWin) {
-    console.log(`[endGame] Called with isWin: ${isWin}. Current gameOver state: ${state.gameOver}`); // LOG
-    if (state.gameOver && !isWin) { // Jeśli gra już się zakończyła przegraną, nie rób nic więcej
-        console.log("[endGame] Game already over (loss). Skipping further actions."); // LOG
+    if (state.gameOver && !isWin) {
         return;
     }
     if (isWin) {
-        console.warn("[endGame] endGame(true) was called, but completeLevel() should handle wins. Current gameOver:", state.gameOver); // LOG
-        // If completeLevel already set gameOver, this is redundant.
-        // If not, this might be an unexpected win condition.
-        if (!state.gameOver) { // Jeśli completeLevel nie ustawiło jeszcze gameOver
-            completeLevel(); // Upewnij się, że logika wygranej jest wykonana
+        if (!state.gameOver) {
+            completeLevel();
         }
         return;
     }
 
-    // Przegrana
-    console.log("[endGame] Processing game loss."); // LOG
     state.gameOver = true;
-    state.waveInProgress = false; // Zatrzymaj wszelkie trwające fale
-    // Nie czyść `state.showingWaveIntro` tutaj, jeśli przegrana nastąpiła podczas intra, ekran intro może być nadal widoczny
-    showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 30000); // Dłuższy czas wyświetlania
-    saveGameProgress(state); // Zapisz stan przegranej (np. że poziom nie został ukończony)
+    state.waveInProgress = false;
+    showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 30000);
+    saveGameProgress(state);
     state.gameScreen = 'levelLost';
-    console.log("[endGame] Set gameOver=true, waveInProgress=false, gameScreen='levelLost'."); // LOG
-
-    // Dodatkowe czyszczenie lub działania przy przegranej, jeśli potrzebne:
-    // np. zatrzymanie animacji, usunięcie pozostałych wrogów (choć animacja GSAP powinna to robić)
-    // state.enemies.forEach(e => { if (!e.isDying) e.isDying = true; }); // Oznacz wszystkich wrogów do animacji zniknięcia
 }
 
 
