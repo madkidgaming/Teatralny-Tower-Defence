@@ -408,13 +408,13 @@ function startGameLevel(levelIndex, startFromWave = 0) {
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
 
-    if (animationFrameId) { 
+    if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
         console.log("[startGameLevel] Warning: animationFrameId was not null. Cancelled existing frame.");
     }
-    animationFrameId = null; 
+    animationFrameId = null;
     console.log("[startGameLevel] Starting new gameLoop.");
-    gameLoop(); 
+    gameLoop();
 }
 
 function updateContinueButtonState() {
@@ -463,7 +463,7 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
-    // console.log(`Game Loop Start. Screen: ${state.gameScreen}, Paused: ${state.isPaused}, AnimID: ${animationFrameId}, gameOver: ${state.gameOver}`);
+    console.log(`[gameLoop ENTRY] Timestamp: ${performance.now()}, Screen: ${state.gameScreen}, Paused: ${state.isPaused}, AnimID before RAF: ${animationFrameId}`);
 
     if (state.gameScreen === 'levelCompleteScreen') {
         console.log("[gameLoop START] Detected gameScreen is 'levelCompleteScreen'. Stopping loop and showing screen.");
@@ -609,10 +609,7 @@ function gameLoop() {
             }
         }
     }
-
-    if (animationFrameId !== null) {
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function checkWaveCompletion() {
@@ -686,17 +683,13 @@ pauseButton.addEventListener('click', () => {
     if (state.gameScreen === 'playing' && !state.isPaused) {
         GameLogic.togglePauseGame();
         showScreen('paused');
-        // Pętla gameLoop powinna kontynuować działanie w stanie 'paused', ale rysować tylko statyczny obraz
-        // Nie ma potrzeby zatrzymywać animationFrameId tutaj, bo gameLoop sam obsłuży stan pauzy
     }
 });
 
 resumeButton.addEventListener('click', () => {
     if (state.isPaused) {
-        GameLogic.togglePauseGame(); // isPaused staje się false
+        GameLogic.togglePauseGame();
         showScreen('playing');
-        // Jeśli pętla była wstrzymana, powinna naturalnie wznowić pełne działanie
-        // Jeśli animationFrameId byłby null (co nie powinno się zdarzyć przy pauzie), to:
         if (animationFrameId === null) {
             console.log("[resumeButton] animationFrameId is null, restarting gameLoop.");
             gameLoop();
