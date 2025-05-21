@@ -53,92 +53,104 @@ export function drawTowerSpots(ctx) {
     });
 }
 
-export function drawEnemies(ctx) {
-    state.enemies.forEach(enemy => {
-        // Rysuj wroga tylko jeśli nie jest w trakcie animacji śmierci LUB jeśli jest, ale alpha > 0
-        // GSAP będzie zarządzać currentAlpha i currentScale
-        if (!enemy.isDeathAnimationStarted || (enemy.currentAlpha !== undefined && enemy.currentAlpha > 0)) {
-            ctx.save();
-            ctx.globalAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
-            const scaleFactor = enemy.currentScale !== undefined ? enemy.currentScale : 1;
-            const w = enemy.width * scaleFactor; 
-            const h = enemy.height * scaleFactor;
-
-            if (enemy.image && !enemy.image.error) {
-                if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { 
-                    ctx.save();
-                    ctx.shadowBlur = 6;
-                    ctx.shadowColor = enemy.level === 2 ? "rgba(100, 180, 255, 0.9)" : "rgba(255, 100, 100, 0.9)";
-                    for (let i = 0; i < 4; i++) {
-                         ctx.drawImage(enemy.image, enemy.x - w / 2 + (i === 0 ? -2 : i === 1 ? 2 : 0), enemy.y - h / 2 + (i === 2 ? -2 : i === 3 ? 2 : 0), w, h);
-                    }
-                    ctx.restore();
-                }
-                ctx.drawImage(enemy.image, enemy.x - w / 2, enemy.y - h / 2, w, h);
-            } else { 
-                ctx.fillStyle = enemy.type === 'krytyk' ? '#5A5A5A' : '#007bff'; 
-                const fallbackSize = w * 0.8; 
-                ctx.fillRect(enemy.x - fallbackSize / 2, enemy.y - fallbackSize / 2, fallbackSize, fallbackSize); 
-            }
-            ctx.restore();
-
-            // Pasek HP - nie rysuj, jeśli alpha jest bardzo małe (wróg znika)
-            if (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) {
-                const barWidth = C.TILE_SIZE * 0.8; const barHeight = 7;
-                ctx.fillStyle = 'rgba(255,0,0,0.7)'; ctx.fillRect(enemy.x - barWidth / 2, enemy.y - h / 2 - barHeight - 3, barWidth, barHeight);
-                ctx.fillStyle = 'rgba(0,255,0,0.7)'; ctx.fillRect(enemy.x - barWidth / 2, enemy.y - h / 2 - barHeight - 3, barWidth * (enemy.hp / enemy.maxHp), barHeight);
-                if (enemy.level > 1) {
-                    drawTextWithOutline(ctx, `L${enemy.level}`, enemy.x, enemy.y - h / 2 - barHeight - 5, C.UI_FONT_TINY, "white", "black");
-                }
-            }
-        }
-    });
-}
-
-export function drawTowers(ctx) {
-    state.towers.forEach(tower => {
+// ZMIANA: Funkcja rysuje pojedynczego wroga
+export function drawSingleEnemy(ctx, enemy) {
+    if (!enemy.isDeathAnimationStarted || (enemy.currentAlpha !== undefined && enemy.currentAlpha > 0)) {
         ctx.save();
-        // Używamy currentAlpha, currentScale, currentRotation, które są aktualizowane przez GSAP
-        ctx.globalAlpha = tower.currentAlpha !== undefined ? tower.currentAlpha : 1;
-        
-        const scaleFactor = tower.currentScale !== undefined ? tower.currentScale : 1;
-        const currentRenderSize = tower.renderSize * scaleFactor;
-        
-        const towerCenterX = tower.x; 
-        const towerCenterY = tower.y; 
+        ctx.globalAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
+        const scaleFactor = enemy.currentScale !== undefined ? enemy.currentScale : 1;
+        const w = enemy.width * scaleFactor; 
+        const h = enemy.height * scaleFactor;
 
-        ctx.translate(towerCenterX, towerCenterY);
-        if (tower.currentRotation !== undefined) {
-            ctx.rotate(tower.currentRotation * Math.PI / 180); // Konwersja na radiany
-        }
-        
-        const drawXOffset = -currentRenderSize / 2;
-        const drawYOffset = C.TILE_SIZE / 2 - currentRenderSize; // Dla wyrównania "stóp"
-
-        if (tower.image && !tower.image.error) {
-            ctx.drawImage(tower.image, drawXOffset, drawYOffset, currentRenderSize, currentRenderSize);
+        if (enemy.image && !enemy.image.error) {
+            if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { 
+                ctx.save();
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = enemy.level === 2 ? "rgba(100, 180, 255, 0.9)" : "rgba(255, 100, 100, 0.9)";
+                for (let i = 0; i < 4; i++) {
+                     ctx.drawImage(enemy.image, enemy.x - w / 2 + (i === 0 ? -2 : i === 1 ? 2 : 0), enemy.y - h / 2 + (i === 2 ? -2 : i === 3 ? 2 : 0), w, h);
+                }
+                ctx.restore();
+            }
+            ctx.drawImage(enemy.image, enemy.x - w / 2, enemy.y - h / 2, w, h);
         } else { 
-            ctx.fillStyle = tower.type === 'bileter' ? '#4CAF50' : '#FFEB3B'; 
-            const fallbackSize = currentRenderSize * 0.8; 
-            ctx.fillRect(drawXOffset + (currentRenderSize - fallbackSize)/2, drawYOffset + (currentRenderSize - fallbackSize), fallbackSize, fallbackSize); 
+            ctx.fillStyle = enemy.type === 'krytyk' ? '#5A5A5A' : '#007bff'; 
+            const fallbackSize = w * 0.8; 
+            ctx.fillRect(enemy.x - fallbackSize / 2, enemy.y - fallbackSize / 2, fallbackSize, fallbackSize); 
         }
-        ctx.restore(); 
-        
-        // Tekst poziomu - rysuj tylko jeśli wieża nie jest w trakcie animacji pojawiania się
-        if ((tower.currentAlpha === undefined || tower.currentAlpha > 0.9) && (tower.currentScale === undefined || tower.currentScale > 0.9)) {
-            const textDrawY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 6; 
-            drawTextWithOutline(ctx, `D:${tower.damageLevel}|S:${tower.fireRateLevel}`, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
-        }
+        ctx.restore();
 
-        if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
-            const originalDrawYforSelection = tower.y + C.TILE_SIZE / 2 - tower.renderSize;
-            ctx.strokeStyle = "rgba(255, 215, 0, 0.9)"; 
-            ctx.lineWidth = 3;
-            ctx.strokeRect(tower.x - tower.renderSize / 2 -2, originalDrawYforSelection -2, tower.renderSize + 4, tower.renderSize + 4);
-            ctx.lineWidth = 1;
+        if ((enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) && enemy.hp > 0 && !enemy.isDying) { // Pasek HP tylko dla żywych, nie znikających
+            const barWidth = C.TILE_SIZE * 0.8; const barHeight = 7;
+            ctx.fillStyle = 'rgba(255,0,0,0.7)'; ctx.fillRect(enemy.x - barWidth / 2, enemy.y - h / 2 - barHeight - 3, barWidth, barHeight);
+            ctx.fillStyle = 'rgba(0,255,0,0.7)'; ctx.fillRect(enemy.x - barWidth / 2, enemy.y - h / 2 - barHeight - 3, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+            if (enemy.level > 1) {
+                drawTextWithOutline(ctx, `L${enemy.level}`, enemy.x, enemy.y - h / 2 - barHeight - 5, C.UI_FONT_TINY, "white", "black");
+            }
         }
-    });
+    }
 }
+
+// ZMIANA: Funkcja rysuje pojedynczą wieżę
+export function drawSingleTower(ctx, tower) {
+    ctx.save();
+    ctx.globalAlpha = tower.currentAlpha !== undefined ? tower.currentAlpha : 1;
+    
+    const scaleFactor = tower.currentScale !== undefined ? tower.currentScale : 1;
+    const currentRenderSize = tower.renderSize * scaleFactor;
+    
+    const towerCenterX = tower.x; 
+    const towerCenterY = tower.y; 
+
+    ctx.translate(towerCenterX, towerCenterY);
+    if (tower.currentRotation !== undefined) {
+        ctx.rotate(tower.currentRotation * Math.PI / 180);
+    }
+    
+    const drawXOffset = -currentRenderSize / 2;
+    // Aby dół wieży (jej "stopy") był wyrównany z tower.y + TILE_SIZE / 2,
+    // a skalowanie i obrót były od środka obrazka wieży,
+    // ale rysowanie względem jej "stóp" na mapie.
+    // Punktem odniesienia dla Y sortowania będzie tower.y + C.TILE_SIZE / 2 (dół kafelka wieży).
+    // Rysujemy obrazek tak, by jego dół (połowa wysokości TILE_SIZE od środka kafelka) zgadzał się z tą linią.
+    const drawYOffset = C.TILE_SIZE / 2 - currentRenderSize;
+
+
+    if (tower.image && !tower.image.error) {
+        ctx.drawImage(tower.image, drawXOffset, drawYOffset, currentRenderSize, currentRenderSize);
+    } else { 
+        ctx.fillStyle = tower.type === 'bileter' ? '#4CAF50' : '#FFEB3B'; 
+        const fallbackSize = currentRenderSize * 0.8; 
+        ctx.fillRect(drawXOffset + (currentRenderSize - fallbackSize)/2, drawYOffset + (currentRenderSize - fallbackSize), fallbackSize, fallbackSize); 
+    }
+    ctx.restore(); 
+    
+    if ((tower.currentAlpha === undefined || tower.currentAlpha > 0.9) && (tower.currentScale === undefined || tower.currentScale > 0.9)) {
+        // Y dla tekstu nad oryginalnym rozmiarem wieży, uwzględniając jej pozycję bazową
+        const textDrawY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 6; 
+        drawTextWithOutline(ctx, `D:${tower.damageLevel}|S:${tower.fireRateLevel}`, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
+    }
+
+    // Ramka zaznaczenia jest rysowana niezależnie od sortowania głębi, więc można ją zostawić tutaj lub przenieść do drawUI
+    // Jeśli ma być zawsze na wierzchu, to do drawUI. Jeśli ma być częścią obiektu wieży (i podlegać sortowaniu), to tutaj.
+    // Na razie zostawiam, ale to do przemyślenia.
+    if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
+        const originalDrawYforSelection = tower.y + C.TILE_SIZE / 2 - tower.renderSize;
+        ctx.strokeStyle = "rgba(255, 215, 0, 0.9)"; 
+        ctx.lineWidth = 3;
+        ctx.strokeRect(tower.x - tower.renderSize / 2 -2, originalDrawYforSelection -2, tower.renderSize + 4, tower.renderSize + 4);
+        ctx.lineWidth = 1;
+    }
+}
+
+// Stare funkcje grupowe, teraz nie będą bezpośrednio używane w pętli gry
+export function drawEnemies(ctx) {
+    state.enemies.forEach(enemy => drawSingleEnemy(ctx, enemy));
+}
+export function drawTowers(ctx) {
+    state.towers.forEach(tower => drawSingleTower(ctx, tower));
+}
+
 
 export function drawProjectiles(ctx) {
     state.projectiles.forEach((p, index) => {
@@ -162,10 +174,9 @@ export function drawEffects(ctx) {
     if (state.effects && state.effects.length > 0) {
         state.effects.forEach(effect => {
             ctx.save();
-            ctx.globalAlpha = effect.alpha; // Kontrolowane przez GSAP
+            ctx.globalAlpha = effect.alpha; 
             ctx.fillStyle = effect.color || "orange";
             ctx.beginPath();
-            // Używamy effect.scale, które jest kontrolowane przez GSAP jako promień
             ctx.arc(effect.x, effect.y, effect.scale, 0, Math.PI * 2); 
             ctx.fill();
             ctx.restore();
@@ -180,7 +191,7 @@ export function drawWaveIntro(ctx) {
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     ctx.textAlign = "center";
-    drawTextWithOutline(ctx, `Nadchodzi Fala ${state.currentWaveNumber + 1}!`, ctx.canvas.width / 2, 80, "bold 28px Georgia", "#ffd700", "black"); // Można użyć C.UI_FONT_...
+    drawTextWithOutline(ctx, `Nadchodzi Fala ${state.currentWaveNumber + 1}!`, ctx.canvas.width / 2, 80, "bold 28px Georgia", "#ffd700", "black");
     drawTextWithOutline(ctx, "Przeciwnicy:", ctx.canvas.width / 2, 130, C.UI_FONT_LARGE, "white", "black");
 
     const iconSize = C.TILE_SIZE * 1.5;
@@ -210,12 +221,14 @@ export function drawWaveIntro(ctx) {
 }
 
 export function drawUI(ctx) { 
+    // Rysowanie zasięgu wieży - jeśli jest zaznaczona
+    // To powinno być rysowane NA WSZYSTKIM innym, co jest częścią "świata gry",
+    // więc może być wywołane po posortowanym rysowaniu.
     if (state.selectedTowerForUpgrade) {
         const tower = state.selectedTowerForUpgrade;
-        // Rysuj tylko jeśli wieża nie jest w trakcie animacji wejścia (lub jest już widoczna)
         if ((tower.currentAlpha === undefined || tower.currentAlpha > 0.5)) {
             ctx.beginPath();
-            ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+            ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2); // Zasięg rysowany od środka wieży
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);

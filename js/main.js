@@ -4,7 +4,7 @@ import { gameState as state, images, incrementImagesLoadedCount, imagesLoadedCou
 import * as Storage from './storage.js';
 import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
-import * as GameLogic from './gameLogic.js'; // GameLogic jest już importowane
+import * as GameLogic from './gameLogic.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -363,17 +363,56 @@ function gameLoop() {
         animationFrameId = null; return;
     }
     
+    const renderGameObjectsSorted = () => {
+        const gameObjectsToRender = [];
+        state.towers.forEach(t => gameObjectsToRender.push({ ...t, entityType: 'tower', renderY: t.y + C.TILE_SIZE / 2 }));
+        state.enemies.forEach(e => {
+            const enemyFeetY = e.y + (e.height * (e.currentScale || 1)) / 2;
+            gameObjectsToRender.push({ ...e, entityType: 'enemy', renderY: enemyFeetY });
+        });
+        
+        const baseNode = state.currentPath[state.currentPath.length -1];
+        if (baseNode) {
+            const baseImg = images.teatrBase;
+            let baseRenderHeight = C.TILE_SIZE * C.BASE_SIZE_MULTIPLIER;
+            if (baseImg && !baseImg.error) {
+                 const baseRenderWidth = C.TILE_SIZE * C.BASE_SIZE_MULTIPLIER;
+                 baseRenderHeight = (baseImg.height / baseImg.width) * baseRenderWidth;
+            }
+            gameObjectsToRender.push({
+                entityType: 'base',
+                draw: () => Drawing.drawTheaterBase(ctx),
+                renderY: (baseNode.y + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8 + baseRenderHeight 
+            });
+        }
+
+        gameObjectsToRender.sort((a, b) => a.renderY - b.renderY);
+
+        gameObjectsToRender.forEach(obj => {
+            if (obj.entityType === 'tower') Drawing.drawSingleTower(ctx, obj);
+            else if (obj.entityType === 'enemy') Drawing.drawSingleEnemy(ctx, obj);
+            else if (obj.entityType === 'base') obj.draw();
+        });
+    };
+    
     if (state.isPaused && state.gameScreen === 'paused') {
-        Drawing.drawBackgroundAndPath(ctx); Drawing.drawTheaterBase(ctx); Drawing.drawTowerSpots(ctx);
-        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx); Drawing.drawEffects(ctx);
-        Drawing.drawUI(ctx); Drawing.drawWaveIntro(ctx);
+        Drawing.drawBackgroundAndPath(ctx); 
+        Drawing.drawTowerSpots(ctx);
+        renderGameObjectsSorted(); // Użycie pomocniczej funkcji
+        Drawing.drawProjectiles(ctx); 
+        Drawing.drawEffects(ctx);
+        Drawing.drawUI(ctx); 
+        Drawing.drawWaveIntro(ctx); 
         showUiMessage(state.currentMessage || "Pauza");
         animationFrameId = requestAnimationFrame(gameLoop); return;
     }
 
     if (state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
-        Drawing.drawBackgroundAndPath(ctx); Drawing.drawTheaterBase(ctx); Drawing.drawTowerSpots(ctx);
-        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx); Drawing.drawEffects(ctx);
+        Drawing.drawBackgroundAndPath(ctx);
+        Drawing.drawTowerSpots(ctx);
+        renderGameObjectsSorted(); // Użycie pomocniczej funkcji
+        Drawing.drawProjectiles(ctx); 
+        Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx);
         showUiMessage(state.currentMessage); updateUiStats();
         animationFrameId = requestAnimationFrame(gameLoop); return;
@@ -381,23 +420,13 @@ function gameLoop() {
     
     if (state.gameScreen === 'playing' && !state.isPaused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        Drawing.drawBackgroundAndPath(ctx); Drawing.drawTheaterBase(ctx); Drawing.drawTowerSpots(ctx);
-
-        // ZMIANA: Logika animacji przed rysowaniem obiektów
+        
         state.towers.forEach(tower => {
             if (tower.isAnimatingIn) {
                 tower.isAnimatingIn = false; 
                 gsap.to(tower, {
-                    duration: 0.6,
-                    currentScale: 1,
-                    currentAlpha: 1,
-                    currentRotation: 0,
+                    duration: 0.6, currentScale: 1, currentAlpha: 1, currentRotation: 0,
                     ease: "back.out(1.7)",
-                    onComplete: () => {
-                        // delete tower.currentScale; // Opcjonalne czyszczenie
-                        // delete tower.currentAlpha;
-                        // delete tower.currentRotation;
-                    }
                 });
             }
         });
@@ -407,45 +436,41 @@ function gameLoop() {
             if (enemy.isDying && !enemy.isDeathAnimationStarted) { 
                 enemy.isDeathAnimationStarted = true;
                 gsap.to(enemy, {
-                    duration: 0.5,
-                    currentAlpha: 0,
+                    duration: 0.5, currentAlpha: 0,
                     currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3,
                     ease: "power2.in",
                     onComplete: () => {
                         const index = state.enemies.indexOf(enemy);
-                        if (index > -1) {
-                            state.enemies.splice(index, 1);
-                        }
-                        // Sprawdzenie warunków końca fali/poziomu PO usunięciu
-                        if (state.waveInProgress && state.enemies.filter(e => !e.isDying || e.isDeathAnimationStarted === false).length === 0 && state.currentWaveSpawnsLeft === 0) {
+                        if (index > -1) state.enemies.splice(index, 1);
+                        // Sprawdzenie końca fali/poziomu musi uwzględniać tylko wrogów, którzy nie są już w trakcie animacji śmierci
+                        const activeEnemies = state.enemies.filter(e => !e.isDying || !e.isDeathAnimationStarted);
+                        if (state.waveInProgress && activeEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
                             state.waveInProgress = false;
                             state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
                             Storage.saveGameProgress(state); 
-                            if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-                                GameLogic.completeLevel(); 
-                            } else {
-                                Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
-                            }
+                            if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) GameLogic.completeLevel();
+                            else Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
                         }
                     }
                 });
             }
         }
-        // Koniec logiki animacji
 
         GameLogic.updateEnemies(); 
         GameLogic.updateTowers(); 
         GameLogic.updateProjectiles();
 
-        if (!state.showingWaveIntro) { GameLogic.handleWaveSpawning(); } 
-        else { if (state.waveIntroTimer <= 0 && !state.isPaused) GameLogic.startNextWaveActual(); }
+        if (!state.showingWaveIntro) GameLogic.handleWaveSpawning();
+        else if (state.waveIntroTimer <= 0 && !state.isPaused) GameLogic.startNextWaveActual();
         
-        Drawing.drawEnemies(ctx);    
-        Drawing.drawTowers(ctx);     
-        Drawing.drawProjectiles(ctx);
-        Drawing.drawEffects(ctx); // Dodano rysowanie efektów
-        Drawing.drawUI(ctx); 
-        Drawing.drawWaveIntro(ctx);
+        Drawing.drawBackgroundAndPath(ctx); 
+        Drawing.drawTowerSpots(ctx);    
+        renderGameObjectsSorted(); // Użycie pomocniczej funkcji
+        
+        Drawing.drawProjectiles(ctx); 
+        Drawing.drawEffects(ctx);     
+        Drawing.drawUI(ctx);          
+        Drawing.drawWaveIntro(ctx);   
 
         updateUiStats(); updateTowerUpgradePanel();
         if (state.messageTimer > 0 && state.currentMessage) {
@@ -505,7 +530,7 @@ uiButtonUpgradeFireRate.addEventListener('click', () => {
 });
 uiButtonSellTower.addEventListener('click', () => {
     if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.sellTower(state.selectedTowerForUpgrade); // sellTower teraz odznacza wieżę
+        GameLogic.sellTower(state.selectedTowerForUpgrade); 
         updateTowerUpgradePanel(); updateUiStats();
     }
 });
@@ -593,10 +618,9 @@ canvas.addEventListener('click', (event) => {
                 if (spot.occupied) Utils.showMessage(state, "To miejsce jest już zajęte!", 120);
                 else if (!GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) { /* buildTower już pokazuje wiadomość */ }
             } else Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
-            // showUiMessage(state.currentMessage); // showMessage w buildTower/Utils już to robi
-            return; // Zmieniono, aby nie było podwójnego return
+            return; 
         }
-        if (!clickedTower && !state.selectedTowerType) { // Jeśli kliknięto puste miejsce i nie wybrano wieży
+        if (!clickedTower && !state.selectedTowerType) { 
             state.selectedTowerForUpgrade = null; updateTowerUpgradePanel();
         }
     }
