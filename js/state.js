@@ -5,21 +5,22 @@ export const gameState = {
     maxZadowolenieWidowni: 100,
     zadowolenieUpgradeLevel: 0,
     currentWaveNumber: 0,
-    gameOver: false, // Oznacza przegraną na danym poziomie, lub ukończenie całego aktu
+    gameOver: false, 
     waveInProgress: false,
     showingWaveIntro: false,
     waveIntroTimer: 0,
     waveIntroEnemies: [],
     currentLevelIndex: 0,
     unlockedLevels: 1,
-    levelProgress: {}, // np. { 0: 5 } oznacza, że poziom 0 jest ukończony do fali 5 włącznie
+    levelProgress: {}, 
     
     isPaused: false,
-    gameScreen: 'menu', // 'menu', 'playing', 'paused', 'levelComplete', 'levelLost'
+    gameScreen: 'menu', 
 
     enemies: [],
     towers: [],
     projectiles: [],
+    effects: [], // Dodano tablicę na efekty
 
     currentPath: [],
     currentTowerSpots: [],
@@ -32,10 +33,10 @@ export const gameState = {
     selectedTowerType: null,
     selectedTowerForUpgrade: null,
 
-    currentMessage: "", // Dla komunikatów wyświetlanych w panelu HTML
-    messageTimer: 0,    // Timer dla tych komunikatów (jeśli chcemy auto-ukrywanie)
+    autoStartNextWaveEnabled: true, // ZMIANA: Nowa flaga dla automatycznego startu fali
 
-    // uiRegions na canvasie nie są już potrzebne, bo UI jest w HTML
+    currentMessage: "", 
+    messageTimer: 0,    
 };
 
 export const images = {};

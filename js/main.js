@@ -308,6 +308,8 @@ function renderLevelSelection() {
 }
 
 function startGameLevel(levelIndex, startFromWave = 0) {
+    clearTimeout(autoStartTimerId); // Anuluj automatyczny start, jeśli gracz manualnie zaczyna poziom
+    state.autoStartNextWaveEnabled = true; // Można to też uzależnić od ustawień gracza
     GameLogic.setupLevel(levelIndex, startFromWave);
     showScreen('playing');
     if (animationFrameId === null) {
@@ -357,6 +359,10 @@ function initGame() {
 }
 
 let animationFrameId = null;
+// ZMIANA: Przeniesiono zmienne autoStart timera globalnie w module
+let autoStartTimerId = null;
+let autoStartCountdown = 0;
+
 
 function gameLoop() {
     if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits') {
@@ -431,11 +437,10 @@ function gameLoop() {
             }
         });
 
-        // Animacja efektów trafienia
         for (let i = state.effects.length - 1; i >= 0; i--) {
             const effect = state.effects[i];
             if (effect.isNew) { 
-                effect.isNew = false; // Uruchom animację tylko raz
+                effect.isNew = false; 
                 gsap.to(effect, { 
                     duration: (effect.durationFrames || 20) / 60, 
                     scale: effect.maxScale, 
@@ -449,7 +454,6 @@ function gameLoop() {
             }
         }
 
-        // ZMIANA: Dodano logowanie przed i wewnątrz onComplete animacji śmierci wroga
         for (let i = state.enemies.length - 1; i >= 0; i--) {
             const enemy = state.enemies[i];
             if (enemy.isDying && !enemy.isDeathAnimationStarted) { 
@@ -468,25 +472,7 @@ function gameLoop() {
                         } else {
                             console.warn(`[ANIM_DEATH_END] Nie znaleziono Enemy ID: ${enemy.id} do usunięcia po animacji.`);
                         }
-                        
-                        const activeEnemiesCount = state.enemies.reduce((count, e_loop) => (e_loop.isDying && e_loop.isDeathAnimationStarted) ? count : count + 1, 0);
-                        console.log(`[END_WAVE_CHECK] waveInProgress: ${state.waveInProgress}, activeEnemiesCount (po usunięciu tego): ${activeEnemiesCount}, currentWaveSpawnsLeft: ${state.currentWaveSpawnsLeft}`);
-                        
-                        if (state.waveInProgress && activeEnemiesCount === 0 && state.currentWaveSpawnsLeft === 0) {
-                            console.log("[END_WAVE_CHECK] Warunki końca fali SPEŁNIONE!");
-                            state.waveInProgress = false;
-                            state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
-                            Storage.saveGameProgress(state); 
-                            if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-                                console.log("[END_WAVE_CHECK] Koniec poziomu!");
-                                GameLogic.completeLevel();
-                            } else {
-                                console.log(`[END_WAVE_CHECK] Fala ${state.currentWaveNumber} pokonana!`);
-                                Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
-                            }
-                        } else {
-                            if (state.waveInProgress) console.log("[END_WAVE_CHECK] Warunki końca fali NIE spełnione.");
-                        }
+                        checkWaveCompletion(); 
                     }
                 });
             }
@@ -496,19 +482,25 @@ function gameLoop() {
         GameLogic.updateTowers(); 
         GameLogic.updateProjectiles();
 
-        if (!state.showingWaveIntro) GameLogic.handleWaveSpawning();
-        else if (state.waveIntroTimer <= 0 && !state.isPaused) GameLogic.startNextWaveActual();
+        if (!state.showingWaveIntro) {
+             GameLogic.handleWaveSpawning();
+             if (state.currentWaveSpawnsLeft === 0 && state.enemies.filter(e => !e.isDying).length === 0 && state.waveInProgress) {
+                 checkWaveCompletion();
+             }
+        } else if (state.waveIntroTimer <= 0 && !state.isPaused) {
+            GameLogic.startNextWaveActual();
+        }
         
         Drawing.drawBackgroundAndPath(ctx); 
         Drawing.drawTowerSpots(ctx);    
         renderGameObjectsSorted(); 
-        
         Drawing.drawProjectiles(ctx); 
         Drawing.drawEffects(ctx);     
         Drawing.drawUI(ctx);          
         Drawing.drawWaveIntro(ctx);   
 
-        updateUiStats(); updateTowerUpgradePanel();
+        updateUiStats(); 
+        updateTowerUpgradePanel();
         if (state.messageTimer > 0 && state.currentMessage) {
             showUiMessage(state.currentMessage);
             if (!state.isPaused && state.currentMessage !== "Pauza") state.messageTimer--;
@@ -530,6 +522,66 @@ function gameLoop() {
     }
 }
 
+function checkWaveCompletion() {
+    if (!state.waveInProgress) {
+        return;
+    }
+    const activeOrAnimatingEnemies = state.enemies.filter(e => !e.isDeathAnimationStarted || e.currentAlpha > 0);
+    console.log(`[CHECK_WAVE_COMPLETION] activeOrAnimatingEnemies: ${activeOrAnimatingEnemies.length}, spawnsLeft: ${state.currentWaveSpawnsLeft}`);
+
+    if (activeOrAnimatingEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
+        console.log("[CHECK_WAVE_COMPLETION] Warunki końca fali SPEŁNIONE!");
+        state.waveInProgress = false; 
+        state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
+        Storage.saveGameProgress(state); 
+        
+        if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
+            console.log("[CHECK_WAVE_COMPLETION] Koniec poziomu!");
+            GameLogic.completeLevel(); 
+        } else {
+            console.log(`[CHECK_WAVE_COMPLETION] Fala ${state.currentWaveNumber} pokonana!`);
+            Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna za chwilę...`, 180);
+            if (state.autoStartNextWaveEnabled) { 
+                prepareAutoStartNextWave(5); 
+            }
+        }
+        updateUiStats(); 
+    } else {
+        if (state.waveInProgress) console.log("[CHECK_WAVE_COMPLETION] Warunki końca fali NIE spełnione.");
+    }
+}
+
+function prepareAutoStartNextWave(seconds) {
+    if (state.gameOver || state.gameScreen !== 'playing' || state.isPaused || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
+        clearTimeout(autoStartTimerId); // Anuluj, jeśli warunki nie są spełnione
+        return; 
+    }
+    clearTimeout(autoStartTimerId); 
+    autoStartCountdown = seconds;
+    console.log(`Automatyczne rozpoczęcie następnej fali za ${autoStartCountdown}s...`);
+    Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65 * seconds + 100); // +100ms marginesu
+    
+    function countdownTick() {
+        if (state.isPaused || state.gameScreen !== 'playing' || state.waveInProgress || state.showingWaveIntro || state.gameOver) { 
+            console.log("Automatyczny start przerwany (pauza/zmiana ekranu/fala w toku/koniec gry).");
+            Utils.showMessage(state, ""); 
+            clearTimeout(autoStartTimerId);
+            return;
+        }
+        autoStartCountdown--;
+        Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65); // Aktualizuj co sekundę
+        if (autoStartCountdown > 0) {
+            autoStartTimerId = setTimeout(countdownTick, 1000);
+        } else {
+            Utils.showMessage(state, `Rozpoczynanie fali...`, 60);
+            GameLogic.prepareNextWave(); 
+            updateUiStats(); 
+        }
+    }
+    autoStartTimerId = setTimeout(countdownTick, 1000);
+}
+
+
 uiButtonBileter.addEventListener('click', () => {
     if (state.gameScreen === 'playing' && !state.isPaused) {
         state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null;
@@ -548,6 +600,8 @@ uiButtonUpgradeSatisfaction.addEventListener('click', () => {
     }
 });
 uiButtonStartWave.addEventListener('click', () => {
+    clearTimeout(autoStartTimerId); // Anuluj automatyczny start, jeśli gracz kliknie manualnie
+    Utils.showMessage(state, ""); // Wyczyść komunikat odliczania
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
         GameLogic.prepareNextWave(); updateUiStats();
     }
@@ -584,6 +638,7 @@ resumeButton.addEventListener('click', () => {
 });
 
 function goToMainMenu() {
+    clearTimeout(autoStartTimerId); // Anuluj auto-start przy powrocie do menu
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
     showScreen('menu'); 
@@ -604,6 +659,8 @@ newGameButtonFromMenu.addEventListener('click', async () => {
     );
 
     if (confirmed) {
+        clearTimeout(autoStartTimerId); 
+        state.autoStartNextWaveEnabled = true; 
         state.unlockedLevels = 1;
         state.levelProgress = {};
         Storage.saveGameProgress(state);

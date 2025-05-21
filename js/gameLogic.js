@@ -95,14 +95,12 @@ export function updateEnemies() {
                 endGame(false); 
             }
             
-            // ZMIANA: Oznacz wroga do animacji zniknięcia, zamiast usuwać go od razu
             if (!enemy.isDying) {
                 console.log(`[BASE_REACHED] Wróg ${enemy.id} dotarł do bazy. Oznaczanie do animacji śmierci.`);
                 enemy.isDying = true; 
                 enemy.hp = 0; 
                 enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
                 enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
-                // Flaga isDeathAnimationStarted zostanie ustawiona w main.js
             }
         }
     }
@@ -271,16 +269,14 @@ export function updateProjectiles() {
 }
 
 export function handleEnemyDefeated(enemy) { 
-    if (!enemy.isDying) { // Tylko jeśli wróg nie jest już oznaczony jako umierający (np. przez dotarcie do bazy)
+    if (!enemy.isDying) { 
         state.aplauz += (enemy.reward * enemy.level);
-        console.log(`[HANDLE_DEFEAT] Wróg ${enemy.id} pokonany przez wieżę. Oznaczanie isDying.`);
+        // console.log(`[HANDLE_DEFEAT] Wróg ${enemy.id} pokonany przez wieżę. Oznaczanie isDying.`);
         enemy.isDying = true;
         enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
         enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
     } else {
-        // Jeśli wróg już był oznaczony jako isDying (np. dotarł do bazy i tam hp spadło do 0, albo był już trafiony śmiertelnie)
-        // nie rób nic dodatkowego, po prostu pozwól animacji w main.js się dokończyć.
-        console.log(`[HANDLE_DEFEAT_SKIP] Wróg ${enemy.id} był już oznaczony jako isDying.`);
+        // console.log(`[HANDLE_DEFEAT_SKIP] Wróg ${enemy.id} był już oznaczony jako isDying.`);
     }
 }
 
