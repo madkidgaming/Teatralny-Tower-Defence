@@ -2,14 +2,15 @@ export const TILE_SIZE = 40;
 export const ROWS = 12;
 export const COLS = 20;
 
-export const UI_FONT_LARGE = "bold 18px Arial";
-export const UI_FONT_MEDIUM = "bold 15px Arial";
-export const UI_FONT_SMALL = "13px Arial";
-export const UI_FONT_TINY = `bold 11px Arial`;
+// ZMIANA: Zmniejszono rozmiary czcionek UI
+export const UI_FONT_LARGE = "bold 16px Arial";     // Było: "bold 18px Arial"
+export const UI_FONT_MEDIUM = "bold 13px Arial";    // Było: "bold 15px Arial"
+export const UI_FONT_SMALL = "12px Arial";          // Było: "13px Arial"
+export const UI_FONT_TINY = `bold 10px Arial`;      // Było: `bold 11px Arial`
 
-export const UI_BUTTON_HEIGHT = 55;
-export const UI_BUTTON_WIDTH = 140;
-export const UI_PADDING = 10;
+export const UI_BUTTON_HEIGHT = 55; // Ta stała nie jest chyba nigdzie używana w JS do rysowania, tylko CSS
+export const UI_BUTTON_WIDTH = 140; // Ta stała nie jest chyba nigdzie używana w JS do rysowania, tylko CSS
+export const UI_PADDING = 10;       // Ta stała nie jest chyba nigdzie używana w JS do rysowania, tylko CSS
 
 export const WAVES_PER_LEVEL = 10;
 export const MAX_ZADOWOLENIE_UPGRADE_LEVEL = 5;
