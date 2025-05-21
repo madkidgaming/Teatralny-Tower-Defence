@@ -13,6 +13,7 @@ const pageTitle = document.getElementById('pageTitle');
 const gameLayout = document.getElementById('gameLayout');
 const mainMenuScreen = document.getElementById('mainMenu');
 const levelSelectionContainer = document.getElementById('levelSelection');
+const newGameButton = document.getElementById('newGameButton'); // ZMIANA: Dodano odniesienie do przycisku
 const pauseMenuScreen = document.getElementById('pauseMenu');
 
 const uiCurrentAct = document.getElementById('uiCurrentAct');
@@ -146,6 +147,18 @@ function showScreen(screenName) {
         mainMenuScreen.classList.add('visible');
         pageTitle.textContent = "Teatr Tower Defense";
         renderLevelSelection();
+        // ZMIANA: Uaktualnienie komunikatu o zapisie przy wyświetlaniu menu
+        const saveStatusEl = document.getElementById('saveStatus');
+        if (saveStatusEl) {
+            // Tekst jest zarządzany głównie przez saveGameProgress i loadGameProgress,
+            // ale tutaj możemy ustawić domyślny, jeśli nic innego go nie nadpisało.
+            // Jeśli ostatni komunikat to był błąd lub info o nowej grze, nie nadpisujemy go od razu.
+            if (!saveStatusEl.textContent.toLowerCase().includes("błąd") && 
+                !saveStatusEl.textContent.toLowerCase().includes("nowa gra") &&
+                !saveStatusEl.textContent.toLowerCase().includes("wyczyszczony")) {
+                 saveStatusEl.textContent = "Postęp gry jest zapisywany automatycznie.";
+            }
+        }
     } else if (screenName === 'playing') {
         gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
@@ -363,6 +376,34 @@ function goToMainMenu() {
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
 menuFromPauseButton.addEventListener('click', goToMainMenu);
+
+// ZMIANA: Dodano Event Listener dla przycisku Nowa Gra
+newGameButton.addEventListener('click', () => {
+    if (confirm("Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.")) {
+        // Resetowanie stanu gry
+        state.unlockedLevels = 1;
+        state.levelProgress = {}; // Resetuje postęp dla wszystkich poziomów
+
+        // Zapisanie zresetowanego stanu
+        Storage.saveGameProgress(state); // Ta funkcja powinna też aktualizować saveStatusEl
+
+        // Odświeżenie widoku wyboru poziomów, aby pokazać zresetowany stan
+        renderLevelSelection();
+
+        // Informacja dla gracza przez system komunikatów (jeśli chcemy na canvasie/globalnie)
+        // Utils.showMessage(state, "Rozpoczęto nową grę. Wybierz Akt 1.", 180);
+        // lub bezpośrednio w panelu HTML, jeśli jest widoczny
+        // showUiMessage("Rozpoczęto nową grę. Wybierz Akt 1.");
+        
+        // Ustawienie komunikatu w menu głównym
+        const saveStatusEl = document.getElementById('saveStatus');
+        if (saveStatusEl) {
+            saveStatusEl.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
+        }
+        
+        console.log("Nowa gra rozpoczęta. Stan zresetowany:", state.unlockedLevels, state.levelProgress);
+    }
+});
 
 canvas.addEventListener('click', (event) => {
     if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') return;
