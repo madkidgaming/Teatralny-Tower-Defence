@@ -49,7 +49,7 @@ export function spawnEnemy(type, level = 1) {
     const baseStats = C.baseEnemyStats[type];
     const img = images[baseStats.imageKey];
     state.enemies.push({
-        id: Date.now() + Math.random().toString(36).substring(2, 7) + '_enemy', // ZMIANA: Dodano unikalne ID
+        id: Date.now() + Math.random().toString(36).substring(2, 7) + '_enemy', 
         type: type, level: level, 
         x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2,
         y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
@@ -66,12 +66,12 @@ export function updateEnemies() {
     for (let i = state.enemies.length - 1; i >= 0; i--) {
         const enemy = state.enemies[i];
 
-        if (enemy.isDying) { // Jeśli wróg jest w trakcie animacji śmierci, pomiń jego logikę
+        if (enemy.isDying) { 
             continue;
         }
 
         if (enemy.hp <= 0 && !enemy.isDying) { 
-            handleEnemyDefeated(enemy);
+            handleEnemyDefeated(enemy); 
             continue; 
         }
 
@@ -88,13 +88,21 @@ export function updateEnemies() {
                 enemy.x += (dx / distance) * enemy.speed;
                 enemy.y += (dy / distance) * enemy.speed;
             }
-        } else {
-            if (!enemy.isDying) { // Upewnij się, że nie usuwasz wroga, który już jest oznaczony jako umierający
-                state.zadowolenieWidowni--; 
-                state.enemies.splice(i, 1); 
-                if (state.zadowolenieWidowni <= 0) {
-                    state.zadowolenieWidowni = 0; endGame(false);
-                }
+        } else { // Wróg dotarł do końca
+            state.zadowolenieWidowni--; 
+            if (state.zadowolenieWidowni <= 0) {
+                state.zadowolenieWidowni = 0; 
+                endGame(false); 
+            }
+            
+            // ZMIANA: Oznacz wroga do animacji zniknięcia, zamiast usuwać go od razu
+            if (!enemy.isDying) {
+                console.log(`[BASE_REACHED] Wróg ${enemy.id} dotarł do bazy. Oznaczanie do animacji śmierci.`);
+                enemy.isDying = true; 
+                enemy.hp = 0; 
+                enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
+                enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
+                // Flaga isDeathAnimationStarted zostanie ustawiona w main.js
             }
         }
     }
@@ -116,7 +124,7 @@ export function buildTower(spotXGrid, spotYGrid, type) {
         state.aplauz -= definition.cost; spot.occupied = true;
         
         const newTower = { 
-            id: Date.now() + Math.random().toString(36).substring(2, 7) + '_tower', // ZMIANA: Dodano unikalne ID
+            id: Date.now() + Math.random().toString(36).substring(2, 7) + '_tower', 
             xGrid: spotXGrid, yGrid: spotYGrid,
             x: spotXGrid * C.TILE_SIZE + C.TILE_SIZE / 2, y: spotYGrid * C.TILE_SIZE + C.TILE_SIZE / 2, 
             type: type, definition: definition, damageLevel: 0, fireRateLevel: 0, 
@@ -239,16 +247,16 @@ export function updateProjectiles() {
         if (distance < p.speed) {
             p.target.hp -= p.damage; 
             state.projectiles.splice(i, 1);
-            // Dodanie efektu trafienia
+            
             const hitEffect = { 
                 x: p.target.x, 
                 y: p.target.y, 
                 scale: 0,
                 alpha: 1, 
-                durationFrames: 20, // Czas trwania w klatkach (ok. 0.33s przy 60fps)
+                durationFrames: 20, 
                 maxScale: C.TILE_SIZE * 0.25,
                 color: p.type === 'laser' ? 'rgba(255,255,100,0.9)' : 'rgba(220,220,220,0.8)',
-                isNew: true // Flaga dla main.js do uruchomienia animacji GSAP
+                isNew: true 
             };
             state.effects.push(hitEffect); 
 
@@ -263,13 +271,16 @@ export function updateProjectiles() {
 }
 
 export function handleEnemyDefeated(enemy) { 
-    state.aplauz += (enemy.reward * enemy.level);
-    
-    if (!enemy.isDying) { 
-        // console.log(`[HANDLE_DEFEAT] Oznaczanie wroga ${enemy.id} jako isDying.`); // Logowanie przeniesione do main.js lub usunięte dla czystości
+    if (!enemy.isDying) { // Tylko jeśli wróg nie jest już oznaczony jako umierający (np. przez dotarcie do bazy)
+        state.aplauz += (enemy.reward * enemy.level);
+        console.log(`[HANDLE_DEFEAT] Wróg ${enemy.id} pokonany przez wieżę. Oznaczanie isDying.`);
         enemy.isDying = true;
         enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
         enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
+    } else {
+        // Jeśli wróg już był oznaczony jako isDying (np. dotarł do bazy i tam hp spadło do 0, albo był już trafiony śmiertelnie)
+        // nie rób nic dodatkowego, po prostu pozwól animacji w main.js się dokończyć.
+        console.log(`[HANDLE_DEFEAT_SKIP] Wróg ${enemy.id} był już oznaczony jako isDying.`);
     }
 }
 
@@ -334,7 +345,7 @@ export function handleWaveSpawning() {
                 const bossBaseStats = C.baseEnemyStats[enemyToSpawnData.type];
                 const bossImg = images[bossBaseStats.imageKey];
                 const newBoss = {
-                    id: Date.now() + Math.random().toString(36).substring(2, 7) + '_boss', // ZMIANA: Dodano unikalne ID
+                    id: Date.now() + Math.random().toString(36).substring(2, 7) + '_boss', 
                     type: enemyToSpawnData.type, level: enemyToSpawnData.level,
                     x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2, y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
                     hp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier,
