@@ -12,14 +12,13 @@ const ctx = canvas.getContext('2d');
 const pageTitle = document.getElementById('pageTitle');
 const gameLayout = document.getElementById('gameLayout');
 
-// ZMIANA: Odniesienia do nowych elementów menu i ekranów
 const mainMenuScreen = document.getElementById('mainMenu');
 const levelSelectionScreen = document.getElementById('levelSelectionScreen');
 const creditsScreen = document.getElementById('creditsScreen');
-const levelSelectionContainer = document.getElementById('levelSelectionContainer'); // Wcześniej osobna stała
+const levelSelectionContainer = document.getElementById('levelSelectionContainer');
 
 const continueGameButton = document.getElementById('continueGameButton');
-const newGameButtonFromMenu = document.getElementById('newGameButtonFromMenu'); // Zmienione ID
+const newGameButtonFromMenu = document.getElementById('newGameButtonFromMenu');
 const levelSelectButton = document.getElementById('levelSelectButton');
 const creditsButton = document.getElementById('creditsButton');
 const backToMainMenuFromLevelSelection = document.getElementById('backToMainMenuFromLevelSelection');
@@ -28,8 +27,19 @@ const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCre
 const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
 const saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
 
-
 const pauseMenuScreen = document.getElementById('pauseMenu');
+
+// ZMIANA: Odniesienia do elementów niestandardowego dialogu
+const customConfirmOverlay = document.getElementById('customConfirmOverlay');
+const customConfirmBox = document.getElementById('customConfirmBox');
+const customConfirmTitle = document.getElementById('customConfirmTitle');
+const customConfirmMessage = document.getElementById('customConfirmMessage');
+const customConfirmOkButton = document.getElementById('customConfirmOkButton');
+const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
+
+// ZMIANA: Zmienne do zarządzania Promise dla niestandardowego dialogu
+let confirmResolve = null;
+
 
 const uiCurrentAct = document.getElementById('uiCurrentAct');
 const uiCurrentWave = document.getElementById('uiCurrentWave');
@@ -50,6 +60,64 @@ const pauseButton = document.getElementById('pauseButton');
 const resumeButton = document.getElementById('resumeButton');
 const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame');
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
+
+
+// ZMIANA: Funkcja do pokazywania niestandardowego potwierdzenia
+function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
+    return new Promise((resolve) => {
+        confirmResolve = resolve; // Zapisujemy funkcję resolve
+        customConfirmTitle.textContent = title;
+        customConfirmMessage.textContent = message;
+        customConfirmOverlay.classList.remove('hidden');
+        customConfirmOverlay.classList.add('visible'); // Użyj tej klasy do animacji pojawienia się
+        // Ustaw fokus na przycisk OK dla lepszej dostępności (opcjonalnie)
+        // customConfirmOkButton.focus(); 
+    });
+}
+
+// ZMIANA: Funkcja do ukrywania niestandardowego potwierdzenia
+function hideCustomConfirm() {
+    customConfirmOverlay.classList.remove('visible');
+    // Można dodać opóźnienie dla animacji zniknięcia przed dodaniem 'hidden'
+    setTimeout(() => {
+        customConfirmOverlay.classList.add('hidden');
+    }, 300); // Czas musi pasować do transition w CSS
+    confirmResolve = null; // Czyścimy resolve
+}
+
+// ZMIANA: Event listenery dla przycisków niestandardowego dialogu
+customConfirmOkButton.addEventListener('click', () => {
+    if (confirmResolve) {
+        confirmResolve(true); // Użytkownik kliknął OK
+    }
+    hideCustomConfirm();
+});
+
+customConfirmCancelButton.addEventListener('click', () => {
+    if (confirmResolve) {
+        confirmResolve(false); // Użytkownik kliknął Anuluj
+    }
+    hideCustomConfirm();
+});
+
+// Można też dodać obsługę klawisza Escape do anulowania
+customConfirmOverlay.addEventListener('click', (event) => {
+    if (event.target === customConfirmOverlay) { // Kliknięcie na tło (overlay)
+        if (confirmResolve) {
+            confirmResolve(false);
+        }
+        hideCustomConfirm();
+    }
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && customConfirmOverlay.classList.contains('visible')) {
+        if (confirmResolve) {
+            confirmResolve(false);
+        }
+        hideCustomConfirm();
+    }
+});
+
 
 function updateUiStats() {
     if (!C.levelData[state.currentLevelIndex] && state.gameScreen !== 'menu' && state.gameScreen !== 'levelSelection' && state.gameScreen !== 'credits') {
@@ -148,9 +216,7 @@ function updateSelectedTowerButtonUI() {
     }
 }
 
-// ZMIANA: Zmodyfikowana funkcja showScreen
 function showScreen(screenName) {
-    // Ukryj wszystkie główne ekrany/layouty
     mainMenuScreen.classList.add('hidden');
     mainMenuScreen.classList.remove('visible');
     levelSelectionScreen.classList.add('hidden');
@@ -162,13 +228,11 @@ function showScreen(screenName) {
     pauseMenuScreen.classList.add('hidden');
     pauseMenuScreen.classList.remove('visible');
 
-    // Ustawienia wspólne dla wszystkich ekranów menu
     if (['menu', 'levelSelection', 'credits'].includes(screenName)) {
         pageTitle.textContent = "Teatr Tower Defense";
-        // Aktualizacja statusu zapisu
         const currentSaveStatusEl = screenName === 'menu' ? saveStatusMainMenu :
                                  screenName === 'levelSelection' ? saveStatusLevelSelection :
-                                 null; // creditsScreen nie ma saveStatus
+                                 null; 
 
         if (currentSaveStatusEl) {
             if (!currentSaveStatusEl.textContent.toLowerCase().includes("błąd") &&
@@ -179,15 +243,14 @@ function showScreen(screenName) {
         }
     }
 
-
     if (screenName === 'menu') {
         mainMenuScreen.classList.remove('hidden');
         mainMenuScreen.classList.add('visible');
-        updateContinueButtonState(); // Zaktualizuj stan przycisku "Kontynuuj"
+        updateContinueButtonState(); 
     } else if (screenName === 'levelSelection') {
         levelSelectionScreen.classList.remove('hidden');
         levelSelectionScreen.classList.add('visible');
-        renderLevelSelection(); // Renderuj listę poziomów
+        renderLevelSelection(); 
     } else if (screenName === 'credits') {
         creditsScreen.classList.remove('hidden');
         creditsScreen.classList.add('visible');
@@ -217,9 +280,8 @@ function showScreen(screenName) {
     state.gameScreen = screenName;
 }
 
-// ZMIANA: renderLevelSelection teraz renderuje do nowego kontenera
 function renderLevelSelection() {
-    levelSelectionContainer.innerHTML = ''; // Używamy nowego kontenera
+    levelSelectionContainer.innerHTML = ''; 
     if (!C.levelData) {
         console.error("C.levelData is not defined in renderLevelSelection");
         return;
@@ -264,11 +326,7 @@ function startGameLevel(levelIndex, startFromWave = 0) {
     }
 }
 
-// ZMIANA: Logika dla przycisku Kontynuuj
 function updateContinueButtonState() {
-    // Prosta logika: Kontynuuj jest aktywne, jeśli jest jakikolwiek zapisany postęp
-    // (czyli localStorage nie jest pusty lub `state.unlockedLevels > 1` lub `Object.keys(state.levelProgress).length > 0`)
-    // Dla uproszczenia, sprawdzimy, czy `levelProgress` nie jest pusty LUB odblokowano więcej niż 1 poziom
     const hasProgress = state.unlockedLevels > 1 || Object.keys(state.levelProgress).length > 0;
     if (hasProgress) {
         continueGameButton.classList.remove('disabled');
@@ -280,7 +338,7 @@ function updateContinueButtonState() {
 }
 
 function preloadImagesAndStart() {
-    Storage.loadGameProgress(state); // Ładuje zapisany stan gry
+    Storage.loadGameProgress(state); 
     setTotalImagesToLoad(Object.keys(C.imageSources).length);
 
     for (const key in C.imageSources) {
@@ -306,13 +364,12 @@ function preloadImagesAndStart() {
 function initGame() {
     canvas.width = C.COLS * C.TILE_SIZE;
     canvas.height = C.ROWS * C.TILE_SIZE;
-    showScreen('menu'); // Zaczynamy od nowego menu głównego
+    showScreen('menu'); 
 }
 
 let animationFrameId = null;
 
 function gameLoop() {
-    // ZMIANA: Dostosowanie warunków gameLoop do nowych ekranów menu
     if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits') {
         animationFrameId = null; return;
     }
@@ -421,28 +478,28 @@ resumeButton.addEventListener('click', () => {
     }
 });
 
-// ZMIANA: Zmodyfikowana funkcja goToMainMenu
 function goToMainMenu() {
     state.isPaused = false; state.gameOver = false;
     state.selectedTowerType = null; state.selectedTowerForUpgrade = null;
-    // updateSelectedTowerButtonUI(); // Niepotrzebne, bo UI gry jest ukrywane
-    // updateTowerUpgradePanel(); // Niepotrzebne
-    showScreen('menu'); // Pokazuje nowe menu główne
+    showScreen('menu'); 
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
 menuFromPauseButton.addEventListener('click', goToMainMenu);
 
-// ZMIANA: Nowe event listenery dla przycisków menu
 continueGameButton.addEventListener('click', () => {
     if (!continueGameButton.disabled) {
-        // Logika kontynuacji: na razie po prostu przechodzi do wyboru poziomu
-        // W przyszłości można tu dodać logikę wczytania ostatnio granego, niedokończonego poziomu
         showScreen('levelSelection');
     }
 });
 
-newGameButtonFromMenu.addEventListener('click', () => {
-    if (confirm("Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.")) {
+// ZMIANA: Zmodyfikowany listener dla przycisku Nowa Gra
+newGameButtonFromMenu.addEventListener('click', async () => { // Dodano async
+    const confirmed = await showCustomConfirm( // Używamy await dla niestandardowego dialogu
+        "Rozpocząć Nową Grę?",
+        "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony."
+    );
+
+    if (confirmed) {
         state.unlockedLevels = 1;
         state.levelProgress = {};
         Storage.saveGameProgress(state);
@@ -450,15 +507,13 @@ newGameButtonFromMenu.addEventListener('click', () => {
         if (saveStatusMainMenu) {
             saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
         }
-        if (saveStatusLevelSelection && levelSelectionScreen.classList.contains('visible')) {
-            saveStatusLevelSelection.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
-        }
-
-        updateContinueButtonState(); // Zaktualizuj stan przycisku "Kontynuuj"
-        if (levelSelectionScreen.classList.contains('visible')) {
-            renderLevelSelection(); // Jeśli ekran wyboru poziomu był widoczny, odśwież go
-        }
+        // Nie ma potrzeby aktualizować saveStatusLevelSelection tutaj, bo nie jesteśmy na tym ekranie
+        
+        updateContinueButtonState();
         console.log("Nowa gra rozpoczęta. Stan zresetowany:", state.unlockedLevels, state.levelProgress);
+        
+        // Automatyczne rozpoczęcie pierwszego poziomu
+        startGameLevel(0, 0); // Akt 1 (index 0), Fala 0
     }
 });
 

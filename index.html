@@ -82,7 +82,6 @@
         <p id="saveStatusLevelSelection" style="margin-top: 20px;">Postęp gry jest zapisywany automatycznie.</p>
     </div>
 
-    <!-- ZMIANA: Zaktualizowana sekcja Autorzy -->
     <div id="creditsScreen" class="menu-screen hidden">
         <h2>Autorzy</h2>
         <p><strong>Koncepcja, programowanie, grafika oraz projekt gry:</strong></p>
@@ -102,6 +101,18 @@
         <h2>Pauza</h2>
         <button id="resumeButton" class="ui-button">Wznów</button>
         <button id="menuFromPauseButton" class="ui-button">Menu Główne</button>
+    </div>
+
+    <!-- ZMIANA: Struktura HTML dla niestandardowego okna dialogowego -->
+    <div id="customConfirmOverlay" class="custom-modal-overlay hidden">
+        <div id="customConfirmBox" class="custom-modal-box">
+            <h3 id="customConfirmTitle">Potwierdzenie</h3>
+            <p id="customConfirmMessage">Czy na pewno chcesz wykonać tę akcję?</p>
+            <div class="custom-modal-buttons">
+                <button id="customConfirmOkButton" class="ui-button">OK</button>
+                <button id="customConfirmCancelButton" class="ui-button cancel">Anuluj</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/main.js"></script>
