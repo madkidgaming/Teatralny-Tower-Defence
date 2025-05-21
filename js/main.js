@@ -4,7 +4,7 @@ import { gameState as state, images, incrementImagesLoadedCount, imagesLoadedCou
 import * as Storage from './storage.js';
 import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
-import * as GameLogic from './gameLogic.js';
+import * as GameLogic from './gameLogic.js'; // GameLogic jest już importowane
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -29,17 +29,13 @@ const saveStatusLevelSelection = document.getElementById('saveStatusLevelSelecti
 
 const pauseMenuScreen = document.getElementById('pauseMenu');
 
-// ZMIANA: Odniesienia do elementów niestandardowego dialogu
 const customConfirmOverlay = document.getElementById('customConfirmOverlay');
-const customConfirmBox = document.getElementById('customConfirmBox');
 const customConfirmTitle = document.getElementById('customConfirmTitle');
 const customConfirmMessage = document.getElementById('customConfirmMessage');
 const customConfirmOkButton = document.getElementById('customConfirmOkButton');
 const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
 
-// ZMIANA: Zmienne do zarządzania Promise dla niestandardowego dialogu
 let confirmResolve = null;
-
 
 const uiCurrentAct = document.getElementById('uiCurrentAct');
 const uiCurrentWave = document.getElementById('uiCurrentWave');
@@ -62,47 +58,40 @@ const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame')
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 
 
-// ZMIANA: Funkcja do pokazywania niestandardowego potwierdzenia
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
     return new Promise((resolve) => {
-        confirmResolve = resolve; // Zapisujemy funkcję resolve
+        confirmResolve = resolve; 
         customConfirmTitle.textContent = title;
         customConfirmMessage.textContent = message;
         customConfirmOverlay.classList.remove('hidden');
-        customConfirmOverlay.classList.add('visible'); // Użyj tej klasy do animacji pojawienia się
-        // Ustaw fokus na przycisk OK dla lepszej dostępności (opcjonalnie)
-        // customConfirmOkButton.focus(); 
+        customConfirmOverlay.classList.add('visible'); 
     });
 }
 
-// ZMIANA: Funkcja do ukrywania niestandardowego potwierdzenia
 function hideCustomConfirm() {
     customConfirmOverlay.classList.remove('visible');
-    // Można dodać opóźnienie dla animacji zniknięcia przed dodaniem 'hidden'
     setTimeout(() => {
         customConfirmOverlay.classList.add('hidden');
-    }, 300); // Czas musi pasować do transition w CSS
-    confirmResolve = null; // Czyścimy resolve
+    }, 300); 
+    confirmResolve = null; 
 }
 
-// ZMIANA: Event listenery dla przycisków niestandardowego dialogu
 customConfirmOkButton.addEventListener('click', () => {
     if (confirmResolve) {
-        confirmResolve(true); // Użytkownik kliknął OK
+        confirmResolve(true); 
     }
     hideCustomConfirm();
 });
 
 customConfirmCancelButton.addEventListener('click', () => {
     if (confirmResolve) {
-        confirmResolve(false); // Użytkownik kliknął Anuluj
+        confirmResolve(false); 
     }
     hideCustomConfirm();
 });
 
-// Można też dodać obsługę klawisza Escape do anulowania
 customConfirmOverlay.addEventListener('click', (event) => {
-    if (event.target === customConfirmOverlay) { // Kliknięcie na tło (overlay)
+    if (event.target === customConfirmOverlay) { 
         if (confirmResolve) {
             confirmResolve(false);
         }
@@ -376,7 +365,7 @@ function gameLoop() {
     
     if (state.isPaused && state.gameScreen === 'paused') {
         Drawing.drawBackgroundAndPath(ctx); Drawing.drawTheaterBase(ctx); Drawing.drawTowerSpots(ctx);
-        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx);
+        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx); Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx); Drawing.drawWaveIntro(ctx);
         showUiMessage(state.currentMessage || "Pauza");
         animationFrameId = requestAnimationFrame(gameLoop); return;
@@ -384,7 +373,7 @@ function gameLoop() {
 
     if (state.gameScreen === 'levelComplete' || state.gameScreen === 'levelLost') {
         Drawing.drawBackgroundAndPath(ctx); Drawing.drawTheaterBase(ctx); Drawing.drawTowerSpots(ctx);
-        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx);
+        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx); Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx);
         showUiMessage(state.currentMessage); updateUiStats();
         animationFrameId = requestAnimationFrame(gameLoop); return;
@@ -394,13 +383,69 @@ function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         Drawing.drawBackgroundAndPath(ctx); Drawing.drawTheaterBase(ctx); Drawing.drawTowerSpots(ctx);
 
-        GameLogic.updateEnemies(); GameLogic.updateTowers(); GameLogic.updateProjectiles();
+        // ZMIANA: Logika animacji przed rysowaniem obiektów
+        state.towers.forEach(tower => {
+            if (tower.isAnimatingIn) {
+                tower.isAnimatingIn = false; 
+                gsap.to(tower, {
+                    duration: 0.6,
+                    currentScale: 1,
+                    currentAlpha: 1,
+                    currentRotation: 0,
+                    ease: "back.out(1.7)",
+                    onComplete: () => {
+                        // delete tower.currentScale; // Opcjonalne czyszczenie
+                        // delete tower.currentAlpha;
+                        // delete tower.currentRotation;
+                    }
+                });
+            }
+        });
+
+        for (let i = state.enemies.length - 1; i >= 0; i--) {
+            const enemy = state.enemies[i];
+            if (enemy.isDying && !enemy.isDeathAnimationStarted) { 
+                enemy.isDeathAnimationStarted = true;
+                gsap.to(enemy, {
+                    duration: 0.5,
+                    currentAlpha: 0,
+                    currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3,
+                    ease: "power2.in",
+                    onComplete: () => {
+                        const index = state.enemies.indexOf(enemy);
+                        if (index > -1) {
+                            state.enemies.splice(index, 1);
+                        }
+                        // Sprawdzenie warunków końca fali/poziomu PO usunięciu
+                        if (state.waveInProgress && state.enemies.filter(e => !e.isDying || e.isDeathAnimationStarted === false).length === 0 && state.currentWaveSpawnsLeft === 0) {
+                            state.waveInProgress = false;
+                            state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
+                            Storage.saveGameProgress(state); 
+                            if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
+                                GameLogic.completeLevel(); 
+                            } else {
+                                Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        // Koniec logiki animacji
+
+        GameLogic.updateEnemies(); 
+        GameLogic.updateTowers(); 
+        GameLogic.updateProjectiles();
 
         if (!state.showingWaveIntro) { GameLogic.handleWaveSpawning(); } 
         else { if (state.waveIntroTimer <= 0 && !state.isPaused) GameLogic.startNextWaveActual(); }
         
-        Drawing.drawEnemies(ctx); Drawing.drawTowers(ctx); Drawing.drawProjectiles(ctx);
-        Drawing.drawUI(ctx); Drawing.drawWaveIntro(ctx);
+        Drawing.drawEnemies(ctx);    
+        Drawing.drawTowers(ctx);     
+        Drawing.drawProjectiles(ctx);
+        Drawing.drawEffects(ctx); // Dodano rysowanie efektów
+        Drawing.drawUI(ctx); 
+        Drawing.drawWaveIntro(ctx);
 
         updateUiStats(); updateTowerUpgradePanel();
         if (state.messageTimer > 0 && state.currentMessage) {
@@ -460,8 +505,7 @@ uiButtonUpgradeFireRate.addEventListener('click', () => {
 });
 uiButtonSellTower.addEventListener('click', () => {
     if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.sellTower(state.selectedTowerForUpgrade);
-        state.selectedTowerForUpgrade = null;
+        GameLogic.sellTower(state.selectedTowerForUpgrade); // sellTower teraz odznacza wieżę
         updateTowerUpgradePanel(); updateUiStats();
     }
 });
@@ -492,9 +536,8 @@ continueGameButton.addEventListener('click', () => {
     }
 });
 
-// ZMIANA: Zmodyfikowany listener dla przycisku Nowa Gra
-newGameButtonFromMenu.addEventListener('click', async () => { // Dodano async
-    const confirmed = await showCustomConfirm( // Używamy await dla niestandardowego dialogu
+newGameButtonFromMenu.addEventListener('click', async () => { 
+    const confirmed = await showCustomConfirm( 
         "Rozpocząć Nową Grę?",
         "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony."
     );
@@ -507,13 +550,11 @@ newGameButtonFromMenu.addEventListener('click', async () => { // Dodano async
         if (saveStatusMainMenu) {
             saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
         }
-        // Nie ma potrzeby aktualizować saveStatusLevelSelection tutaj, bo nie jesteśmy na tym ekranie
         
         updateContinueButtonState();
         console.log("Nowa gra rozpoczęta. Stan zresetowany:", state.unlockedLevels, state.levelProgress);
         
-        // Automatyczne rozpoczęcie pierwszego poziomu
-        startGameLevel(0, 0); // Akt 1 (index 0), Fala 0
+        startGameLevel(0, 0); 
     }
 });
 
@@ -552,9 +593,10 @@ canvas.addEventListener('click', (event) => {
                 if (spot.occupied) Utils.showMessage(state, "To miejsce jest już zajęte!", 120);
                 else if (!GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) { /* buildTower już pokazuje wiadomość */ }
             } else Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
-            showUiMessage(state.currentMessage); return;
+            // showUiMessage(state.currentMessage); // showMessage w buildTower/Utils już to robi
+            return; // Zmieniono, aby nie było podwójnego return
         }
-        if (!clickedTower && !state.selectedTowerType) {
+        if (!clickedTower && !state.selectedTowerType) { // Jeśli kliknięto puste miejsce i nie wybrano wieży
             state.selectedTowerForUpgrade = null; updateTowerUpgradePanel();
         }
     }

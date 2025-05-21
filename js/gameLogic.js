@@ -25,6 +25,8 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.enemies.length = 0;
     state.towers.length = 0;
     state.projectiles.length = 0;
+    state.effects = state.effects || []; // Upewnij się, że tablica efektów istnieje
+    state.effects.length = 0;
     state.gameOver = false;
     state.waveInProgress = false;
     state.showingWaveIntro = false;
@@ -53,13 +55,27 @@ export function spawnEnemy(type, level = 1) {
         hp: baseStats.baseHp * level, maxHp: baseStats.baseHp * level,
         speed: baseStats.speed * (1 - (level - 1) * 0.05), pathIndex: 0,
         image: img, width: baseStats.width, height: baseStats.height,
-        reward: baseStats.aplauzReward 
+        reward: baseStats.aplauzReward,
+        isDying: false, // Dodajemy flagę
+        isDeathAnimationStarted: false // Dodajemy flagę
     });
 }
 
 export function updateEnemies() {
     for (let i = state.enemies.length - 1; i >= 0; i--) {
         const enemy = state.enemies[i];
+
+        // Jeśli wróg jest w trakcie animacji śmierci, nie aktualizuj jego logiki (np. ruchu)
+        if (enemy.isDying) {
+            continue;
+        }
+
+        if (enemy.hp <= 0 && !enemy.isDying) { // ZMIANA: Sprawdzamy też !isDying
+            handleEnemyDefeated(enemy);
+            // Nie usuwamy go tutaj, animacja to zrobi
+            continue; // Przejdź do następnego wroga
+        }
+
         if (enemy.pathIndex < state.currentPath.length - 1) {
             const targetNode = state.currentPath[enemy.pathIndex + 1];
             const targetX = targetNode.x * C.TILE_SIZE + C.TILE_SIZE / 2;
@@ -74,9 +90,13 @@ export function updateEnemies() {
                 enemy.y += (dy / distance) * enemy.speed;
             }
         } else {
-            state.zadowolenieWidowni--; state.enemies.splice(i, 1);
-            if (state.zadowolenieWidowni <= 0) {
-                state.zadowolenieWidowni = 0; endGame(false);
+            // Wróg dotarł do końca, ale nie usuwaj go jeśli już umiera (choć to mało prawdopodobne)
+            if (!enemy.isDying) {
+                state.zadowolenieWidowni--; 
+                state.enemies.splice(i, 1); // Tutaj usuwamy od razu, bo nie ma animacji przegranej dla pojedynczego wroga
+                if (state.zadowolenieWidowni <= 0) {
+                    state.zadowolenieWidowni = 0; endGame(false);
+                }
             }
         }
     }
@@ -96,14 +116,22 @@ export function buildTower(spotXGrid, spotYGrid, type) {
             showMessage(state, "To miejsce jest już zajęte!", 120); return false;
         }
         state.aplauz -= definition.cost; spot.occupied = true;
-        state.towers.push({
+        
+        const newTower = { // ZMIANA: Przechowujemy nową wieżę w zmiennej
             id: Date.now() + Math.random(), xGrid: spotXGrid, yGrid: spotYGrid,
             x: spotXGrid * C.TILE_SIZE + C.TILE_SIZE / 2, y: spotYGrid * C.TILE_SIZE + C.TILE_SIZE / 2, 
             type: type, definition: definition, damageLevel: 0, fireRateLevel: 0, 
             currentDamage: definition.baseDamage, currentFireRate: definition.baseFireRate,
             range: definition.range, fireCooldown: 0, projectileType: definition.projectileType,
-            image: images[definition.imageKey], renderSize: definition.renderSize
-        });
+            image: images[definition.imageKey], renderSize: definition.renderSize,
+            // ZMIANA: Dodajemy właściwości dla animacji pojawiania się
+            currentScale: 0.1, 
+            currentAlpha: 0,   
+            currentRotation: -45, 
+            isAnimatingIn: true 
+        };
+        state.towers.push(newTower);
+        
         showMessage(state, `${definition.imageKey === 'bileterTowerIcon' ? 'Bileter' : 'Reflektor'} postawiony!`, 90);
         saveGameProgress(state);
         return true;
@@ -159,7 +187,7 @@ export function updateTowers() {
         else {
             const target = findTarget(tower);
             if (target) { 
-                fireProjectile(tower, target); // Wywołanie fireProjectile
+                fireProjectile(tower, target); 
                 tower.fireCooldown = tower.currentFireRate; 
             }
         }
@@ -169,7 +197,8 @@ export function updateTowers() {
 function findTarget(tower) {
     let closestEnemy = null; let minDistance = tower.range;
     state.enemies.forEach(enemy => {
-        if (enemy.hp <= 0) return;
+        // ZMIANA: Ignoruj wrogów, którzy są w trakcie animacji śmierci
+        if (enemy.hp <= 0 || enemy.isDying) return;
         const dx = enemy.x - tower.x; const dy = enemy.y - tower.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < minDistance) { minDistance = distance; closestEnemy = enemy; }
@@ -180,45 +209,42 @@ function findTarget(tower) {
 function fireProjectile(tower, target) {
     const projectileData = C.projectileTypes[tower.projectileType];
     if (!projectileData) {
-        console.error("[LOG-POCISK] Brak danych dla typu pocisku:", tower.projectileType); // LOG 1
+        console.error("[LOG-POCISK] Brak danych dla typu pocisku:", tower.projectileType); 
         return;
     }
     const projectileImage = images[projectileData.imageKey];
     if (!projectileImage) {
-        console.error("[LOG-POCISK] Brak obrazka dla pocisku (klucz):", projectileData.imageKey); // LOG 2
+        console.error("[LOG-POCISK] Brak obrazka dla pocisku (klucz):", projectileData.imageKey); 
     } else if (projectileImage.error) {
-        console.error("[LOG-POCISK] Błąd ładowania obrazka dla pocisku:", projectileData.imageKey, projectileImage.src); // LOG 3
+        console.error("[LOG-POCISK] Błąd ładowania obrazka dla pocisku:", projectileData.imageKey, projectileImage.src); 
     }
 
     const fireY = (tower.y + C.TILE_SIZE / 2 - tower.definition.renderSize) + tower.definition.renderSize * 0.4; 
     const newProjectile = {
         x: tower.x, y: fireY, target: target, type: tower.projectileType, speed: projectileData.speed,
-        damage: tower.currentDamage, image: projectileImage, // Użyj projectileImage
+        damage: tower.currentDamage, image: projectileImage, 
         width: projectileData.width, height: projectileData.height,
         angle: Math.atan2(target.y - fireY, target.x - tower.x)
     };
     state.projectiles.push(newProjectile);
-    console.log("[LOG-POCISK] Wystrzelono:", JSON.parse(JSON.stringify(newProjectile)), "Obrazek:", (projectileImage ? projectileImage.src : "BRAK"), "Liczba pocisków:", state.projectiles.length); // LOG 4
 }
 
 export function updateProjectiles() {
-    // if (state.projectiles.length > 0) console.log("[LOG-POCISK] Aktualizacja, pociski:", state.projectiles.length); // LOG 5 (może być dużo logów)
     for (let i = state.projectiles.length - 1; i >= 0; i--) {
         const p = state.projectiles[i];
-        // if (i === 0 && state.projectiles.length > 0) console.log(`[LOG-POCISK] Aktualizacja pocisku ${i}: X=${p.x.toFixed(1)}, Y=${p.y.toFixed(1)}, Cel HP: ${p.target ? p.target.hp : 'BRAK'}`); // LOG 6 (loguj tylko pierwszy)
 
-        if (!p.target || p.target.hp <= 0) { 
-            // console.log("[LOG-POCISK] Usuwanie pocisku - brak celu lub cel martwy"); // LOG 7
+        if (!p.target || p.target.hp <= 0 || p.target.isDying) { // ZMIANA: Dodano p.target.isDying
             state.projectiles.splice(i, 1); 
             continue; 
         }
         const dx = p.target.x - p.x; const dy = p.target.y - p.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < p.speed) {
-            // console.log("[LOG-POCISK] Trafienie! Obrażenia:", p.damage); // LOG 8
             p.target.hp -= p.damage; 
             state.projectiles.splice(i, 1);
-            if (p.target.hp <= 0) handleEnemyDefeated(p.target);
+            if (p.target.hp <= 0 && !p.target.isDying) { // ZMIANA: Sprawdź !p.target.isDying
+                handleEnemyDefeated(p.target);
+            }
         } else {
             p.x += (dx / distance) * p.speed; p.y += (dy / distance) * p.speed;
             p.angle = Math.atan2(dy, dx);
@@ -226,27 +252,29 @@ export function updateProjectiles() {
     }
 }
 
-function handleEnemyDefeated(enemy) {
+// ZMIANA: Zmodyfikowana funkcja handleEnemyDefeated
+export function handleEnemyDefeated(enemy) { // Dodano export, jeśli będzie wywoływana z main.js
     state.aplauz += (enemy.reward * enemy.level);
-    const index = state.enemies.indexOf(enemy);
-    if (index > -1) state.enemies.splice(index, 1);
-    if (state.waveInProgress && state.enemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
-        state.waveInProgress = false;
-        state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
-        saveGameProgress(state);
-        if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) completeLevel();
-        else showMessage(state, `Fala ${state.currentWaveNumber} pokonana!`, 120);
+    
+    if (!enemy.isDying) { 
+        enemy.isDying = true;
+        // Inicjalizacja wartości dla GSAP, jeśli nie istnieją (GSAP i tak je nadpisze)
+        enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
+        enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
     }
+    // Usunięcie z tablicy i sprawdzenie końca fali odbędzie się w main.js po animacji GSAP
 }
 
-function completeLevel() {
+
+// ZMIANA: completeLevel teraz jest eksportowane, aby mogło być wywołane z main.js
+export function completeLevel() {
     showMessage(state, `Akt ${state.currentLevelIndex + 1} ukończony! Brawo!`, 240);
     state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL;
     if (state.currentLevelIndex < C.levelData.length - 1) {
         state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2);
     }
     saveGameProgress(state);
-    state.gameOver = true;
+    state.gameOver = true; // Oznacza koniec tego poziomu (sukces)
     state.gameScreen = 'levelComplete';
 }
 
@@ -299,15 +327,18 @@ export function handleWaveSpawning() {
             if (enemyToSpawnData.isBoss) {
                 const bossBaseStats = C.baseEnemyStats[enemyToSpawnData.type];
                 const bossImg = images[bossBaseStats.imageKey];
-                state.enemies.push({
+                // Dodaj flagi isDying i isDeathAnimationStarted dla bossów
+                const newBoss = {
                     type: enemyToSpawnData.type, level: enemyToSpawnData.level,
                     x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2, y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
                     hp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier,
                     maxHp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier,
                     speed: bossBaseStats.speed * (1 - (enemyToSpawnData.level - 1) * 0.15), pathIndex: 0,
                     image: bossImg, width: bossBaseStats.width * 1.3, height: bossBaseStats.height * 1.3,
-                    reward: C.baseEnemyStats[enemyToSpawnData.type].aplauzReward 
-                });
+                    reward: C.baseEnemyStats[enemyToSpawnData.type].aplauzReward,
+                    isDying: false, isDeathAnimationStarted: false
+                };
+                state.enemies.push(newBoss);
             } else spawnEnemy(enemyToSpawnData.type, enemyToSpawnData.level);
             state.spawnTimer = state.spawnInterval;
         }
@@ -315,7 +346,7 @@ export function handleWaveSpawning() {
 }
 
 export function endGame(isWin) {
-    if (isWin) return;
+    if (isWin) return; // Sukces jest obsługiwany przez completeLevel
     state.gameOver = true; state.waveInProgress = false;
     showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 300);
     saveGameProgress(state); state.gameScreen = 'levelLost';
@@ -339,5 +370,6 @@ export function sellTower(towerToSell) {
     const spot = state.currentTowerSpots.find(s => s.x === towerToSell.xGrid && s.y === towerToSell.yGrid);
     if (spot) spot.occupied = false;
     showMessage(state, `Sprzedano wieżę za ${sellValue} Aplauzu.`, 120);
+    state.selectedTowerForUpgrade = null; // Odznacz wieżę po sprzedaży
     saveGameProgress(state);
 }

@@ -55,8 +55,9 @@ export function drawTowerSpots(ctx) {
 
 export function drawEnemies(ctx) {
     state.enemies.forEach(enemy => {
-        // Jeśli wróg nie jest oznaczony jako umierający, lub jeśli jest, ale jego alpha > 0
-        if (!enemy.isDying || (enemy.currentAlpha !== undefined && enemy.currentAlpha > 0)) {
+        // Rysuj wroga tylko jeśli nie jest w trakcie animacji śmierci LUB jeśli jest, ale alpha > 0
+        // GSAP będzie zarządzać currentAlpha i currentScale
+        if (!enemy.isDeathAnimationStarted || (enemy.currentAlpha !== undefined && enemy.currentAlpha > 0)) {
             ctx.save();
             ctx.globalAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
             const scaleFactor = enemy.currentScale !== undefined ? enemy.currentScale : 1;
@@ -64,7 +65,7 @@ export function drawEnemies(ctx) {
             const h = enemy.height * scaleFactor;
 
             if (enemy.image && !enemy.image.error) {
-                if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { // Nie rysuj cienia dla prawie znikającego wroga
+                if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { 
                     ctx.save();
                     ctx.shadowBlur = 6;
                     ctx.shadowColor = enemy.level === 2 ? "rgba(100, 180, 255, 0.9)" : "rgba(255, 100, 100, 0.9)";
@@ -81,8 +82,8 @@ export function drawEnemies(ctx) {
             }
             ctx.restore();
 
-            // Pasek HP - można go też skalować/ukrywać przy śmierci
-            if (!enemy.isDying || (enemy.currentAlpha !== undefined && enemy.currentAlpha > 0.3)) { // Ukryj pasek HP gdy wróg prawie zniknął
+            // Pasek HP - nie rysuj, jeśli alpha jest bardzo małe (wróg znika)
+            if (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) {
                 const barWidth = C.TILE_SIZE * 0.8; const barHeight = 7;
                 ctx.fillStyle = 'rgba(255,0,0,0.7)'; ctx.fillRect(enemy.x - barWidth / 2, enemy.y - h / 2 - barHeight - 3, barWidth, barHeight);
                 ctx.fillStyle = 'rgba(0,255,0,0.7)'; ctx.fillRect(enemy.x - barWidth / 2, enemy.y - h / 2 - barHeight - 3, barWidth * (enemy.hp / enemy.maxHp), barHeight);
@@ -97,24 +98,22 @@ export function drawEnemies(ctx) {
 export function drawTowers(ctx) {
     state.towers.forEach(tower => {
         ctx.save();
+        // Używamy currentAlpha, currentScale, currentRotation, które są aktualizowane przez GSAP
         ctx.globalAlpha = tower.currentAlpha !== undefined ? tower.currentAlpha : 1;
         
         const scaleFactor = tower.currentScale !== undefined ? tower.currentScale : 1;
         const currentRenderSize = tower.renderSize * scaleFactor;
         
-        const towerCenterX = tower.x; // Punkt obrotu i skalowania
-        const towerCenterY = tower.y; // Punkt obrotu i skalowania
+        const towerCenterX = tower.x; 
+        const towerCenterY = tower.y; 
 
         ctx.translate(towerCenterX, towerCenterY);
         if (tower.currentRotation !== undefined) {
-            ctx.rotate(tower.currentRotation * Math.PI / 180);
+            ctx.rotate(tower.currentRotation * Math.PI / 180); // Konwersja na radiany
         }
-        // Rysujemy obrazek tak, aby jego środek był w (0,0) po translacji
+        
         const drawXOffset = -currentRenderSize / 2;
-        // Aby dół wieży (jej "stopy") był wyrównany z tower.y + TILE_SIZE / 2,
-        // a skalowanie i obrót były od środka obrazka
-        const drawYOffset = C.TILE_SIZE / 2 - currentRenderSize;
-
+        const drawYOffset = C.TILE_SIZE / 2 - currentRenderSize; // Dla wyrównania "stóp"
 
         if (tower.image && !tower.image.error) {
             ctx.drawImage(tower.image, drawXOffset, drawYOffset, currentRenderSize, currentRenderSize);
@@ -123,16 +122,15 @@ export function drawTowers(ctx) {
             const fallbackSize = currentRenderSize * 0.8; 
             ctx.fillRect(drawXOffset + (currentRenderSize - fallbackSize)/2, drawYOffset + (currentRenderSize - fallbackSize), fallbackSize, fallbackSize); 
         }
-        ctx.restore(); // Przywraca stan ctx (w tym translate, rotate, globalAlpha)
+        ctx.restore(); 
         
-        // Tekst poziomu (D:S:) - rysowany normalnie, bez transformacji, nad wieżą
-        if (tower.currentAlpha === undefined || (tower.currentAlpha > 0.9 && tower.currentScale > 0.9)) {
-            const textDrawY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 6; // Y dla tekstu nad oryginalnym rozmiarem wieży
+        // Tekst poziomu - rysuj tylko jeśli wieża nie jest w trakcie animacji pojawiania się
+        if ((tower.currentAlpha === undefined || tower.currentAlpha > 0.9) && (tower.currentScale === undefined || tower.currentScale > 0.9)) {
+            const textDrawY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 6; 
             drawTextWithOutline(ctx, `D:${tower.damageLevel}|S:${tower.fireRateLevel}`, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
         }
 
         if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
-            // Ramka zaznaczenia rysowana wokół oryginalnych wymiarów i pozycji, bez transformacji wieży
             const originalDrawYforSelection = tower.y + C.TILE_SIZE / 2 - tower.renderSize;
             ctx.strokeStyle = "rgba(255, 215, 0, 0.9)"; 
             ctx.lineWidth = 3;
@@ -143,17 +141,11 @@ export function drawTowers(ctx) {
 }
 
 export function drawProjectiles(ctx) {
-    if (state.projectiles.length > 0 && state.projectiles.some(p=>p.image)) { // Dodatkowe sprawdzenie, czy jakikolwiek pocisk ma obrazek
-        // console.log("[LOG-POCISK] Rysowanie, pociski:", state.projectiles.length); // LOG 9
-    }
     state.projectiles.forEach((p, index) => {
-        // if (index === 0 && state.projectiles.length > 0) console.log(`[LOG-POCISK] Rysowanie pocisku ${index}: X=${p.x.toFixed(1)}, Y=${p.y.toFixed(1)}, Img: ${p.image ? p.image.src : 'BRAK'}, Img Error: ${p.image ? p.image.error : 'N/A'}`); // LOG 10
-        
         if (p.image && !p.image.error) {
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.angle);
-            // Można dodać skalowanie pocisków, jeśli `p.currentScale` jest zdefiniowane
             const scale = p.currentScale !== undefined ? p.currentScale : 1;
             ctx.drawImage(p.image, -p.width * scale / 2, -p.height * scale / 2, p.width * scale, p.height * scale);
             ctx.restore();
@@ -162,8 +154,6 @@ export function drawProjectiles(ctx) {
             const fallbackWidth = p.width || C.TILE_SIZE * 0.2;
             const fallbackHeight = p.height || C.TILE_SIZE * 0.1;
             ctx.fillRect(p.x - fallbackWidth / 2, p.y - fallbackHeight / 2, fallbackWidth, fallbackHeight);
-            // if (!p.image) console.warn("[LOG-POCISK] Rysowanie fallback - BRAK obrazka dla:", p.type); // LOG 11
-            // else if (p.image.error) console.warn("[LOG-POCISK] Rysowanie fallback - BŁĄD obrazka dla:", p.type, p.image.src); // LOG 12
         }
     });
 }
@@ -172,10 +162,11 @@ export function drawEffects(ctx) {
     if (state.effects && state.effects.length > 0) {
         state.effects.forEach(effect => {
             ctx.save();
-            ctx.globalAlpha = effect.alpha;
+            ctx.globalAlpha = effect.alpha; // Kontrolowane przez GSAP
             ctx.fillStyle = effect.color || "orange";
             ctx.beginPath();
-            ctx.arc(effect.x, effect.y, effect.scale, 0, Math.PI * 2); // effect.scale to promień
+            // Używamy effect.scale, które jest kontrolowane przez GSAP jako promień
+            ctx.arc(effect.x, effect.y, effect.scale, 0, Math.PI * 2); 
             ctx.fill();
             ctx.restore();
         });
@@ -189,7 +180,7 @@ export function drawWaveIntro(ctx) {
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     ctx.textAlign = "center";
-    drawTextWithOutline(ctx, `Nadchodzi Fala ${state.currentWaveNumber + 1}!`, ctx.canvas.width / 2, 80, "bold 28px Georgia", "#ffd700", "black");
+    drawTextWithOutline(ctx, `Nadchodzi Fala ${state.currentWaveNumber + 1}!`, ctx.canvas.width / 2, 80, "bold 28px Georgia", "#ffd700", "black"); // Można użyć C.UI_FONT_...
     drawTextWithOutline(ctx, "Przeciwnicy:", ctx.canvas.width / 2, 130, C.UI_FONT_LARGE, "white", "black");
 
     const iconSize = C.TILE_SIZE * 1.5;
@@ -218,17 +209,20 @@ export function drawWaveIntro(ctx) {
     }
 }
 
-export function drawUI(ctx) { // Rysuje tylko elementy specyficzne dla canvasa
+export function drawUI(ctx) { 
     if (state.selectedTowerForUpgrade) {
         const tower = state.selectedTowerForUpgrade;
-        ctx.beginPath();
-        ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.lineWidth = 1;
+        // Rysuj tylko jeśli wieża nie jest w trakcie animacji wejścia (lub jest już widoczna)
+        if ((tower.currentAlpha === undefined || tower.currentAlpha > 0.5)) {
+            ctx.beginPath();
+            ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1;
+        }
     }
 }
 
