@@ -3,24 +3,103 @@ import * as C from './config.js';
 import { images, gameState as state } from './state.js';
 import { drawTextWithOutline } from './utils.js';
 
-export function drawBackgroundAndPath(ctx) {
+// ZMIANA: Nowa funkcja do rysowania tła z kafelków
+export function drawTiledBackground(ctx) {
+    if (!images.tileset || images.tileset.error) {
+        // Fallback na stary system, jeśli tileset się nie załaduje
+        console.warn("Tileset image not loaded or has error. Falling back to old background rendering.");
+        drawOldBackgroundAndPath(ctx); // Wywołaj starą funkcję
+        return;
+    }
+
+    for (let row = 0; row < C.ROWS; row++) {
+        for (let col = 0; col < C.COLS; col++) {
+            const tileX_onCanvas = col * C.TILE_SIZE; // Pozycja X na canvasie gry
+            const tileY_onCanvas = row * C.TILE_SIZE; // Pozycja Y na canvasie gry
+            let tileDataFromSheet; // Obiekt {sx, sy} z config.js
+
+            // Sprawdź, czy obecny kafelek (col, row) jest częścią ścieżki
+            const isPathTile = state.currentPath.some(p => p.x === col && p.y === row);
+
+            if (isPathTile) {
+                // Wszystkie kafelki ścieżki w Twoim tilesecie są podobne,
+                // więc możemy użyć pierwszego lub losować. Użyjmy pierwszego dla spójności.
+                tileDataFromSheet = C.tileTypes.PATH_1; 
+            } else {
+                // Logika dla trawy z przewagą podstawowej
+                const rand = Math.random();
+                if (rand < 0.75) { // 75% szans na podstawową trawę
+                    tileDataFromSheet = C.tileTypes.GRASS_BASIC;
+                } else {
+                    // Pozostałe 25% na losowy wariant trawy z dodatkami (indeksy 1-4 z grassVariants)
+                    // Tworzymy tablicę tylko z dekoracyjnymi wariantami trawy
+                    const decorativeGrass = [
+                        C.tileTypes.GRASS_FLOWER_YELLOW,
+                        C.tileTypes.GRASS_FLOWER_WHITE,
+                        C.tileTypes.GRASS_BLADES_1,
+                        C.tileTypes.GRASS_BLADES_2
+                    ];
+                    tileDataFromSheet = decorativeGrass[Math.floor(Math.random() * decorativeGrass.length)];
+                }
+            }
+
+            ctx.drawImage(
+                images.tileset,               // Obrazek źródłowy (Twój tileset.png)
+                tileDataFromSheet.sx,         // Współrzędna X kafelka na obrazku tilesetu
+                tileDataFromSheet.sy,         // Współrzędna Y kafelka na obrazku tilesetu
+                C.TILESET_TILE_SIZE_PX,       // Szerokość kafelka źródłowego (16px)
+                C.TILESET_TILE_SIZE_PX,       // Wysokość kafelka źródłowego (16px)
+                tileX_onCanvas,               // Współrzędna X na canvasie gry
+                tileY_onCanvas,               // Współrzędna Y na canvasie gry
+                C.TILE_SIZE,                  // Szerokość kafelka na canvasie gry (np. 40px)
+                C.TILE_SIZE                   // Wysokość kafelka na canvasie gry (np. 40px)
+            );
+        }
+    }
+}
+
+// ZMIANA: Stara funkcja rysowania tła i ścieżki, teraz jako fallback
+export function drawOldBackgroundAndPath(ctx) {
     if (!state.currentPath || state.currentPath.length === 0 || !C.levelData[state.currentLevelIndex]) {
         ctx.fillStyle = '#cccccc'; 
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         return;
     }
-    ctx.fillStyle = C.levelData[state.currentLevelIndex].bgColor || '#c2b280';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    ctx.strokeStyle = C.levelData[state.currentLevelIndex].pathColor || '#a0522d';
-    ctx.lineWidth = C.TILE_SIZE * 0.9;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
-    ctx.moveTo(state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2, state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2);
-    for (let i = 1; i < state.currentPath.length; i++) {
-        ctx.lineTo(state.currentPath[i].x * C.TILE_SIZE + C.TILE_SIZE / 2, state.currentPath[i].y * C.TILE_SIZE + C.TILE_SIZE / 2);
+    // Stare rysowanie tła jednolitym kolorem (bgColor)
+    // ctx.fillStyle = C.levelData[state.currentLevelIndex].bgColor || '#c2b280';
+    // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // Zamiast powyższego, można narysować domyślny kafelek trawy na całym tle, jeśli tileset jest, ale np. path nie
+     if (images.tileset && !images.tileset.error) {
+        for (let row = 0; row < C.ROWS; row++) {
+            for (let col = 0; col < C.COLS; col++) {
+                 ctx.drawImage(
+                    images.tileset, C.tileTypes.GRASS_BASIC.sx, C.tileTypes.GRASS_BASIC.sy,
+                    C.TILESET_TILE_SIZE_PX, C.TILESET_TILE_SIZE_PX,
+                    col * C.TILE_SIZE, row * C.TILE_SIZE,
+                    C.TILE_SIZE, C.TILE_SIZE
+                );
+            }
+        }
+    } else {
+        ctx.fillStyle = '#5E7C4B'; // Domyślny zielony, jeśli nawet tileset zawiedzie
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
-    ctx.stroke();
+
+
+    // Rysowanie ścieżki jako grubej linii (jeśli nadal potrzebne, np. dla wyraźniejszego konturu)
+    // Jeśli kafelki ścieżki są wystarczające, można to usunąć lub zmniejszyć jej widoczność.
+    // ctx.strokeStyle = C.levelData[state.currentLevelIndex].pathColor || '#a0522d';
+    // ctx.lineWidth = C.TILE_SIZE * 0.9; // Można zmniejszyć, np. do C.TILE_SIZE * 0.1 dla subtelnego konturu
+    // ctx.globalAlpha = 0.5; // Można dodać przezroczystość
+    // ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+    // ctx.moveTo(state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2, state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2);
+    // for (let i = 1; i < state.currentPath.length; i++) {
+    //     ctx.lineTo(state.currentPath[i].x * C.TILE_SIZE + C.TILE_SIZE / 2, state.currentPath[i].y * C.TILE_SIZE + C.TILE_SIZE / 2);
+    // }
+    // ctx.stroke();
+    // ctx.globalAlpha = 1.0; // Przywróć alpha
 }
+
 
 export function drawTheaterBase(ctx) {
     const baseImg = images.teatrBase;
@@ -239,12 +318,10 @@ export function drawLevelCompleteSummary(ctx) {
     const totalStarWidth = (3 * starSize) + (2 * 8);
     let starX = canvasWidth / 2 - totalStarWidth / 2;
     
-    // Rysowanie gwiazdek na podstawie indywidualnych stanów animacji
     for (let i = 0; i < 3; i++) {
         const starState = state.lastLevelStats.starStates[i];
         
         ctx.save();
-        // Ustaw środek transformacji na środek gwiazdki
         const currentStarCenterX = starX + starSize / 2;
         const currentStarCenterY = currentY;
         ctx.translate(currentStarCenterX, currentStarCenterY);
@@ -253,7 +330,7 @@ export function drawLevelCompleteSummary(ctx) {
         ctx.translate(-currentStarCenterX, -currentStarCenterY);
         
         drawTextWithOutline(ctx, starState.character, currentStarCenterX, currentStarCenterY, `bold ${starSize * 1.2}px Arial`, starState.color, "black", 2, "center");
-        ctx.restore(); // Przywróć alpha i transformację
+        ctx.restore();
         
         starX += starSize + 8;
     }

@@ -6,28 +6,24 @@ import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
 import * as GameLogic from './gameLogic.js';
 import * as UIManager from './uiManager.js';
-import *as ScreenManager from './screenManager.js';
+import * as ScreenManager from './screenManager.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Inicjalizacja ScreenManager z callbackami
 ScreenManager.initializeScreenManager({
     startGameLevel: startGameLevel,
     updateContinueButtonState: updateContinueButtonState,
     goToMainMenu: goToMainMenu
 });
 
-// Elementy DOM dla menu, które są nadal obsługiwane przez main.js lub ScreenManager
 const continueGameButton = document.getElementById('continueGameButton');
 const newGameButtonFromMenu = document.getElementById('newGameButtonFromMenu');
 const levelSelectButton = document.getElementById('levelSelectButton');
 const creditsButton = document.getElementById('creditsButton');
 const backToMainMenuFromLevelSelection = document.getElementById('backToMainMenuFromLevelSelection');
 const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCredits');
-
 const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
-
 const customConfirmOverlay = document.getElementById('customConfirmOverlay');
 const customConfirmTitle = document.getElementById('customConfirmTitle');
 const customConfirmMessage = document.getElementById('customConfirmMessage');
@@ -37,10 +33,8 @@ const customConfirmCancelButton = document.getElementById('customConfirmCancelBu
 if (!customConfirmOverlay || !customConfirmTitle || !customConfirmMessage || !customConfirmOkButton || !customConfirmCancelButton) {
     console.error("CRITICAL: One or more custom confirm dialog DOM elements are missing! Check IDs in index.html and main.js.");
 }
-
 let confirmResolve = null;
 
-// Elementy UI do interakcji w grze (event listenery pozostają w main.js)
 const uiButtonBileter = document.getElementById('uiButtonBileter');
 const uiButtonOswietleniowiec = document.getElementById('uiButtonOswietleniowiec');
 const uiButtonUpgradeSatisfaction = document.getElementById('uiButtonUpgradeSatisfaction');
@@ -48,20 +42,17 @@ const uiButtonStartWave = document.getElementById('uiButtonStartWave');
 const uiButtonUpgradeDamage = document.getElementById('uiButtonUpgradeDamage');
 const uiButtonUpgradeFireRate = document.getElementById('uiButtonUpgradeFireRate');
 const uiButtonSellTower = document.getElementById('uiButtonSellTower');
-
 const pauseButton = document.getElementById('pauseButton');
 const resumeButton = document.getElementById('resumeButton');
 const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame');
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
-
 
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
     return new Promise((resolve) => {
         confirmResolve = resolve;
         if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
             console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
-            resolve(false);
-            return;
+            resolve(false); return;
         }
         customConfirmTitle.textContent = title;
         customConfirmMessage.textContent = message;
@@ -73,51 +64,26 @@ function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
 function hideCustomConfirm() {
     if (customConfirmOverlay) {
         customConfirmOverlay.classList.remove('visible');
-        setTimeout(() => {
-            customConfirmOverlay.classList.add('hidden');
-        }, 300);
+        setTimeout(() => { customConfirmOverlay.classList.add('hidden'); }, 300);
     }
     confirmResolve = null;
 }
 
-customConfirmOkButton.addEventListener('click', () => {
-    if (confirmResolve) confirmResolve(true);
-    hideCustomConfirm();
-});
-
-customConfirmCancelButton.addEventListener('click', () => {
-    if (confirmResolve) confirmResolve(false);
-    hideCustomConfirm();
-});
-
-customConfirmOverlay.addEventListener('click', (event) => {
-    if (event.target === customConfirmOverlay) {
-        if (confirmResolve) confirmResolve(false);
-        hideCustomConfirm();
-    }
-});
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && customConfirmOverlay && customConfirmOverlay.classList.contains('visible')) {
-        if (confirmResolve) confirmResolve(false);
-        hideCustomConfirm();
-    }
-});
+customConfirmOkButton.addEventListener('click', () => { if (confirmResolve) confirmResolve(true); hideCustomConfirm(); });
+customConfirmCancelButton.addEventListener('click', () => { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); });
+customConfirmOverlay.addEventListener('click', (event) => { if (event.target === customConfirmOverlay) { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); }});
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && customConfirmOverlay?.classList.contains('visible')) { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); }});
 
 export function startGameLevel(levelIndex, startFromWave = 0) {
     console.log(`[main.js startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave); 
-    
     ScreenManager.showScreen('playing'); 
-    
     UIManager.updateUiStats();
     UIManager.updateTowerUpgradePanel();
     UIManager.updateSelectedTowerButtonUI();
-
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-    }
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
     gameLoop();
 }
@@ -136,23 +102,18 @@ export function updateContinueButtonState() {
 function preloadImagesAndStart() {
     Storage.loadGameProgress(state);
     setTotalImagesToLoad(Object.keys(C.imageSources).length);
-
     for (const key in C.imageSources) {
         images[key] = new Image();
         images[key].src = C.imageSources[key];
         images[key].onload = () => {
             incrementImagesLoadedCount();
-            if (imagesLoadedCount === totalImagesToLoad) {
-                initGame();
-            }
+            if (imagesLoadedCount === totalImagesToLoad) initGame();
         };
         images[key].onerror = (e) => {
             console.error(`Błąd ładowania obrazka: ${key} z ${C.imageSources[key]}`, e);
             images[key].error = true;
             incrementImagesLoadedCount();
-            if (imagesLoadedCount === totalImagesToLoad) {
-                initGame();
-            }
+            if (imagesLoadedCount === totalImagesToLoad) initGame();
         }
     }
 }
@@ -169,38 +130,32 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
-    if (state.gameScreen === 'menu' ||
-        state.gameScreen === 'levelSelection' ||
-        state.gameScreen === 'credits' ||
-        state.gameScreen === 'levelCompleteScreen') {
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
+    if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits' || state.gameScreen === 'levelCompleteScreen') {
+        if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
         return;
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (state.gameScreen === 'levelCompleteCanvas' && state.showingLevelCompleteSummary) {
+        Drawing.drawTiledBackground(ctx); // Rysuj tło kafelkowe także na ekranie podsumowania
         Drawing.drawLevelCompleteSummary(ctx);
         UIManager.updateUiStats(); 
     } else if (state.gameScreen === 'levelLost') {
-        Drawing.drawBackgroundAndPath(ctx); 
+        Drawing.drawTiledBackground(ctx); 
         renderGameObjectsSorted(); 
         Drawing.drawTextWithOutline(ctx, "KONIEC GRY!", canvas.width / 2, canvas.height / 2 - 40, "bold 48px Georgia", "red", "black", 4);
         Drawing.drawTextWithOutline(ctx, "Premiera tego aktu zrujnowana...", canvas.width / 2, canvas.height / 2 + 10, "bold 22px Georgia", "white", "black");
         UIManager.updateUiStats();
     } else if (state.gameScreen === 'playing' || state.gameScreen === 'paused') {
         if (state.isPaused && state.gameScreen === 'paused') {
-            Drawing.drawBackgroundAndPath(ctx);
+            Drawing.drawTiledBackground(ctx); // ZMIANA
             Drawing.drawTowerSpots(ctx);
             renderGameObjectsSorted();
             Drawing.drawProjectiles(ctx);
             Drawing.drawEffects(ctx);
             Drawing.drawUI(ctx);
             if(state.showingWaveIntro) Drawing.drawWaveIntro(ctx);
-            
             UIManager.showUiMessage(state.currentMessage || "Pauza");
             UIManager.updateUiStats();
         } else if (state.gameScreen === 'playing' && !state.isPaused) {
@@ -217,10 +172,7 @@ function gameLoop() {
                     gsap.to(effect, {
                         duration: (effect.durationFrames || 20) / 60,
                         scale: effect.maxScale, alpha: 0, ease: "expo.out",
-                        onComplete: () => {
-                            const index = state.effects.indexOf(effect);
-                            if (index > -1) state.effects.splice(index, 1);
-                        }
+                        onComplete: () => { const index = state.effects.indexOf(effect); if (index > -1) state.effects.splice(index, 1); }
                     });
                 }
             }
@@ -232,11 +184,7 @@ function gameLoop() {
                         duration: 0.5, currentAlpha: 0,
                         currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3,
                         ease: "power2.in",
-                        onComplete: () => {
-                            const index = state.enemies.indexOf(enemy);
-                            if (index > -1) state.enemies.splice(index, 1);
-                            checkWaveCompletion();
-                        }
+                        onComplete: () => { const index = state.enemies.indexOf(enemy); if (index > -1) state.enemies.splice(index, 1); checkWaveCompletion(); }
                     });
                 }
             }
@@ -252,7 +200,7 @@ function gameLoop() {
             GameLogic.updateTowers();
             GameLogic.updateProjectiles();
 
-            Drawing.drawBackgroundAndPath(ctx);
+            Drawing.drawTiledBackground(ctx); // ZMIANA
             Drawing.drawTowerSpots(ctx);
             renderGameObjectsSorted();
             Drawing.drawProjectiles(ctx);
@@ -266,10 +214,7 @@ function gameLoop() {
                 UIManager.showUiMessage(state.currentMessage);
                 if (!state.isPaused && state.currentMessage !== "Pauza") state.messageTimer--;
             } else if (state.messageTimer <= 0 && document.getElementById('uiMessages').textContent !== "") {
-                if (!(state.currentMessage === "Pauza" && state.isPaused)) {
-                    UIManager.showUiMessage(""); 
-                    state.currentMessage = "";
-                }
+                if (!(state.currentMessage === "Pauza" && state.isPaused)) { UIManager.showUiMessage(""); state.currentMessage = ""; }
             }
         }
     }
@@ -313,43 +258,30 @@ function checkWaveCompletion() {
     if (activeOrAnimatingEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
         console.log(`[main.js checkWaveCompletion] All enemies cleared for wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}.`);
         state.waveInProgress = false;
-        
-        // Zapisz ukończoną falę (state.currentWaveNumber jest 0-indexed)
         state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
         Storage.saveGameProgress(state);
-
-        // Zwiększ numer fali dla następnej iteracji
         state.currentWaveNumber++; 
-
-        if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) { // Sprawdź, czy to była ostatnia fala
+        if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
             console.log(`[main.js checkWaveCompletion] All waves completed for level ${state.currentLevelIndex + 1}. Current wave number now: ${state.currentWaveNumber}`);
-            GameLogic.completeLevel(); // To ustawi odpowiedni gameScreen
+            GameLogic.completeLevel();
         } else {
-            // currentWaveNumber teraz wskazuje na NASTĘPNĄ falę
             Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna (${state.currentWaveNumber + 1}) za chwilę...`, 180);
-            if (state.autoStartNextWaveEnabled) {
-                prepareAutoStartNextWave(5);
-            }
+            if (state.autoStartNextWaveEnabled) prepareAutoStartNextWave(5);
         }
         UIManager.updateUiStats();
     }
 }
 
 function prepareAutoStartNextWave(seconds) {
-    // state.currentWaveNumber już wskazuje na następną falę
     if (state.gameOver || state.gameScreen !== 'playing' || state.isPaused || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
         clearTimeout(autoStartTimerId); return;
     }
     clearTimeout(autoStartTimerId);
     autoStartCountdown = seconds;
-    // Wyświetlamy numer następnej fali (currentWaveNumber + 1 dla gracza)
     Utils.showMessage(state, `Następna fala (${state.currentWaveNumber + 1}) za: ${autoStartCountdown}s`, 65 * seconds + 100); 
-    
     function countdownTick() {
         if (state.isPaused || state.gameScreen !== 'playing' || state.waveInProgress || state.showingWaveIntro || state.gameOver) {
-            Utils.showMessage(state, "");
-            clearTimeout(autoStartTimerId); 
-            return;
+            Utils.showMessage(state, ""); clearTimeout(autoStartTimerId); return;
         }
         autoStartCountdown--;
         Utils.showMessage(state, `Następna fala (${state.currentWaveNumber + 1}) za: ${autoStartCountdown}s`, 65);
@@ -357,7 +289,7 @@ function prepareAutoStartNextWave(seconds) {
             autoStartTimerId = setTimeout(countdownTick, 1000);
         } else { 
             Utils.showMessage(state, `Rozpoczynanie fali ${state.currentWaveNumber + 1}...`, 60); 
-            GameLogic.prepareNextWave(); // prepareNextWave użyje zaktualizowanego state.currentWaveNumber
+            GameLogic.prepareNextWave(); 
             UIManager.updateUiStats(); 
         }
     }
@@ -368,67 +300,30 @@ uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'play
 uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
 uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); UIManager.updateUiStats(); }});
 uiButtonStartWave.addEventListener('click', () => {
-    clearTimeout(autoStartTimerId);
-    Utils.showMessage(state, "");
-    // state.currentWaveNumber to fala, która ma się rozpocząć
+    clearTimeout(autoStartTimerId); Utils.showMessage(state, "");
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
-        GameLogic.prepareNextWave(); 
-        UIManager.updateUiStats();
+        GameLogic.prepareNextWave(); UIManager.updateUiStats();
     }
 });
 uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }});
 uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }});
 uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }});
-
-pauseButton.addEventListener('click', () => {
-    if (state.gameScreen === 'playing' && !state.isPaused) {
-        GameLogic.togglePauseGame();
-        ScreenManager.showScreen('paused');
-    }
-});
-
-resumeButton.addEventListener('click', () => {
-    if (state.isPaused) {
-        GameLogic.togglePauseGame();
-        ScreenManager.showScreen('playing');
-        if (animationFrameId === null) {
-             gameLoop(); 
-        }
-    }
-});
-
+pauseButton.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { GameLogic.togglePauseGame(); ScreenManager.showScreen('paused'); }});
+resumeButton.addEventListener('click', () => { if (state.isPaused) { GameLogic.togglePauseGame(); ScreenManager.showScreen('playing'); if (animationFrameId === null) gameLoop(); }});
 export function goToMainMenu() {
-    clearTimeout(autoStartTimerId);
-    state.isPaused = false; 
-    state.gameOver = false;
-    state.selectedTowerType = null; 
-    state.selectedTowerForUpgrade = null;
-    state.showingLevelCompleteSummary = false;
-    state.levelCompleteButtons = [];
-
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-    }
-    animationFrameId = null;
-    ScreenManager.showScreen('menu');
-    updateContinueButtonState();
+    clearTimeout(autoStartTimerId); state.isPaused = false; state.gameOver = false; state.selectedTowerType = null; state.selectedTowerForUpgrade = null; state.showingLevelCompleteSummary = false; state.levelCompleteButtons = [];
+    if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
+    ScreenManager.showScreen('menu'); updateContinueButtonState();
 }
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
 menuFromPauseButton.addEventListener('click', goToMainMenu);
-
 continueGameButton.addEventListener('click', () => { if (!continueGameButton.disabled) ScreenManager.showScreen('levelSelection'); });
 newGameButtonFromMenu.addEventListener('click', async () => {
     const confirmed = await showCustomConfirm("Rozpocząć Nową Grę?", "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.");
     if (confirmed) {
-        clearTimeout(autoStartTimerId);
-        state.autoStartNextWaveEnabled = true;
-        state.currentAplauzBonusForNextLevel = 0;
-        state.unlockedLevels = 1;
-        state.levelProgress = {};
-        Storage.saveGameProgress(state);
+        clearTimeout(autoStartTimerId); state.autoStartNextWaveEnabled = true; state.currentAplauzBonusForNextLevel = 0; state.unlockedLevels = 1; state.levelProgress = {}; Storage.saveGameProgress(state);
         if (saveStatusMainMenu) saveStatusMainMenu.textContent = "Nowa gra rozpoczęta. Postęp wyczyszczony.";
-        updateContinueButtonState();
-        startGameLevel(0, 0);
+        updateContinueButtonState(); startGameLevel(0, 0);
     }
 });
 levelSelectButton.addEventListener('click', () => ScreenManager.showScreen('levelSelection'));
@@ -438,155 +333,78 @@ backToMainMenuFromCredits.addEventListener('click', () => ScreenManager.showScre
 
 canvas.addEventListener('click', (event) => {
     const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-
+    const clickX = event.clientX - rect.left; const clickY = event.clientY - rect.top;
     if (state.gameScreen === 'levelCompleteCanvas' && state.showingLevelCompleteSummary) {
-        if (state.levelCompleteButtons && state.levelCompleteButtons.length > 0) {
+        if (state.levelCompleteButtons?.length > 0) {
             state.levelCompleteButtons.forEach(button => {
-                if (clickX >= button.x && clickX <= button.x + button.width &&
-                    clickY >= button.y && clickY <= button.y + button.height) {
-                    
+                if (clickX >= button.x && clickX <= button.x + button.width && clickY >= button.y && clickY <= button.y + button.height) {
                     if (button.id === 'nextLevel') {
-                        // state.currentLevelIndex to indeks właśnie ukończonego aktu
-                        if (state.currentLevelIndex < C.levelData.length - 1) {
-                            startGameLevel(state.currentLevelIndex + 1, 0); // Następny akt, fala 0
-                        } else {
-                            goToMainMenu(); // Ostatni akt ukończony
-                        }
-                    } else if (button.id === 'mainMenu') {
-                        goToMainMenu();
-                    }
+                        if (state.currentLevelIndex < C.levelData.length - 1) startGameLevel(state.currentLevelIndex + 1, 0);
+                        else goToMainMenu();
+                    } else if (button.id === 'mainMenu') goToMainMenu();
                 }
             });
         }
         return;
     }
-    
     if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') return;
-
-    const gridX = Math.floor(clickX / C.TILE_SIZE); 
-    const gridY = Math.floor(clickY / C.TILE_SIZE);
-
+    const gridX = Math.floor(clickX / C.TILE_SIZE); const gridY = Math.floor(clickY / C.TILE_SIZE);
     if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >= 0) {
         const clickedTower = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY);
-        if (clickedTower) { 
-            state.selectedTowerForUpgrade = clickedTower; 
-            state.selectedTowerType = null; 
-            UIManager.updateTowerUpgradePanel(); 
-            UIManager.updateSelectedTowerButtonUI(); 
-            return; 
-        }
+        if (clickedTower) { state.selectedTowerForUpgrade = clickedTower; state.selectedTowerType = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); return; }
         if (state.selectedTowerType) {
             const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY);
-            if (spot) { 
-                if (spot.occupied) {
-                    Utils.showMessage(state, "To miejsce jest już zajęte!", 120);
-                } else {
-                    GameLogic.buildTower(gridX, gridY, state.selectedTowerType);
-                }
-            } else {
-                Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
-            }
+            if (spot) { if (spot.occupied) Utils.showMessage(state, "To miejsce jest już zajęte!", 120); else GameLogic.buildTower(gridX, gridY, state.selectedTowerType); }
+            else Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
             return;
         }
-        if (!clickedTower && !state.selectedTowerType) { 
-            state.selectedTowerForUpgrade = null; 
-            UIManager.updateTowerUpgradePanel(); 
-        }
+        if (!clickedTower && !state.selectedTowerType) { state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); }
     }
 });
 
 canvas.addEventListener('mousemove', (event) => {
     if (state.gameScreen === 'levelCompleteCanvas' && state.showingLevelCompleteSummary) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-        let onButton = false;
-        if (state.levelCompleteButtons && state.levelCompleteButtons.length > 0) {
-            state.levelCompleteButtons.forEach(button => {
-                if (mouseX >= button.x && mouseX <= button.x + button.width &&
-                    mouseY >= button.y && mouseY <= button.y + button.height) {
-                    onButton = true;
-                }
-            });
+        const mouseX = event.clientX - rect.left; const mouseY = event.clientY - rect.top; let onButton = false;
+        if (state.levelCompleteButtons?.length > 0) {
+            state.levelCompleteButtons.forEach(button => { if (mouseX >= button.x && mouseX <= button.x + button.width && mouseY >= button.y && mouseY <= button.y + button.height) onButton = true; });
         }
-        canvas.style.cursor = onButton ? 'pointer' : 'default';
-        return;
+        canvas.style.cursor = onButton ? 'pointer' : 'default'; return;
     }
-
-    if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') { 
-        canvas.style.cursor = 'default'; 
-        return; 
-    }
+    if (state.gameOver || state.showingWaveIntro || state.isPaused || state.gameScreen !== 'playing') { canvas.style.cursor = 'default'; return; }
     const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left; 
-    const mouseY = event.clientY - rect.top;
-    let onCanvasActionable = false;
-    const gridX = Math.floor(mouseX / C.TILE_SIZE); 
-    const gridY = Math.floor(mouseY / C.TILE_SIZE);
-
+    const mouseX = event.clientX - rect.left; const mouseY = event.clientY - rect.top; let onCanvasActionable = false;
+    const gridX = Math.floor(mouseX / C.TILE_SIZE); const gridY = Math.floor(mouseY / C.TILE_SIZE);
     if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >=0) {
-        if (state.selectedTowerType) { 
-            const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY && !s.occupied); 
-            if (spot) onCanvasActionable = true; 
-        }
-        const towerOnSpot = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY); 
-        if (towerOnSpot) onCanvasActionable = true;
+        if (state.selectedTowerType) { const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY && !s.occupied); if (spot) onCanvasActionable = true; }
+        const towerOnSpot = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY); if (towerOnSpot) onCanvasActionable = true;
     }
     canvas.style.cursor = onCanvasActionable ? 'pointer' : 'default';
 });
 
 document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.altKey && event.shiftKey && event.key === 'D') {
-        event.preventDefault();
-        state.isDevModeActive = !state.isDevModeActive;
-        Utils.showMessage(state, `Tryb deweloperski ${state.isDevModeActive ? 'AKTYWNY' : 'WYŁĄCZONY'}`, 120);
-        UIManager.updateUiStats();
+        event.preventDefault(); state.isDevModeActive = !state.isDevModeActive;
+        Utils.showMessage(state, `Tryb deweloperski ${state.isDevModeActive ? 'AKTYWNY' : 'WYŁĄCZONY'}`, 120); UIManager.updateUiStats();
     }
-
     if (state.isDevModeActive && customConfirmOverlay && !customConfirmOverlay.classList.contains('visible')) {
         if (state.gameScreen === 'playing' || state.gameScreen === 'paused') {
-            if (event.shiftKey && event.key === 'M') {
-                event.preventDefault(); state.aplauz += 1000;
-                Utils.showMessage(state, "+1000 Aplauzu (DEV)", 90); UIManager.updateUiStats();
-            } else if (event.shiftKey && event.key === 'W') { // Zakończ obecną falę lub przejdź do następnej
+            if (event.shiftKey && event.key === 'M') { event.preventDefault(); state.aplauz += 1000; Utils.showMessage(state, "+1000 Aplauzu (DEV)", 90); UIManager.updateUiStats(); }
+            else if (event.shiftKey && event.key === 'W') {
                 event.preventDefault();
-                if (state.waveInProgress || state.showingWaveIntro) { // Jeśli fala trwa
-                    Utils.showMessage(state, "Kończenie obecnej fali... (DEV)", 90);
-                    state.enemies.forEach(enemy => enemy.hp = 0); 
-                    state.currentWaveSpawnsLeft = 0;
-                    // checkWaveCompletion() zostanie wywołane przez animacje śmierci
-                } else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && !state.gameOver && !state.isPaused) { // Jeśli między falami
-                    Utils.showMessage(state, "Przeskakiwanie do następnej fali... (DEV)", 90);
-                    clearTimeout(autoStartTimerId); 
-                    // Nie inkrementujemy tu currentWaveNumber, prepareNextWave użyje obecnej wartości
-                    GameLogic.prepareNextWave();
-                } else { 
-                    Utils.showMessage(state, "Nie można rozpocząć/przeskoczyć fali. (DEV)", 90); 
-                }
+                if (state.waveInProgress || state.showingWaveIntro) { Utils.showMessage(state, "Kończenie obecnej fali... (DEV)", 90); state.enemies.forEach(enemy => enemy.hp = 0); state.currentWaveSpawnsLeft = 0; }
+                else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && !state.gameOver && !state.isPaused) { Utils.showMessage(state, "Przeskakiwanie do następnej fali... (DEV)", 90); clearTimeout(autoStartTimerId); GameLogic.prepareNextWave(); }
+                else { Utils.showMessage(state, "Nie można rozpocząć/przeskoczyć fali. (DEV)", 90); }
                 UIManager.updateUiStats();
-            }  else if (event.shiftKey && event.key === 'H') {
-                 event.preventDefault(); state.zadowolenieWidowni = state.maxZadowolenieWidowni;
-                 Utils.showMessage(state, "Zadowolenie przywrócone! (DEV)", 90); UIManager.updateUiStats();
-            }
+            }  else if (event.shiftKey && event.key === 'H') { event.preventDefault(); state.zadowolenieWidowni = state.maxZadowolenieWidowni; Utils.showMessage(state, "Zadowolenie przywrócone! (DEV)", 90); UIManager.updateUiStats(); }
         }
-        if (event.shiftKey && event.key === 'L') { // Odblokuj wszystko
-            event.preventDefault(); 
-            Utils.showMessage(state, "Wszystkie akty odblokowane i ukończone! (DEV)", 120);
-            state.unlockedLevels = C.levelData.length;
-            C.levelData.forEach((level, index) => { state.levelProgress[index] = C.WAVES_PER_LEVEL; });
-            Storage.saveGameProgress(state); 
-            
-            if ((state.gameScreen === 'playing' || state.gameScreen === 'paused') && !state.gameOver) {
-                 GameLogic.completeLevel(); // Zakończ bieżący poziom jako wygrany
-            } else if (state.gameScreen !== 'menu' && state.gameScreen !== 'levelCompleteCanvas' && state.gameScreen !== 'levelLost') {
-                goToMainMenu();
-            } else if (state.gameScreen === 'menu') {
-                updateContinueButtonState();
-            } else if (state.gameScreen === 'levelSelection') { // Jeśli jesteśmy na ekranie wyboru poziomu
-                 ScreenManager.renderLevelSelection(); // Odśwież, aby pokazać zmiany
-            }
+        if (event.shiftKey && event.key === 'L') {
+            event.preventDefault(); Utils.showMessage(state, "Wszystkie akty odblokowane i ukończone! (DEV)", 120); state.unlockedLevels = C.levelData.length;
+            C.levelData.forEach((level, index) => { state.levelProgress[index] = C.WAVES_PER_LEVEL; }); Storage.saveGameProgress(state); 
+            if ((state.gameScreen === 'playing' || state.gameScreen === 'paused') && !state.gameOver) GameLogic.completeLevel();
+            else if (state.gameScreen !== 'menu' && state.gameScreen !== 'levelCompleteCanvas' && state.gameScreen !== 'levelLost') goToMainMenu();
+            else if (state.gameScreen === 'menu') updateContinueButtonState();
+            else if (state.gameScreen === 'levelSelection') ScreenManager.renderLevelSelection();
         }
     }
 });
