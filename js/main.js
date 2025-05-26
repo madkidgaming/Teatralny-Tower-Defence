@@ -6,7 +6,7 @@ import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
 import * as GameLogic from './gameLogic.js';
 import * as UIManager from './uiManager.js';
-import * as ScreenManager from './screenManager.js';
+import *as ScreenManager from './screenManager.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -56,32 +56,25 @@ const menuFromPauseButton = document.getElementById('menuFromPauseButton');
 
 
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
-    // console.log("[showCustomConfirm] Function called. Overlay element:", customConfirmOverlay);
     return new Promise((resolve) => {
         confirmResolve = resolve;
-
         if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
             console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
             resolve(false);
             return;
         }
-
         customConfirmTitle.textContent = title;
         customConfirmMessage.textContent = message;
-
         customConfirmOverlay.classList.remove('hidden');
         customConfirmOverlay.classList.add('visible');
-        // console.log("[showCustomConfirm] Overlay classes set. Should be visible now.");
     });
 }
 
 function hideCustomConfirm() {
-    // console.log("[hideCustomConfirm] Function called.");
     if (customConfirmOverlay) {
         customConfirmOverlay.classList.remove('visible');
         setTimeout(() => {
             customConfirmOverlay.classList.add('hidden');
-            // console.log("[hideCustomConfirm] Overlay classes set to hidden after timeout.");
         }, 300);
     }
     confirmResolve = null;
@@ -111,7 +104,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 export function startGameLevel(levelIndex, startFromWave = 0) {
-    console.log(`[startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
+    console.log(`[main.js startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave); 
@@ -124,10 +117,8 @@ export function startGameLevel(levelIndex, startFromWave = 0) {
 
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
-        // console.log("[startGameLevel] Warning: animationFrameId was not null. Cancelled existing frame.");
     }
     animationFrameId = null;
-    // console.log("[startGameLevel] Starting new gameLoop.");
     gameLoop();
 }
 
@@ -181,7 +172,7 @@ function gameLoop() {
     if (state.gameScreen === 'menu' ||
         state.gameScreen === 'levelSelection' ||
         state.gameScreen === 'credits' ||
-        state.gameScreen === 'levelCompleteScreen') { // HTML version
+        state.gameScreen === 'levelCompleteScreen') {
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
@@ -193,14 +184,13 @@ function gameLoop() {
 
     if (state.gameScreen === 'levelCompleteCanvas' && state.showingLevelCompleteSummary) {
         Drawing.drawLevelCompleteSummary(ctx);
-        UIManager.updateUiStats(); // Aby statystyki w panelach HTML były spójne
+        UIManager.updateUiStats(); 
     } else if (state.gameScreen === 'levelLost') {
         Drawing.drawBackgroundAndPath(ctx); 
-        renderGameObjectsSorted(); // Pokaż stan końcowy
+        renderGameObjectsSorted(); 
         Drawing.drawTextWithOutline(ctx, "KONIEC GRY!", canvas.width / 2, canvas.height / 2 - 40, "bold 48px Georgia", "red", "black", 4);
         Drawing.drawTextWithOutline(ctx, "Premiera tego aktu zrujnowana...", canvas.width / 2, canvas.height / 2 + 10, "bold 22px Georgia", "white", "black");
         UIManager.updateUiStats();
-        // Przycisk HTML 'Menu Główne' jest już obsługiwany przez ScreenManager dla 'levelLost'
     } else if (state.gameScreen === 'playing' || state.gameScreen === 'paused') {
         if (state.isPaused && state.gameScreen === 'paused') {
             Drawing.drawBackgroundAndPath(ctx);
@@ -214,7 +204,6 @@ function gameLoop() {
             UIManager.showUiMessage(state.currentMessage || "Pauza");
             UIManager.updateUiStats();
         } else if (state.gameScreen === 'playing' && !state.isPaused) {
-            // GSAP Animations
             state.towers.forEach(tower => {
                 if (tower.isAnimatingIn) {
                     tower.isAnimatingIn = false;
@@ -252,7 +241,6 @@ function gameLoop() {
                 }
             }
 
-            // Game Logic Updates
             if (state.showingWaveIntro) {
                 state.waveIntroTimer--;
                 if (state.waveIntroTimer <= 0) GameLogic.startNextWaveActual();
@@ -264,7 +252,6 @@ function gameLoop() {
             GameLogic.updateTowers();
             GameLogic.updateProjectiles();
 
-            // Drawing
             Drawing.drawBackgroundAndPath(ctx);
             Drawing.drawTowerSpots(ctx);
             renderGameObjectsSorted();
@@ -273,7 +260,6 @@ function gameLoop() {
             Drawing.drawUI(ctx);
             if(state.showingWaveIntro) Drawing.drawWaveIntro(ctx);
 
-            // UI Updates (HTML)
             UIManager.updateUiStats();
             UIManager.updateTowerUpgradePanel();
             if (state.messageTimer > 0 && state.currentMessage) {
@@ -325,29 +311,39 @@ function checkWaveCompletion() {
     const activeOrAnimatingEnemies = state.enemies.filter(e => !e.isDeathAnimationStarted || (e.isDeathAnimationStarted && e.currentAlpha > 0));
 
     if (activeOrAnimatingEnemies.length === 0 && state.currentWaveSpawnsLeft === 0) {
-        console.log(`[checkWaveCompletion] All enemies cleared for wave ${state.currentWaveNumber}.`);
+        console.log(`[main.js checkWaveCompletion] All enemies cleared for wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}.`);
         state.waveInProgress = false;
+        
+        // Zapisz ukończoną falę (state.currentWaveNumber jest 0-indexed)
         state.levelProgress[state.currentLevelIndex] = state.currentWaveNumber;
         Storage.saveGameProgress(state);
 
-        if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-            console.log(`[checkWaveCompletion] Last wave (${state.currentWaveNumber}) completed.`);
-            GameLogic.completeLevel();
+        // Zwiększ numer fali dla następnej iteracji
+        state.currentWaveNumber++; 
+
+        if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) { // Sprawdź, czy to była ostatnia fala
+            console.log(`[main.js checkWaveCompletion] All waves completed for level ${state.currentLevelIndex + 1}. Current wave number now: ${state.currentWaveNumber}`);
+            GameLogic.completeLevel(); // To ustawi odpowiedni gameScreen
         } else {
-            Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna za chwilę...`, 180);
-            if (state.autoStartNextWaveEnabled) prepareAutoStartNextWave(5);
+            // currentWaveNumber teraz wskazuje na NASTĘPNĄ falę
+            Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna (${state.currentWaveNumber + 1}) za chwilę...`, 180);
+            if (state.autoStartNextWaveEnabled) {
+                prepareAutoStartNextWave(5);
+            }
         }
         UIManager.updateUiStats();
     }
 }
 
 function prepareAutoStartNextWave(seconds) {
+    // state.currentWaveNumber już wskazuje na następną falę
     if (state.gameOver || state.gameScreen !== 'playing' || state.isPaused || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
         clearTimeout(autoStartTimerId); return;
     }
     clearTimeout(autoStartTimerId);
     autoStartCountdown = seconds;
-    Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65 * seconds + 100); 
+    // Wyświetlamy numer następnej fali (currentWaveNumber + 1 dla gracza)
+    Utils.showMessage(state, `Następna fala (${state.currentWaveNumber + 1}) za: ${autoStartCountdown}s`, 65 * seconds + 100); 
     
     function countdownTick() {
         if (state.isPaused || state.gameScreen !== 'playing' || state.waveInProgress || state.showingWaveIntro || state.gameOver) {
@@ -356,12 +352,12 @@ function prepareAutoStartNextWave(seconds) {
             return;
         }
         autoStartCountdown--;
-        Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65);
+        Utils.showMessage(state, `Następna fala (${state.currentWaveNumber + 1}) za: ${autoStartCountdown}s`, 65);
         if (autoStartCountdown > 0) {
             autoStartTimerId = setTimeout(countdownTick, 1000);
         } else { 
-            Utils.showMessage(state, `Rozpoczynanie fali...`, 60); 
-            GameLogic.prepareNextWave(); 
+            Utils.showMessage(state, `Rozpoczynanie fali ${state.currentWaveNumber + 1}...`, 60); 
+            GameLogic.prepareNextWave(); // prepareNextWave użyje zaktualizowanego state.currentWaveNumber
             UIManager.updateUiStats(); 
         }
     }
@@ -374,8 +370,9 @@ uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScre
 uiButtonStartWave.addEventListener('click', () => {
     clearTimeout(autoStartTimerId);
     Utils.showMessage(state, "");
+    // state.currentWaveNumber to fala, która ma się rozpocząć
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
-        GameLogic.prepareNextWave();
+        GameLogic.prepareNextWave(); 
         UIManager.updateUiStats();
     }
 });
@@ -395,7 +392,6 @@ resumeButton.addEventListener('click', () => {
         GameLogic.togglePauseGame();
         ScreenManager.showScreen('playing');
         if (animationFrameId === null) {
-             // console.log("[resumeButton] animationFrameId is null, restarting gameLoop.");
              gameLoop(); 
         }
     }
@@ -412,7 +408,6 @@ export function goToMainMenu() {
 
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
-        // console.log("[goToMainMenu] Cancelled animationFrameId:", animationFrameId);
     }
     animationFrameId = null;
     ScreenManager.showScreen('menu');
@@ -452,12 +447,12 @@ canvas.addEventListener('click', (event) => {
                 if (clickX >= button.x && clickX <= button.x + button.width &&
                     clickY >= button.y && clickY <= button.y + button.height) {
                     
-                    // console.log(`Clicked on canvas button: ${button.id}`);
                     if (button.id === 'nextLevel') {
-                        if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
-                            startGameLevel(state.currentLevelIndex + 1, 0);
+                        // state.currentLevelIndex to indeks właśnie ukończonego aktu
+                        if (state.currentLevelIndex < C.levelData.length - 1) {
+                            startGameLevel(state.currentLevelIndex + 1, 0); // Następny akt, fala 0
                         } else {
-                            goToMainMenu();
+                            goToMainMenu(); // Ostatni akt ukończony
                         }
                     } else if (button.id === 'mainMenu') {
                         goToMainMenu();
@@ -555,34 +550,42 @@ document.addEventListener('keydown', (event) => {
             if (event.shiftKey && event.key === 'M') {
                 event.preventDefault(); state.aplauz += 1000;
                 Utils.showMessage(state, "+1000 Aplauzu (DEV)", 90); UIManager.updateUiStats();
-            } else if (event.shiftKey && event.key === 'W') {
+            } else if (event.shiftKey && event.key === 'W') { // Zakończ obecną falę lub przejdź do następnej
                 event.preventDefault();
-                if (state.waveInProgress || state.showingWaveIntro) {
+                if (state.waveInProgress || state.showingWaveIntro) { // Jeśli fala trwa
                     Utils.showMessage(state, "Kończenie obecnej fali... (DEV)", 90);
                     state.enemies.forEach(enemy => enemy.hp = 0); 
                     state.currentWaveSpawnsLeft = 0;
-                } else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && state.gameScreen === 'playing' && !state.gameOver && !state.isPaused) {
+                    // checkWaveCompletion() zostanie wywołane przez animacje śmierci
+                } else if (state.currentWaveNumber < C.WAVES_PER_LEVEL && !state.gameOver && !state.isPaused) { // Jeśli między falami
                     Utils.showMessage(state, "Przeskakiwanie do następnej fali... (DEV)", 90);
-                    clearTimeout(autoStartTimerId); GameLogic.prepareNextWave();
-                } else { Utils.showMessage(state, "Nie można rozpocząć/przeskoczyć fali. (DEV)", 90); }
+                    clearTimeout(autoStartTimerId); 
+                    // Nie inkrementujemy tu currentWaveNumber, prepareNextWave użyje obecnej wartości
+                    GameLogic.prepareNextWave();
+                } else { 
+                    Utils.showMessage(state, "Nie można rozpocząć/przeskoczyć fali. (DEV)", 90); 
+                }
                 UIManager.updateUiStats();
             }  else if (event.shiftKey && event.key === 'H') {
                  event.preventDefault(); state.zadowolenieWidowni = state.maxZadowolenieWidowni;
                  Utils.showMessage(state, "Zadowolenie przywrócone! (DEV)", 90); UIManager.updateUiStats();
             }
         }
-        if (event.shiftKey && event.key === 'L') {
-            event.preventDefault(); state.unlockedLevels = C.levelData.length;
+        if (event.shiftKey && event.key === 'L') { // Odblokuj wszystko
+            event.preventDefault(); 
+            Utils.showMessage(state, "Wszystkie akty odblokowane i ukończone! (DEV)", 120);
+            state.unlockedLevels = C.levelData.length;
             C.levelData.forEach((level, index) => { state.levelProgress[index] = C.WAVES_PER_LEVEL; });
-            Storage.saveGameProgress(state); Utils.showMessage(state, "Wszystkie akty odblokowane i ukończone! (DEV)", 120);
+            Storage.saveGameProgress(state); 
             
-            if (state.gameScreen === 'playing' && !state.gameOver && !state.isPaused) {
-                 GameLogic.completeLevel();
+            if ((state.gameScreen === 'playing' || state.gameScreen === 'paused') && !state.gameOver) {
+                 GameLogic.completeLevel(); // Zakończ bieżący poziom jako wygrany
             } else if (state.gameScreen !== 'menu' && state.gameScreen !== 'levelCompleteCanvas' && state.gameScreen !== 'levelLost') {
                 goToMainMenu();
             } else if (state.gameScreen === 'menu') {
                 updateContinueButtonState();
-                ScreenManager.renderLevelSelection(); // Zakładając, że ta funkcja jest dostępna w ScreenManager
+            } else if (state.gameScreen === 'levelSelection') { // Jeśli jesteśmy na ekranie wyboru poziomu
+                 ScreenManager.renderLevelSelection(); // Odśwież, aby pokazać zmiany
             }
         }
     }
