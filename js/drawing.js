@@ -28,13 +28,13 @@ export function drawTheaterBase(ctx) {
     const baseNode = state.currentPath[state.currentPath.length -1];
     if (!baseNode) return;
 
-    if (baseImg && !baseImg.error && baseImg.width > 0 && baseImg.height > 0) { // Dodano sprawdzenie width/height
+    if (baseImg && !baseImg.error && baseImg.width > 0 && baseImg.height > 0) {
          const baseY = baseNode.y;
          const baseRenderWidth = C.TILE_SIZE * C.BASE_SIZE_MULTIPLIER;
          const baseRenderHeight = (baseImg.height / baseImg.width) * baseRenderWidth;
          ctx.drawImage(baseImg,
             (baseNode.x + 0.5) * C.TILE_SIZE - baseRenderWidth / 2,
-            (baseY + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8, // Dostosuj, aby lepiej pasowało
+            (baseY + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8,
             baseRenderWidth, baseRenderHeight);
     } else {
         ctx.fillStyle = '#8B4513'; const fallbackSize = C.TILE_SIZE * 1.5; const baseY = baseNode.y;
@@ -227,98 +227,121 @@ export function drawLevelCompleteSummary(ctx) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.92)";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    let currentY = 60;
-    
-    drawTextWithOutline(ctx, `${stats.levelName || 'Akt ' + (state.currentLevelIndex +1)} Ukończony!`, canvasWidth / 2, currentY, "bold 32px Georgia", "#ffd700", "black", 3, "center");
-    currentY += 60;
+    let currentY = 50; 
 
-    const starSize = 30;
-    const totalStarWidth = (3 * starSize) + (2 * 10);
+    drawTextWithOutline(ctx, `${stats.levelName || 'Akt ' + (state.currentLevelIndex +1)} Ukończony!`, canvasWidth / 2, currentY, "bold 30px Georgia", "#ffd700", "black", 3, "center");
+    currentY += 50; 
+
+    const starSize = 28;
+    const totalStarWidth = (3 * starSize) + (2 * 8);
     let starX = canvasWidth / 2 - totalStarWidth / 2;
     for (let i = 0; i < 3; i++) {
         const starChar = (i < stats.stars) ? '★' : '☆';
         const starColor = (i < stats.stars) ? "#ffd700" : "#888888";
         drawTextWithOutline(ctx, starChar, starX + starSize / 2, currentY, `bold ${starSize * 1.2}px Arial`, starColor, "black", 2, "center");
-        starX += starSize + 10;
+        starX += starSize + 8;
     }
-    currentY += starSize + 40;
+    currentY += starSize + 35; 
 
-    const sectionPadding = 30;
-    const sectionWidth = Math.min(canvasWidth * 0.7, 500); // Ogranicz szerokość sekcji
-    const sectionX = canvasWidth / 2 - sectionWidth / 2;
-    const lineHeight = 28;
-    const valueXOffset = sectionWidth - sectionPadding; // Pozycja dla wartości, wyrównanych do prawej
-
-    drawTextWithOutline(ctx, "Statystyki Aktu:", sectionX, currentY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "left");
-    currentY += lineHeight * 1.5;
+    const columnGap = 40;
+    const totalContentWidth = canvasWidth * 0.85;
+    const columnWidth = (totalContentWidth - columnGap) / 2;
     
-    drawTextWithOutline(ctx, `Nazwa Aktu:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    drawTextWithOutline(ctx, `${stats.levelName || `Akt ${state.currentLevelIndex + 1}`}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    currentY += lineHeight;
+    const leftColumnX = canvasWidth / 2 - totalContentWidth / 2;
+    const rightColumnX = leftColumnX + columnWidth + columnGap;
 
-    drawTextWithOutline(ctx, `Zadowolenie Widowni:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    drawTextWithOutline(ctx, `${stats.finalSatisfaction} / ${stats.initialMaxSatisfaction}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    currentY += lineHeight;
+    const lineHeight = 26; 
+    const sectionPadding = 20; 
+    let leftColumnY = currentY;
+    let rightColumnY = currentY;
+    const valueXOffset = columnWidth - sectionPadding;
 
-    drawTextWithOutline(ctx, `Wieże Bileterów:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    drawTextWithOutline(ctx, `${stats.towersBuilt.bileter}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    currentY += lineHeight;
+    // --- LEWA KOLUMNA: Statystyki Aktu ---
+    drawTextWithOutline(ctx, "Statystyki Aktu:", leftColumnX + columnWidth / 2, leftColumnY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "center");
+    leftColumnY += lineHeight * 1.8; 
+    
+    // ZMIANA: Usunięto "Nazwa Aktu:", ponieważ jest już w tytule głównym
+    // drawTextWithOutline(ctx, `Nazwa Aktu:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    // drawTextWithOutline(ctx, `${stats.levelName || `Akt ${state.currentLevelIndex + 1}`}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    // leftColumnY += lineHeight; // Usunięto, więc nie ma potrzeby inkrementacji Y
 
-    drawTextWithOutline(ctx, `Wieże Oświetleniowców:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    drawTextWithOutline(ctx, `${stats.towersBuilt.oswietleniowiec}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    currentY += lineHeight * 1.8;
+    drawTextWithOutline(ctx, `Zadowolenie Widowni:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.finalSatisfaction} / ${stats.initialMaxSatisfaction}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    leftColumnY += lineHeight;
 
-    drawTextWithOutline(ctx, "Bonus na Następny Akt:", sectionX, currentY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "left");
-    currentY += lineHeight * 1.5;
+    drawTextWithOutline(ctx, `Wieże Bileterów:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.towersBuilt.bileter}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    leftColumnY += lineHeight;
 
-    drawTextWithOutline(ctx, `Pozostały Aplauz:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    drawTextWithOutline(ctx, `${stats.remainingAplauz} Ap.`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    currentY += lineHeight;
+    drawTextWithOutline(ctx, `Wieże Oświetleniowców:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.towersBuilt.oswietleniowiec}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    leftColumnY += lineHeight;
 
-    drawTextWithOutline(ctx, `Wartość Sprzedaży Wież:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    drawTextWithOutline(ctx, `${stats.totalTowerValue} Ap.`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    currentY += lineHeight * 1.2;
+
+    // --- PRAWA KOLUMNA: Bonus na Następny Akt ---
+    drawTextWithOutline(ctx, "Bonus na Następny Akt:", rightColumnX + columnWidth / 2, rightColumnY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "center");
+    rightColumnY += lineHeight * 1.8;
+
+    drawTextWithOutline(ctx, `Pozostały Aplauz:`, rightColumnX + sectionPadding, rightColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.remainingAplauz} Ap.`, rightColumnX + valueXOffset, rightColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    rightColumnY += lineHeight;
+
+    drawTextWithOutline(ctx, `Wartość Sprzedaży Wież:`, rightColumnX + sectionPadding, rightColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.totalTowerValue} Ap.`, rightColumnX + valueXOffset, rightColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    rightColumnY += lineHeight * 1.1;
     
     ctx.beginPath();
-    ctx.moveTo(sectionX + sectionPadding, currentY - lineHeight * 0.4);
-    ctx.lineTo(sectionX + sectionWidth - sectionPadding, currentY - lineHeight * 0.4);
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.2)";
+    ctx.moveTo(rightColumnX + sectionPadding / 2, rightColumnY);
+    ctx.lineTo(rightColumnX + columnWidth - sectionPadding / 2, rightColumnY);
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
+    ctx.lineWidth = 1;
     ctx.stroke();
+    rightColumnY += lineHeight * 0.9;
 
-    const totalBonusFont = "bold 15px Arial"; // nieco większa czcionka dla sumy
-    drawTextWithOutline(ctx, `Łączny Bonus Aplauzu:`, sectionX + sectionPadding, currentY + lineHeight*0.5, totalBonusFont, "#e0c9a6", "black", 2.2, "left");
-    drawTextWithOutline(ctx, `${stats.aplauzBonusForNextLevel} Ap.`, sectionX + valueXOffset, currentY + lineHeight*0.5, totalBonusFont, "#4CAF50", "black", 2.2, "right");
-    currentY += lineHeight * 2.5;
+    const totalBonusFont = "bold 14px Arial";
+    drawTextWithOutline(ctx, `Łączny Bonus Aplauzu:`, rightColumnX + sectionPadding, rightColumnY, totalBonusFont, "#e0c9a6", "black", 2.2, "left");
+    drawTextWithOutline(ctx, `${stats.aplauzBonusForNextLevel} Ap.`, rightColumnX + valueXOffset, rightColumnY, totalBonusFont, "#50C878", "black", 2.2, "right");
+    // rightColumnY += lineHeight; // Już niepotrzebne, przyciski poniżej
 
-    const buttonWidth = 220;
-    const buttonHeight = 45;
+    const maxYFromColumns = Math.max(leftColumnY, rightColumnY);
+    let buttonsCurrentY = maxYFromColumns + 35;
+
+    const buttonWidth = 200;
+    const buttonHeight = 40;
     state.levelCompleteButtons = [];
 
-    let buttonsYStart = canvasHeight - 50 - buttonHeight; // Start Y for the lowest button
+    let numButtons = 1;
     if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
-        buttonsYStart -= (buttonHeight + 15); // Make space for the "Next Act" button
+        numButtons = 2;
+    }
+    const requiredSpaceForButtons = numButtons * buttonHeight + (numButtons - 1) * 10; 
+
+    if (buttonsCurrentY + requiredSpaceForButtons + 20 > canvasHeight) { // Sprawdzenie, czy przyciski nie wyjdą poza ekran
+        buttonsCurrentY = canvasHeight - requiredSpaceForButtons - 20;
     }
     
-    const menuButtonY = canvasHeight - buttonHeight - 30;
+    // Przycisk "Menu Główne" zawsze na dole (lub prawie na dole)
+    let menuButtonActualY = buttonsCurrentY;
+    if (numButtons === 2) { // Jeśli są dwa przyciski, "Menu Główne" jest niżej
+        menuButtonActualY = buttonsCurrentY + buttonHeight + 10;
+    }
      state.levelCompleteButtons.push({
         id: 'mainMenu', text: "Menu Główne",
-        x: canvasWidth / 2 - buttonWidth / 2, y: menuButtonY,
+        x: canvasWidth / 2 - buttonWidth / 2, y: menuButtonActualY,
         width: buttonWidth, height: buttonHeight
     });
-    drawStyledButton(ctx, "Menu Główne", canvasWidth / 2, menuButtonY + buttonHeight / 2, buttonWidth, buttonHeight);
+    drawStyledButton(ctx, "Menu Główne", canvasWidth / 2, menuButtonActualY + buttonHeight / 2, buttonWidth, buttonHeight);
 
-
-    if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
-        const nextLevelButtonY = menuButtonY - buttonHeight - 15;
+    if (numButtons === 2) { // Jeśli jest przycisk "Następny Akt", rysujemy go nad "Menu Główne"
         state.levelCompleteButtons.push({
             id: 'nextLevel', text: "Następny Akt",
-            x: canvasWidth / 2 - buttonWidth / 2, y: nextLevelButtonY,
+            x: canvasWidth / 2 - buttonWidth / 2, y: buttonsCurrentY, // buttonsCurrentY jest teraz dla górnego przycisku
             width: buttonWidth, height: buttonHeight
         });
-        drawStyledButton(ctx, "Następny Akt", canvasWidth / 2, nextLevelButtonY + buttonHeight / 2, buttonWidth, buttonHeight);
+        drawStyledButton(ctx, "Następny Akt", canvasWidth / 2, buttonsCurrentY + buttonHeight / 2, buttonWidth, buttonHeight);
     }
 }
 
@@ -330,16 +353,28 @@ function drawStyledButton(ctx, text, centerX, centerY, width, height) {
     gradient.addColorStop(0, "#b8860b");
     gradient.addColorStop(1, "#8c6c0a");
     ctx.fillStyle = gradient;
-    ctx.fillRect(x, y, width, height);
+    
+    const cornerRadius = 6;
+    ctx.beginPath();
+    ctx.moveTo(x + cornerRadius, y);
+    ctx.lineTo(x + width - cornerRadius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + cornerRadius);
+    ctx.lineTo(x + width, y + height - cornerRadius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - cornerRadius, y + height);
+    ctx.lineTo(x + cornerRadius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - cornerRadius);
+    ctx.lineTo(x, y + cornerRadius);
+    ctx.quadraticCurveTo(x, y, x + cornerRadius, y);
+    ctx.closePath();
+    ctx.fill();
 
     ctx.strokeStyle = "#5c400a";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, width, height);
+    ctx.lineWidth = 1.5; 
+    ctx.stroke(); 
     
-    // Używamy globalnego textAlign = 'center' z drawTextWithOutline
     const baseFontSize = parseInt(C.UI_FONT_MEDIUM.match(/\d+/)[0]) || 13;
-    drawTextWithOutline(ctx, text, centerX, centerY + baseFontSize / 3, C.UI_FONT_MEDIUM, "white", "black", 2.5, "center");
-    ctx.lineWidth = 1; // Reset lineWidth
+    drawTextWithOutline(ctx, text, centerX, centerY + baseFontSize / 3.3, C.UI_FONT_MEDIUM, "white", "black", 2.5, "center");
+    ctx.lineWidth = 1;
 }
 
 export function drawGameOverScreen(ctx) { /* Pusta, nieużywana */ }
