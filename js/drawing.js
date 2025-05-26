@@ -98,8 +98,15 @@ export function drawSingleEnemy(ctx, enemy) {
         ctx.save();
         ctx.globalAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
         const scaleFactor = enemy.currentScale !== undefined ? enemy.currentScale : 1;
-        const w = enemy.width * scaleFactor; 
-        const h = enemy.height * scaleFactor;
+        let w = enemy.width * scaleFactor; 
+        let h = enemy.height * scaleFactor;
+
+        if (enemy.type === 'diva' && enemy.furyActive) {
+            ctx.save(); // Zapisz stan przed nałożeniem efektu furii
+            ctx.shadowColor = "rgba(255, 50, 50, 0.7)"; // Czerwona poświata
+            ctx.shadowBlur = 8;                          // Rozmiar poświaty
+        }
+
 
         if (enemy.image && !enemy.image.error) {
             if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { 
@@ -113,11 +120,15 @@ export function drawSingleEnemy(ctx, enemy) {
             }
             ctx.drawImage(enemy.image, enemy.x - w / 2, enemy.y - h / 2, w, h);
         } else { 
-            ctx.fillStyle = enemy.type === 'krytyk' ? '#5A5A5A' : '#007bff'; 
+            ctx.fillStyle = enemy.type === 'krytyk' ? '#5A5A5A' : (enemy.type === 'diva' ? '#FF69B4' : (enemy.type === 'techniczny' ? '#4682B4' : '#007bff')); 
             const fallbackSize = w * 0.8; 
             ctx.fillRect(enemy.x - fallbackSize / 2, enemy.y - fallbackSize / 2, fallbackSize, fallbackSize); 
         }
-        ctx.restore();
+        
+        if (enemy.type === 'diva' && enemy.furyActive) {
+            ctx.restore(); // Przywróć stan sprzed efektu furii
+        }
+        ctx.restore(); // Główny restore dla alpha i scale
 
         if ((enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) && enemy.hp > 0 && !enemy.isDying) { 
             const barWidth = C.TILE_SIZE * 0.8; const barHeight = 7;
@@ -152,15 +163,41 @@ export function drawSingleTower(ctx, tower) {
     if (tower.image && !tower.image.error) {
         ctx.drawImage(tower.image, drawXOffset, drawYOffset, currentRenderSize, currentRenderSize);
     } else { 
-        ctx.fillStyle = tower.type === 'bileter' ? '#4CAF50' : '#FFEB3B'; 
+        let fallbackColor = '#CCCCCC';
+        if (tower.type === 'bileter') fallbackColor = '#4CAF50';
+        else if (tower.type === 'oswietleniowiec') fallbackColor = '#FFEB3B';
+        else if (tower.type === 'garderobiana') fallbackColor = '#FFC0CB'; 
+        else if (tower.type === 'budkaInspicjenta') fallbackColor = '#A0522D'; 
+        ctx.fillStyle = fallbackColor; 
         const fallbackSize = currentRenderSize * 0.8; 
         ctx.fillRect(drawXOffset + (currentRenderSize - fallbackSize)/2, drawYOffset + (currentRenderSize - fallbackSize), fallbackSize, fallbackSize); 
     }
     ctx.restore(); 
     
+    if (tower.isSabotaged && images.sabotageEffectIcon && !images.sabotageEffectIcon.error) {
+        const effectSize = C.TILE_SIZE * 0.7;
+        const effectX = tower.x - effectSize / 2;
+        const effectY = tower.y - tower.renderSize + C.TILE_SIZE / 2 - effectSize * 0.7 + Math.sin(Date.now() / 100) * 2; // Lekkie unoszenie
+        ctx.globalAlpha = 0.8 + Math.sin(Date.now() / 150) * 0.2; // Lekkie migotanie
+        ctx.drawImage(
+            images.sabotageEffectIcon,
+            effectX,
+            effectY,
+            effectSize,
+            effectSize
+        );
+        ctx.globalAlpha = 1.0; // Przywróć alpha
+    }
+
     if ((tower.currentAlpha === undefined || tower.currentAlpha > 0.9) && (tower.currentScale === undefined || tower.currentScale > 0.9)) {
+        let levelText = `D:${tower.damageLevel || 0}|S:${tower.fireRateLevel || 0}`;
+        if (tower.type === 'garderobiana') {
+            levelText += `|R:${tower.rangeLevel || 0}|E:${tower.effectStrengthLevel || 0}|T:${tower.effectDurationLevel || 0}`;
+        } else if (tower.type === 'budkaInspicjenta') {
+            levelText += `|C:${tower.critChanceLevel || 0}`;
+        }
         const textDrawY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 6; 
-        drawTextWithOutline(ctx, `D:${tower.damageLevel}|S:${tower.fireRateLevel}`, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
+        drawTextWithOutline(ctx, levelText, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
     }
 
     if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
@@ -190,7 +227,7 @@ export function drawProjectiles(ctx) {
             ctx.drawImage(p.image, -p.width * scale / 2, -p.height * scale / 2, p.width * scale, p.height * scale);
             ctx.restore();
         } else { 
-            ctx.fillStyle = p.type === 'bilet' ? 'white' : 'yellow';
+            ctx.fillStyle = p.type === 'bilet' ? 'white' : (p.type === 'recenzja' ? '#DDD' : 'yellow');
             const fallbackWidth = p.width || C.TILE_SIZE * 0.2;
             const fallbackHeight = p.height || C.TILE_SIZE * 0.1;
             ctx.fillRect(p.x - fallbackWidth / 2, p.y - fallbackHeight / 2, fallbackWidth, fallbackHeight);
@@ -202,11 +239,23 @@ export function drawEffects(ctx) {
     if (state.effects && state.effects.length > 0) {
         state.effects.forEach(effect => {
             ctx.save();
-            ctx.globalAlpha = effect.alpha; 
-            ctx.fillStyle = effect.color || "orange";
-            ctx.beginPath();
-            ctx.arc(effect.x, effect.y, effect.scale, 0, Math.PI * 2); 
-            ctx.fill();
+            ctx.globalAlpha = effect.currentAlpha !== undefined ? effect.currentAlpha : effect.alpha; 
+            
+            if (effect.image && !effect.image.error) {
+                const scale = effect.currentScale !== undefined ? effect.currentScale : 1;
+                 ctx.drawImage(effect.image, 
+                    effect.x - effect.width * scale / 2, 
+                    effect.y - effect.height * scale / 2, 
+                    effect.width * scale, 
+                    effect.height * scale
+                );
+            } else { 
+                const radius = effect.currentRadius !== undefined ? effect.currentRadius : (effect.scale || 10) ;
+                ctx.fillStyle = effect.color || "orange";
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         });
     }
@@ -223,22 +272,28 @@ export function drawWaveIntro(ctx) {
     drawTextWithOutline(ctx, "Przeciwnicy:", ctx.canvas.width / 2, 130, C.UI_FONT_LARGE, "white", "black");
 
     const iconSize = C.TILE_SIZE * 1.5;
-    const startX = ctx.canvas.width / 2 - (state.waveIntroEnemies.length * (iconSize + 20) - 20) / 2;
+    let totalIconsWidth = 0;
+    state.waveIntroEnemies.forEach(enemyInfo => {
+        totalIconsWidth += iconSize + (state.waveIntroEnemies.length > 1 ? 10 : 0);
+    });
+    if (state.waveIntroEnemies.length > 0) totalIconsWidth -=10;
 
-    state.waveIntroEnemies.forEach((enemyInfo, index) => {
-        const x = startX + index * (iconSize + 20);
+    let startX = canvas.width / 2 - totalIconsWidth / 2;
+
+    state.waveIntroEnemies.forEach((enemyInfo) => {
         const y = 160;
         if (enemyInfo.image && !enemyInfo.image.error) {
-            ctx.drawImage(enemyInfo.image, x, y, iconSize, iconSize);
+            ctx.drawImage(enemyInfo.image, startX, y, iconSize, iconSize);
              if (enemyInfo.isBoss) {
-                drawTextWithOutline(ctx, "BOSS!", x + iconSize / 2, y + iconSize + 25, "bold 18px Arial", "red", "black");
+                drawTextWithOutline(ctx, "BOSS!", startX + iconSize / 2, y + iconSize + 25, "bold 18px Arial", "red", "black");
             } else if (enemyInfo.level > 1) {
-                drawTextWithOutline(ctx, `Lvl ${enemyInfo.level}`, x + iconSize / 2, y + iconSize + 20, "bold 16px Arial", enemyInfo.level === 2 ? "lightblue" : "pink", "black");
+                drawTextWithOutline(ctx, `Lvl ${enemyInfo.level}`, startX + iconSize / 2, y + iconSize + 20, "bold 16px Arial", enemyInfo.level === 2 ? "lightblue" : "pink", "black");
             }
         } else {
-            ctx.fillStyle = enemyInfo.type === 'krytyk' ? '#5A5A5A' : '#007bff';
-            ctx.fillRect(x, y, iconSize, iconSize);
+            ctx.fillStyle = enemyInfo.type === 'krytyk' ? '#5A5A5A' : (enemyInfo.type === 'diva' ? '#FF69B4' : (enemyInfo.type === 'techniczny' ? '#4682B4' : '#007bff'));
+            ctx.fillRect(startX, y, iconSize, iconSize);
         }
+        startX += iconSize + 10;
     });
     
     drawTextWithOutline(ctx, `Przygotuj się! (${Math.ceil(state.waveIntroTimer / 60)}s)`, ctx.canvas.width / 2, ctx.canvas.height - 80, C.UI_FONT_MEDIUM, "lightgray", "black");
@@ -323,6 +378,15 @@ export function drawLevelCompleteSummary(ctx) {
 
     drawTextWithOutline(ctx, `Wieże Oświetleniowców:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
     drawTextWithOutline(ctx, `${stats.towersBuilt.oswietleniowiec}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    leftColumnY += lineHeight;
+
+    drawTextWithOutline(ctx, `Garderobiane:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.towersBuilt.garderobiana || 0}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    leftColumnY += lineHeight;
+
+    drawTextWithOutline(ctx, `Budki Inspicjenta:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.towersBuilt.budkaInspicjenta || 0}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+
 
     drawTextWithOutline(ctx, "Bonus na Następny Akt:", rightColumnX + columnWidth / 2, rightColumnY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "center");
     rightColumnY += lineHeight * 1.8;

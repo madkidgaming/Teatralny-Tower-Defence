@@ -20,15 +20,13 @@ export const gameState = {
     showingLevelCompleteSummary: false,
     levelCompleteButtons: [], 
 
-    enemies: [],
-    towers: [],
+    enemies: [], // Obiekty wrogów mogą teraz mieć: .isSlowed, .slowTimer, .damageTakenMultiplier, .furyActive, .furyTimer, .currentDamageReduction
+    towers: [],  // Obiekty wież mogą teraz mieć: .isSabotaged, .sabotageTimer, .sabotageEffectImage (dla rysowania), .special1Level, .special2Level, .special3Level
     projectiles: [],
-    effects: [],
+    effects: [], 
 
     currentPath: [],
     currentTowerSpots: [],
-
-    // ZMIANA: Dodana właściwość do przechowywania wygenerowanej mapy kafelków tła
     currentBackgroundTileMap: [], 
 
     currentWaveSpawns: [],
@@ -54,7 +52,12 @@ export const gameState = {
         isStarAnimationComplete: false,
         finalSatisfaction: 0,
         initialMaxSatisfaction: 0,
-        towersBuilt: { bileter: 0, oswietleniowiec: 0 },
+        towersBuilt: { 
+            bileter: 0, 
+            oswietleniowiec: 0, 
+            garderobiana: 0, 
+            budkaInspicjenta: 0 
+        },
         totalTowerValue: 0,
         remainingAplauz: 0,
         aplauzBonusForNextLevel: 0,

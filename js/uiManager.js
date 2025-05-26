@@ -2,106 +2,92 @@
 import * as C from './config.js';
 import { gameState as state } from './state.js';
 
-// Cache DOM elements used by UI functions
 let uiCurrentAct, uiCurrentWave, uiAplauz, uiAudienceSatisfaction,
-    uiButtonBileter, uiButtonOswietleniowiec, uiButtonUpgradeSatisfaction,
-    uiButtonStartWave, uiMessages, towerUpgradePanel, upgradePanelTowerName,
-    uiButtonUpgradeDamage, uiButtonUpgradeFireRate, uiButtonSellTower;
+    uiButtonBileter, uiButtonOswietleniowiec, uiButtonGarderobiana, uiButtonBudkaInspicjenta,
+    uiButtonUpgradeSatisfaction, uiButtonStartWave, uiMessages, 
+    towerUpgradePanel, upgradePanelTowerName, uiButtonUpgradeDamage, uiButtonUpgradeFireRate, 
+    uiButtonUpgradeSpecial1, uiButtonUpgradeSpecial2, uiButtonUpgradeSpecial3, // Dodany przycisk dla 3. specjalnego ulepszenia
+    uiButtonSellTower;
 
 function cacheDOMElements() {
     uiCurrentAct = document.getElementById('uiCurrentAct');
     uiCurrentWave = document.getElementById('uiCurrentWave');
     uiAplauz = document.getElementById('uiAplauz');
     uiAudienceSatisfaction = document.getElementById('uiAudienceSatisfaction');
+    
     uiButtonBileter = document.getElementById('uiButtonBileter');
     uiButtonOswietleniowiec = document.getElementById('uiButtonOswietleniowiec');
+    uiButtonGarderobiana = document.getElementById('uiButtonGarderobiana');
+    uiButtonBudkaInspicjenta = document.getElementById('uiButtonBudkaInspicjenta');
+
     uiButtonUpgradeSatisfaction = document.getElementById('uiButtonUpgradeSatisfaction');
     uiButtonStartWave = document.getElementById('uiButtonStartWave');
     uiMessages = document.getElementById('uiMessages');
+    
     towerUpgradePanel = document.getElementById('towerUpgradePanel');
     upgradePanelTowerName = document.getElementById('upgradePanelTowerName');
     uiButtonUpgradeDamage = document.getElementById('uiButtonUpgradeDamage');
     uiButtonUpgradeFireRate = document.getElementById('uiButtonUpgradeFireRate');
+    uiButtonUpgradeSpecial1 = document.getElementById('uiButtonUpgradeSpecial1'); // Możesz chcieć go dodać do HTML
+    uiButtonUpgradeSpecial2 = document.getElementById('uiButtonUpgradeSpecial2'); // Możesz chcieć go dodać do HTML
+    // uiButtonUpgradeSpecial3 = document.getElementById('uiButtonUpgradeSpecial3'); // Jeśli dodasz trzeci przycisk
     uiButtonSellTower = document.getElementById('uiButtonSellTower');
 }
-// Wywołaj cachowanie, gdy DOM będzie gotowy. Dla modułów to zwykle działa poprawnie.
-// Alternatywnie: document.addEventListener('DOMContentLoaded', cacheDOMElements);
 cacheDOMElements();
 
 
 export function updateUiStats() {
-    // Upewnij się, że elementy DOM są dostępne
     if (!uiCurrentAct) cacheDOMElements();
-    if (!uiCurrentAct) { // Jeśli nadal nie ma, coś jest nie tak z timingiem/DOM
+    if (!uiCurrentAct) { 
         console.error("UIManager: DOM elements not cached for updateUiStats.");
         return;
     }
 
-
     if (!C.levelData[state.currentLevelIndex] &&
-        state.gameScreen !== 'menu' &&
-        state.gameScreen !== 'levelSelection' &&
-        state.gameScreen !== 'credits' &&
-        state.gameScreen !== 'levelCompleteScreen' && // HTMLowa wersja
-        state.gameScreen !== 'levelCompleteCanvas' // Canvasowa wersja
+        !['menu', 'levelSelection', 'credits', 'levelCompleteScreen', 'levelCompleteCanvas'].includes(state.gameScreen)
     ) {
         return;
     }
 
-     if (state.gameScreen === 'playing' || state.gameScreen === 'paused' || state.gameScreen === 'levelLost' || state.gameScreen === 'levelCompleteCanvas') {
+     if (['playing', 'paused', 'levelLost', 'levelCompleteCanvas'].includes(state.gameScreen)) {
         uiCurrentAct.textContent = state.currentLevelIndex + 1;
-        let waveDisplay;
-        if (state.currentWaveNumber > C.WAVES_PER_LEVEL) {
-            waveDisplay = C.WAVES_PER_LEVEL;
-        } else if (state.currentWaveNumber > 0) {
-            waveDisplay = state.currentWaveNumber;
-        } else {
-            const progress = state.levelProgress[state.currentLevelIndex];
-            if (progress === undefined || progress === -1) {
-                waveDisplay = '-';
-            } else {
-                // Jeśli progress to 0, oznacza, że fala 0 (pierwsza) się nie zaczęła lub jest tuż przed startem.
-                // Dla gracza lepiej wyświetlić "0" lub "1" jeśli progress to *ostatnia ukończona fala*.
-                // Tutaj przyjmujemy, że progress=-1 to "niezaczęty", progress=0 to "na fali 0" (wyświetlane jako fala 1 dla gracza)
-                waveDisplay = progress + 1 > 0 ? progress + 1 : '-';
-                 if (state.currentWaveNumber === 0 && (progress === undefined || progress === -1)) waveDisplay = '-';
-                 else if (state.currentWaveNumber === 0 && progress >=0) waveDisplay = progress +1; // np. jeśli zapisano postęp na fali 0.
-
-                 // Uproszczenie: jeśli currentWaveNumber to 0, a nie ma progressu -
-                 // Jeśli currentWaveNumber to 0, a jest progress to ostatnia fala
-                  if (state.currentWaveNumber === 0) {
-                     waveDisplay = (state.levelProgress[state.currentLevelIndex] >= 0) ? state.levelProgress[state.currentLevelIndex] +1 : '-';
-                     if (waveDisplay === '-' && state.levelProgress[state.currentLevelIndex] === -1 && state.currentWaveNumber === 0) waveDisplay = '0'; // Pokaż 0/10 jeśli poziom jest nowy, ale jeszcze nie fala 1
-                     if(state.currentWaveNumber > 0) waveDisplay = state.currentWaveNumber; // to nadpisze poprzednie
-                  } else {
-                    waveDisplay = state.currentWaveNumber;
-                  }
-                  if(waveDisplay === '0' && state.currentWaveNumber === 0 && (state.levelProgress[state.currentLevelIndex] === undefined || state.levelProgress[state.currentLevelIndex] === -1)) waveDisplay = '-';
-
-
+        
+        let displayWaveNumber = state.currentWaveNumber;
+        if (state.gameScreen === 'playing' || state.gameScreen === 'paused') {
+            if (state.waveInProgress || state.showingWaveIntro) {
+                displayWaveNumber = state.currentWaveNumber + 1;
+            } else if (state.currentWaveNumber === 0 && (state.levelProgress[state.currentLevelIndex] === undefined || state.levelProgress[state.currentLevelIndex] === -1)) {
+                displayWaveNumber = "-";
+            } else if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
+                 displayWaveNumber = C.WAVES_PER_LEVEL;
+            } else { // Między falami
+                displayWaveNumber = state.currentWaveNumber +1; 
+            }
+        } else { // levelLost or levelCompleteCanvas
+            if (state.gameScreen === 'levelCompleteCanvas') {
+                displayWaveNumber = C.WAVES_PER_LEVEL;
+            } else { // levelLost
+                displayWaveNumber = (state.currentWaveNumber > 0 && state.currentWaveNumber <= C.WAVES_PER_LEVEL) ? state.currentWaveNumber : (state.levelProgress[state.currentLevelIndex] === -1 ? "-" : (state.levelProgress[state.currentLevelIndex] || 0) + 1) ;
+                if(displayWaveNumber > C.WAVES_PER_LEVEL) displayWaveNumber = C.WAVES_PER_LEVEL;
             }
         }
-        // Ostateczne formatowanie waveDisplay, aby uniknąć "0/X" jeśli wolimy "-"
-        let finalWaveDisplay = state.currentWaveNumber > C.WAVES_PER_LEVEL ? C.WAVES_PER_LEVEL : state.currentWaveNumber;
-        if (state.currentWaveNumber === 0 && (state.levelProgress[state.currentLevelIndex] === undefined || state.levelProgress[state.currentLevelIndex] === -1) ) {
-            finalWaveDisplay = "-";
-        } else if (state.currentWaveNumber === 0 && state.levelProgress[state.currentLevelIndex] >= 0) {
-            finalWaveDisplay = state.levelProgress[state.currentLevelIndex]; //np. 0
+        if (state.currentWaveNumber === 0 && !state.waveInProgress && !state.showingWaveIntro && (state.levelProgress[state.currentLevelIndex] === undefined || state.levelProgress[state.currentLevelIndex] === -1)){
+            displayWaveNumber = "-"; // Przed pierwszą falą
         }
 
 
-        uiCurrentWave.textContent = `${finalWaveDisplay === '-' ? '-' : finalWaveDisplay === 0 ? '0' : finalWaveDisplay }/${C.WAVES_PER_LEVEL}`;
+        uiCurrentWave.textContent = `${displayWaveNumber}/${C.WAVES_PER_LEVEL}`;
         uiAplauz.textContent = state.aplauz;
         uiAudienceSatisfaction.textContent = `${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`;
     }
 
-
-    if (C.towerDefinitions.bileter && uiButtonBileter) {
-        uiButtonBileter.querySelector('.cost').textContent = C.towerDefinitions.bileter.cost;
-    }
-    if (C.towerDefinitions.oswietleniowiec && uiButtonOswietleniowiec) {
-        uiButtonOswietleniowiec.querySelector('.cost').textContent = C.towerDefinitions.oswietleniowiec.cost;
-    }
+    ['bileter', 'oswietleniowiec', 'garderobiana', 'budkaInspicjenta'].forEach(towerType => {
+        const buttonId = `uiButton${towerType.charAt(0).toUpperCase() + towerType.slice(1)}`;
+        const buttonEl = document.getElementById(buttonId);
+        if (buttonEl && C.towerDefinitions[towerType]) {
+            buttonEl.querySelector('.cost').textContent = C.towerDefinitions[towerType].cost;
+        }
+    });
 
     if (uiButtonUpgradeSatisfaction) {
         if (state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL && C.zadowolenieUpgrades[state.zadowolenieUpgradeLevel]) {
@@ -134,7 +120,7 @@ export function showUiMessage(message) {
             uiMessages.style.opacity = '0';
             setTimeout(() => {
                 if (uiMessages.style.opacity === '0') uiMessages.textContent = '';
-            }, 300); // Czas zgodny z transition w CSS
+            }, 300);
         }
     }
 }
@@ -143,52 +129,95 @@ export function updateTowerUpgradePanel() {
     if (!towerUpgradePanel) cacheDOMElements();
     if (!towerUpgradePanel) return;
 
+    const specialButtons = [uiButtonUpgradeSpecial1, uiButtonUpgradeSpecial2 /*, uiButtonUpgradeSpecial3 */];
+    specialButtons.forEach(btn => btn?.classList.add('hidden'));
+    [uiButtonUpgradeDamage, uiButtonUpgradeFireRate].forEach(btn => btn?.classList.add('hidden'));
+
+
     if (state.selectedTowerForUpgrade && C.towerDefinitions[state.selectedTowerForUpgrade.type]) {
         towerUpgradePanel.classList.remove('hidden');
         const tower = state.selectedTowerForUpgrade;
         const towerDef = C.towerDefinitions[tower.type];
         
-        if (upgradePanelTowerName) upgradePanelTowerName.textContent = tower.type === 'bileter' ? 'Bileter' : 'Oświetleniowiec';
+        if (upgradePanelTowerName) upgradePanelTowerName.textContent = towerDef.name;
 
-        if (uiButtonUpgradeDamage) {
-            if (tower.damageLevel < C.MAX_UPGRADE_LEVEL && towerDef.upgrades.damage[tower.damageLevel]) {
-                uiButtonUpgradeDamage.querySelector('.cost').textContent = towerDef.upgrades.damage[tower.damageLevel].cost;
-                uiButtonUpgradeDamage.classList.remove('disabled');
+        const standardUpgradeMap = { damage: uiButtonUpgradeDamage, fireRate: uiButtonUpgradeFireRate };
+
+        towerDef.upgradeLevelNames?.forEach((upgradeKey, index) => {
+            let button;
+            let isStandard = false;
+            if (standardUpgradeMap[upgradeKey]) {
+                button = standardUpgradeMap[upgradeKey];
+                isStandard = true;
             } else {
-                uiButtonUpgradeDamage.querySelector('.cost').textContent = "MAX";
-                uiButtonUpgradeDamage.classList.add('disabled');
+                // Mapowanie specjalnych ulepszeń na przyciski Special1, Special2 itd.
+                // To zakłada, że pierwsze specjalne ulepszenie w upgradeLevelNames to Special1 itd.
+                let specialButtonIndex = 0;
+                for(let i=0; i < index; i++){
+                    if(!standardUpgradeMap[towerDef.upgradeLevelNames[i]]) specialButtonIndex++;
+                }
+                button = specialButtons[specialButtonIndex];
             }
-        }
-        if (uiButtonUpgradeFireRate) {
-            if (tower.fireRateLevel < C.MAX_UPGRADE_LEVEL && towerDef.upgrades.fireRate[tower.fireRateLevel]) {
-                uiButtonUpgradeFireRate.querySelector('.cost').textContent = towerDef.upgrades.fireRate[tower.fireRateLevel].cost;
-                uiButtonUpgradeFireRate.classList.remove('disabled');
-            } else {
-                uiButtonUpgradeFireRate.querySelector('.cost').textContent = "MAX";
-                uiButtonUpgradeFireRate.classList.add('disabled');
+
+            if (button && towerDef.upgrades[upgradeKey]) {
+                button.classList.remove('hidden');
+                let buttonText = upgradeKey.charAt(0).toUpperCase() + upgradeKey.slice(1);
+                // Poprawki nazw dla standardowych
+                if (upgradeKey === 'damage') buttonText = "Obrażenia+";
+                else if (upgradeKey === 'fireRate') buttonText = "Szybkostrzelność+";
+                else if (upgradeKey === 'range') buttonText = "Zasięg+";
+                else if (upgradeKey === 'effectStrength') buttonText = "Siła Efektu+";
+                else if (upgradeKey === 'effectDuration') buttonText = "Czas Efektu+";
+                else if (upgradeKey === 'critChance') buttonText = "Szansa Kryt.+";
+
+                const currentLevel = tower[`${upgradeKey}Level`] || 0;
+                const maxLevelForThisSpecificUpgrade = towerDef.upgrades[upgradeKey].length;
+
+
+                if (currentLevel < maxLevelForThisSpecificUpgrade) {
+                    button.innerHTML = `${buttonText} (<span class="cost">${towerDef.upgrades[upgradeKey][currentLevel].cost}</span> Ap.)`;
+                    button.classList.remove('disabled');
+                } else {
+                    button.innerHTML = `${buttonText} (<span class="cost">MAX</span> Ap.)`;
+                    button.classList.add('disabled');
+                }
             }
-        }
+        });
+        
         if (uiButtonSellTower) {
             let sellValue = Math.floor(towerDef.cost * 0.75);
-            for(let i=0; i < tower.damageLevel; i++) sellValue += Math.floor(towerDef.upgrades.damage[i].cost * 0.5);
-            for(let i=0; i < tower.fireRateLevel; i++) sellValue += Math.floor(towerDef.upgrades.fireRate[i].cost * 0.5);
+             tower.definition.upgradeLevelNames?.forEach(upgradeName => {
+                const levelKey = `${upgradeName}Level`;
+                for(let i = 0; i < (tower[levelKey] || 0); i++) {
+                    sellValue += Math.floor((tower.definition.upgrades[upgradeName]?.[i]?.cost || 0) * 0.5);
+                }
+            });
             uiButtonSellTower.querySelector('.value').textContent = sellValue;
         }
+
     } else {
         towerUpgradePanel.classList.add('hidden');
     }
 }
 
+
 export function updateSelectedTowerButtonUI() {
-    if (!uiButtonBileter || !uiButtonOswietleniowiec) cacheDOMElements();
-    if (!uiButtonBileter || !uiButtonOswietleniowiec) return;
+    if (!uiButtonBileter) cacheDOMElements(); 
+    
+    const towerButtons = {
+        'bileter': uiButtonBileter,
+        'oswietleniowiec': uiButtonOswietleniowiec,
+        'garderobiana': uiButtonGarderobiana,
+        'budkaInspicjenta': uiButtonBudkaInspicjenta
+    };
 
-    uiButtonBileter.classList.remove('selected-for-build');
-    uiButtonOswietleniowiec.classList.remove('selected-for-build');
-
-    if (state.selectedTowerType === 'bileter') {
-        uiButtonBileter.classList.add('selected-for-build');
-    } else if (state.selectedTowerType === 'oswietleniowiec') {
-        uiButtonOswietleniowiec.classList.add('selected-for-build');
+    for (const type in towerButtons) {
+        if (towerButtons[type]) {
+            if (state.selectedTowerType === type) {
+                towerButtons[type].classList.add('selected-for-build');
+            } else {
+                towerButtons[type].classList.remove('selected-for-build');
+            }
+        }
     }
 }

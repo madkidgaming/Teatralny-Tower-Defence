@@ -11,23 +11,19 @@ import *as ScreenManager from './screenManager.js';
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Inicjalizacja ScreenManager z callbackami
 ScreenManager.initializeScreenManager({
     startGameLevel: startGameLevel,
     updateContinueButtonState: updateContinueButtonState,
     goToMainMenu: goToMainMenu
 });
 
-// Elementy DOM dla menu, które są nadal obsługiwane przez main.js lub ScreenManager
 const continueGameButton = document.getElementById('continueGameButton');
 const newGameButtonFromMenu = document.getElementById('newGameButtonFromMenu');
 const levelSelectButton = document.getElementById('levelSelectButton');
 const creditsButton = document.getElementById('creditsButton');
 const backToMainMenuFromLevelSelection = document.getElementById('backToMainMenuFromLevelSelection');
 const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCredits');
-
 const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
-
 const customConfirmOverlay = document.getElementById('customConfirmOverlay');
 const customConfirmTitle = document.getElementById('customConfirmTitle');
 const customConfirmMessage = document.getElementById('customConfirmMessage');
@@ -37,31 +33,30 @@ const customConfirmCancelButton = document.getElementById('customConfirmCancelBu
 if (!customConfirmOverlay || !customConfirmTitle || !customConfirmMessage || !customConfirmOkButton || !customConfirmCancelButton) {
     console.error("CRITICAL: One or more custom confirm dialog DOM elements are missing! Check IDs in index.html and main.js.");
 }
-
 let confirmResolve = null;
 
-// Elementy UI do interakcji w grze (event listenery pozostają w main.js)
 const uiButtonBileter = document.getElementById('uiButtonBileter');
 const uiButtonOswietleniowiec = document.getElementById('uiButtonOswietleniowiec');
+const uiButtonGarderobiana = document.getElementById('uiButtonGarderobiana');
+const uiButtonBudkaInspicjenta = document.getElementById('uiButtonBudkaInspicjenta');
 const uiButtonUpgradeSatisfaction = document.getElementById('uiButtonUpgradeSatisfaction');
 const uiButtonStartWave = document.getElementById('uiButtonStartWave');
 const uiButtonUpgradeDamage = document.getElementById('uiButtonUpgradeDamage');
 const uiButtonUpgradeFireRate = document.getElementById('uiButtonUpgradeFireRate');
+const uiButtonUpgradeSpecial1 = document.getElementById('uiButtonUpgradeSpecial1');
+const uiButtonUpgradeSpecial2 = document.getElementById('uiButtonUpgradeSpecial2');
 const uiButtonSellTower = document.getElementById('uiButtonSellTower');
-
 const pauseButton = document.getElementById('pauseButton');
 const resumeButton = document.getElementById('resumeButton');
 const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame');
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
-
 
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
     return new Promise((resolve) => {
         confirmResolve = resolve;
         if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
             console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
-            resolve(false);
-            return;
+            resolve(false); return;
         }
         customConfirmTitle.textContent = title;
         customConfirmMessage.textContent = message;
@@ -73,51 +68,26 @@ function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
 function hideCustomConfirm() {
     if (customConfirmOverlay) {
         customConfirmOverlay.classList.remove('visible');
-        setTimeout(() => {
-            customConfirmOverlay.classList.add('hidden');
-        }, 300);
+        setTimeout(() => { customConfirmOverlay.classList.add('hidden'); }, 300);
     }
     confirmResolve = null;
 }
 
-customConfirmOkButton.addEventListener('click', () => {
-    if (confirmResolve) confirmResolve(true);
-    hideCustomConfirm();
-});
-
-customConfirmCancelButton.addEventListener('click', () => {
-    if (confirmResolve) confirmResolve(false);
-    hideCustomConfirm();
-});
-
-customConfirmOverlay.addEventListener('click', (event) => {
-    if (event.target === customConfirmOverlay) {
-        if (confirmResolve) confirmResolve(false);
-        hideCustomConfirm();
-    }
-});
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && customConfirmOverlay && customConfirmOverlay.classList.contains('visible')) {
-        if (confirmResolve) confirmResolve(false);
-        hideCustomConfirm();
-    }
-});
+customConfirmOkButton.addEventListener('click', () => { if (confirmResolve) confirmResolve(true); hideCustomConfirm(); });
+customConfirmCancelButton.addEventListener('click', () => { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); });
+customConfirmOverlay.addEventListener('click', (event) => { if (event.target === customConfirmOverlay) { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); }});
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && customConfirmOverlay?.classList.contains('visible')) { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); }});
 
 export function startGameLevel(levelIndex, startFromWave = 0) {
     console.log(`[main.js startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave); 
-    
     ScreenManager.showScreen('playing'); 
-    
     UIManager.updateUiStats();
     UIManager.updateTowerUpgradePanel();
     UIManager.updateSelectedTowerButtonUI();
-
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-    }
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
     gameLoop();
 }
@@ -136,15 +106,10 @@ export function updateContinueButtonState() {
 function preloadImagesAndStart() {
     Storage.loadGameProgress(state);
     setTotalImagesToLoad(Object.keys(C.imageSources).length);
-
-    let imagesToLoadCount = Object.keys(C.imageSources).length;
-    let loadedCount = 0;
-
-    function checkAllImagesLoaded() {
-        loadedCount++;
-        if (loadedCount === imagesToLoadCount) {
-            initGame();
-        }
+    
+    if (totalImagesToLoad === 0) {
+        initGame();
+        return;
     }
 
     for (const key in C.imageSources) {
@@ -152,9 +117,9 @@ function preloadImagesAndStart() {
         images[key].src = C.imageSources[key];
         images[key].onload = () => {
             console.log(`Image loaded: ${key} from ${images[key].src}`);
-            images[key].error = false; // Upewnij się, że flaga błędu jest false
-            incrementImagesLoadedCount(); // Ta funkcja w state.js powinna być używana
-            if (imagesLoadedCount === totalImagesToLoad) { // Używamy globalnych liczników ze state.js
+            images[key].error = false;
+            incrementImagesLoadedCount();
+            if (imagesLoadedCount === totalImagesToLoad) {
                 initGame();
             }
         };
@@ -166,10 +131,6 @@ function preloadImagesAndStart() {
                 initGame();
             }
         }
-    }
-     // Na wypadek gdyby nie było żadnych obrazków do załadowania (chociaż to mało prawdopodobne)
-    if (totalImagesToLoad === 0) {
-        initGame();
     }
 }
 
@@ -185,21 +146,15 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
-    if (state.gameScreen === 'menu' ||
-        state.gameScreen === 'levelSelection' ||
-        state.gameScreen === 'credits' ||
-        state.gameScreen === 'levelCompleteScreen') { // HTML version
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
+    if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits' || state.gameScreen === 'levelCompleteScreen') {
+        if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
         return;
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (state.gameScreen === 'levelCompleteCanvas' && state.showingLevelCompleteSummary) {
-        Drawing.drawTiledBackground(ctx); // Rysuj tło kafelkowe także na ekranie podsumowania
+        Drawing.drawTiledBackground(ctx); 
         Drawing.drawLevelCompleteSummary(ctx);
         UIManager.updateUiStats(); 
     } else if (state.gameScreen === 'levelLost') {
@@ -210,7 +165,7 @@ function gameLoop() {
         UIManager.updateUiStats();
     } else if (state.gameScreen === 'playing' || state.gameScreen === 'paused') {
         if (state.isPaused && state.gameScreen === 'paused') {
-            Drawing.drawTiledBackground(ctx); // ZMIANA
+            Drawing.drawTiledBackground(ctx);
             Drawing.drawTowerSpots(ctx);
             renderGameObjectsSorted();
             Drawing.drawProjectiles(ctx);
@@ -228,7 +183,7 @@ function gameLoop() {
             });
             for (let i = state.effects.length - 1; i >= 0; i--) {
                 const effect = state.effects[i];
-                if (effect.isNew) {
+                if (effect.isNew && !effect.isDebuffCloud) { 
                     effect.isNew = false;
                     gsap.to(effect, {
                         duration: (effect.durationFrames || 20) / 60,
@@ -261,7 +216,7 @@ function gameLoop() {
             GameLogic.updateTowers();
             GameLogic.updateProjectiles();
 
-            Drawing.drawTiledBackground(ctx); // ZMIANA
+            Drawing.drawTiledBackground(ctx);
             Drawing.drawTowerSpots(ctx);
             renderGameObjectsSorted();
             Drawing.drawProjectiles(ctx);
@@ -359,6 +314,9 @@ function prepareAutoStartNextWave(seconds) {
 
 uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
 uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
+uiButtonGarderobiana.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'garderobiana'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
+uiButtonBudkaInspicjenta.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'budkaInspicjenta'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
+
 uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); UIManager.updateUiStats(); }});
 uiButtonStartWave.addEventListener('click', () => {
     clearTimeout(autoStartTimerId); Utils.showMessage(state, "");
@@ -368,6 +326,35 @@ uiButtonStartWave.addEventListener('click', () => {
 });
 uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }});
 uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }});
+
+// Event Listenery dla przycisków specjalnych ulepszeń
+uiButtonUpgradeSpecial1.addEventListener('click', () => { 
+    if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { 
+        const towerDef = C.towerDefinitions[state.selectedTowerForUpgrade.type];
+        const upgradeKey = towerDef.upgradeLevelNames?.[0]; // Pierwszy klucz specjalny, np. 'range' lub 'critChance'
+        if(upgradeKey && upgradeKey !== 'damage' && upgradeKey !== 'fireRate') { // Upewnij się, że to specjalne
+            GameLogic.upgradeTower(state.selectedTowerForUpgrade, upgradeKey); 
+            UIManager.updateTowerUpgradePanel(); 
+            UIManager.updateUiStats(); 
+        }
+    }
+});
+uiButtonUpgradeSpecial2.addEventListener('click', () => { 
+    if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { 
+        const towerDef = C.towerDefinitions[state.selectedTowerForUpgrade.type];
+        const upgradeKey = towerDef.upgradeLevelNames?.[1]; 
+        if(upgradeKey && upgradeKey !== 'damage' && upgradeKey !== 'fireRate') {
+            GameLogic.upgradeTower(state.selectedTowerForUpgrade, upgradeKey); 
+            UIManager.updateTowerUpgradePanel(); 
+            UIManager.updateUiStats(); 
+        }
+    }
+});
+// Jeśli Garderobiana ma trzecie specjalne ulepszenie (effectDuration), potrzebny będzie uiButtonUpgradeSpecial3
+// const uiButtonUpgradeSpecial3 = document.getElementById('uiButtonUpgradeSpecial3'); // jeśli istnieje w HTML
+// uiButtonUpgradeSpecial3.addEventListener('click', () => { /* ... podobna logika ... */ });
+
+
 uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }});
 pauseButton.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { GameLogic.togglePauseGame(); ScreenManager.showScreen('paused'); }});
 resumeButton.addEventListener('click', () => { if (state.isPaused) { GameLogic.togglePauseGame(); ScreenManager.showScreen('playing'); if (animationFrameId === null) gameLoop(); }});

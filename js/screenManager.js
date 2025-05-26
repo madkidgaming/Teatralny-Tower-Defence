@@ -24,7 +24,7 @@ function cacheDOMElements() {
     saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
     saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
 }
-cacheDOMElements(); // Wywołaj od razu
+cacheDOMElements(); 
 
 export function initializeScreenManager(callbacks) {
     if (callbacks.startGameLevel) _startGameLevelCallback = callbacks.startGameLevel;
@@ -33,9 +33,8 @@ export function initializeScreenManager(callbacks) {
 }
 
 export function showScreen(screenName) {
-    if (!mainMenuScreen) cacheDOMElements(); // Dodatkowe zabezpieczenie
+    if (!mainMenuScreen) cacheDOMElements(); 
 
-    // Ukryj wszystkie główne kontenery ekranów
     const screens = [mainMenuScreen, levelSelectionScreen, creditsScreen, levelCompleteScreenHTML, gameLayout, pauseMenuScreen];
     screens.forEach(screen => {
         if (screen) {
@@ -130,13 +129,13 @@ export function showScreen(screenName) {
                 mainMenuScreen.classList.add('visible');
             }
             if (_updateContinueButtonStateCallback) _updateContinueButtonStateCallback();
-            screenName = 'menu'; // Ensure state reflects the fallback
+            screenName = 'menu'; 
             break;
     }
     state.gameScreen = screenName;
 }
 
-function renderLevelSelection() {
+export function renderLevelSelection() { 
     if (!levelSelectionContainer) {
         console.error("levelSelectionContainer is not found for renderLevelSelection.");
         return;
@@ -157,7 +156,6 @@ function renderLevelSelection() {
         if (progress >= C.WAVES_PER_LEVEL) {
             progressText = "(Ukończono ✔️)";
         } else if (progress >= 0) {
-             // Jeśli progress to ostatnia ukończona fala (0-9), wyświetlamy (X+1)/10
             progressText = `(Fale: ${progress + 1}/${C.WAVES_PER_LEVEL})`;
         } else {
             progressText = "(Nierozpoczęty)";
@@ -170,8 +168,6 @@ function renderLevelSelection() {
 
         if (isUnlocked) {
             button.addEventListener('click', () => {
-                // startFromWave: jeśli poziom ukończony (progress >= WAVES_PER_LEVEL) lub nierozpoczęty (progress < 0), zaczynamy od fali 0.
-                // W przeciwnym razie, zaczynamy od następnej fali po ostatniej ukończonej (progress + 1).
                 const startFromWave = (progress >= C.WAVES_PER_LEVEL || progress < 0) ? 0 : progress +1;
                 if (_startGameLevelCallback) {
                     _startGameLevelCallback(index, startFromWave);

@@ -30,6 +30,14 @@
                     <img src="https://kaliskie.org/wp-content/uploads/2025/05/reflektor.png" alt="Oświetleniowiec">
                     Oświetleniowiec (<span class="cost">0</span> Ap.)
                 </button>
+                <button id="uiButtonGarderobiana" class="ui-button tower-buy-button">
+                    <img src="assets/images/GARDEROBIANA.png" alt="Garderobiana"> <!-- Upewnij się, że ścieżka jest poprawna -->
+                    Garderobiana (<span class="cost">0</span> Ap.)
+                </button>
+                <button id="uiButtonBudkaInspicjenta" class="ui-button tower-buy-button">
+                    <img src="assets/images/BUDKA_INSPICJENTA.png" alt="Budka Inspicjenta"> <!-- Upewnij się, że ścieżka jest poprawna -->
+                    Budka Inspicjenta (<span class="cost">0</span> Ap.)
+                </button>
             </div>
             <div class="ui-panel-section">
                 <h3>Ulepszenia</h3>
@@ -54,6 +62,9 @@
                 <h3 id="upgradePanelTowerName">Ulepsz Wieżę</h3>
                 <button id="uiButtonUpgradeDamage" class="ui-button">Obrażenia+ (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonUpgradeFireRate" class="ui-button">Szybkostrzelność+ (<span class="cost">0</span> Ap.)</button>
+                <!-- Dodatkowe przyciski ulepszeń dla specyficznych wież (np. zasięg Garderobiany) będą dodawane/ukrywane przez JS -->
+                <button id="uiButtonUpgradeSpecial1" class="ui-button hidden">Ulepszenie Specjalne 1 (<span class="cost">0</span> Ap.)</button>
+                <button id="uiButtonUpgradeSpecial2" class="ui-button hidden">Ulepszenie Specjalne 2 (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonSellTower" class="ui-button">Sprzedaj (<span class="value">0</span> Ap.)</button>
             </div>
             <div class="ui-panel-section">
@@ -90,15 +101,13 @@
         <p><strong>Wykorzystane zasoby zewnętrzne:</strong></p>
         <p>Czcionki: Google Fonts (Cinzel Decorative, Merriweather)</p>
         <p>Biblioteka animacji: GSAP (GreenSock Animation Platform)</p>
-        <p>Ikony wież/przeciwników: (np. z kaliskie.org)</p>
+        <p>Ikony wież/przeciwników: (np. z kaliskie.org, oraz własne)</p>
         <p>Wzór tła strony: SVGBackgrounds.com (zmodyfikowany)</p>
         <br>
         <p>Teatr Tower Defense © 2024 Piotr Józefiak</p>
         <button id="backToMainMenuFromCredits" class="ui-button">Powrót do Menu</button>
     </div>
 
-    <!-- ZMIANA: HTMLowy ekran podsumowania aktu jest teraz zakomentowany/usunięty -->
-    <!-- Zostawiam pusty div, aby uniknąć błędów, jeśli jakieś skrypty (np. stare wersje) odwołują się do tego ID -->
     <div id="levelCompleteScreen" class="hidden"></div> 
 
 
@@ -119,7 +128,6 @@
         </div>
     </div>
 
-    <!-- Kolejność importu modułów ma znaczenie -->
     <script type="module" src="js/uiManager.js"></script>
     <script type="module" src="js/screenManager.js"></script>
     <script type="module" src="js/main.js"></script>

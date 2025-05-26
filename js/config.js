@@ -1,5 +1,5 @@
 // js/config.js
-export const TILE_SIZE = 40; // Rozmiar kafelka na mapie gry (jak będzie rysowany)
+export const TILE_SIZE = 40;
 export const ROWS = 12;
 export const COLS = 20;
 
@@ -10,12 +10,13 @@ export const UI_FONT_TINY = `bold 10px Arial`;
 
 export const WAVES_PER_LEVEL = 10;
 export const MAX_ZADOWOLENIE_UPGRADE_LEVEL = 5;
-export const MAX_UPGRADE_LEVEL = 5;
+export const MAX_UPGRADE_LEVEL = 3; // Zmieniono na 3 dla nowych wież dla uproszczenia, stare mogą mieć 5
 
 export const ENEMY_BASE_SIZE_MULTIPLIER = 1.4;
 export const TOWER_RENDER_SIZE_MULTIPLIER = 1.6;
 export const PROJECTILE_SIZE_MULTIPLIER = 1.2;
 export const BASE_SIZE_MULTIPLIER = 2.2;
+export const EFFECT_SIZE_MULTIPLIER = 1.0; 
 
 export const imageSources = {
     teatrBase: 'https://kaliskie.org/wp-content/uploads/2025/05/TEATR.png',
@@ -25,12 +26,37 @@ export const imageSources = {
     spoznionyWidz: 'https://kaliskie.org/wp-content/uploads/2025/05/SPOZNIONY-WIDZ.png',
     krytykTeatralny: 'https://kaliskie.org/wp-content/uploads/2025/05/KRYTYK-TEATRALNY.png',
     reflektorTowerIcon: 'https://kaliskie.org/wp-content/uploads/2025/05/reflektor.png',
-    tileset: 'assets/images/TILESET TOWER DEFENCE.png' // Upewnij się, że ta ścieżka jest poprawna!
+    tileset: 'assets/images/TILESET TOWER DEFENCE.png',
+
+    garderobianaTowerIcon: 'assets/images/GARDEROBIANA.png',
+    garderobianaProjectileEffect: 'assets/images/GARDEROBIANA_PROJECTILE.png',
+    budkaInspicjentaTowerIcon: 'assets/images/BUDKA_INSPICJENTA.png',
+    budkaInspicjentaProjectile: 'assets/images/BUDKA_INSPICJENTA_PROJECTILE.png',
+    divaEnemy: 'assets/images/DIVA.png',
+    technicznyEnemy: 'assets/images/TECHNICZNY.png',
+    sabotageEffectIcon: 'assets/images/ZEPSUTA.png'
 };
 
 export const baseEnemyStats = {
-    krytyk: { baseHp: 100, speed: 1, aplauzReward: 10, imageKey: 'krytykTeatralny', width: TILE_SIZE * 0.7 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.9 * ENEMY_BASE_SIZE_MULTIPLIER },
-    spozniony: { baseHp: 40, speed: 2.5, aplauzReward: 5, imageKey: 'spoznionyWidz', width: TILE_SIZE * 0.6 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.8 * ENEMY_BASE_SIZE_MULTIPLIER }
+    krytyk: { 
+        name: "Krytyk Teatralny", baseHp: 100, speed: 1, aplauzReward: 10, imageKey: 'krytykTeatralny', 
+        width: TILE_SIZE * 0.7 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.9 * ENEMY_BASE_SIZE_MULTIPLIER 
+    },
+    spozniony: { 
+        name: "Spóźniony Widz", baseHp: 40, speed: 2.5, aplauzReward: 5, imageKey: 'spoznionyWidz', 
+        width: TILE_SIZE * 0.6 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.8 * ENEMY_BASE_SIZE_MULTIPLIER 
+    },
+    diva: {
+        name: "Primadonna", baseHp: 300, speed: 0.8, aplauzReward: 25, imageKey: 'divaEnemy',
+        width: TILE_SIZE * 0.8 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 1.1 * ENEMY_BASE_SIZE_MULTIPLIER,
+        damageReduction: 0.25, 
+        furyThreshold: 0.5, furySpeedMultiplier: 1.8, furyDamageReduction: 0.4, furyDuration: 300 
+    },
+    techniczny: {
+        name: "Techniczny Sabotażysta", baseHp: 80, speed: 2.0, aplauzReward: 12, imageKey: 'technicznyEnemy',
+        width: TILE_SIZE * 0.65 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.95 * ENEMY_BASE_SIZE_MULTIPLIER,
+        sabotageChance: 0.3, sabotageDuration: 180 
+    }
 };
 
 export const zadowolenieUpgrades = [
@@ -40,26 +66,59 @@ export const zadowolenieUpgrades = [
 
 export const towerDefinitions = {
     bileter: {
-        cost: 50, baseDamage: 20, baseFireRate: 70, range: TILE_SIZE * 2.8,
+        name: "Bileter", cost: 50, baseDamage: 20, baseFireRate: 70, range: TILE_SIZE * 2.8,
         projectileType: 'bilet', imageKey: 'bileterTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER,
-        upgrades: {
+        upgrades: { // Stare wieże mogą mieć 5 poziomów ulepszeń
             damage: [ { cost: 30, value: 5 }, { cost: 55, value: 7 }, { cost: 90, value: 10 }, { cost: 140, value: 12 }, { cost: 200, value: 15 } ],
             fireRate: [ { cost: 35, value: 5 }, { cost: 60, value: 7 }, { cost: 95, value: 8 }, { cost: 150, value: 9 }, { cost: 220, value: 10 } ]
         }
     },
     oswietleniowiec: {
-        cost: 75, baseDamage: 35, baseFireRate: 100, range: TILE_SIZE * 3.8,
+        name: "Oświetleniowiec", cost: 75, baseDamage: 35, baseFireRate: 100, range: TILE_SIZE * 3.8,
         projectileType: 'laser', imageKey: 'reflektorTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER,
         upgrades: {
             damage: [ { cost: 45, value: 8 }, { cost: 75, value: 12 }, { cost: 120, value: 15 }, { cost: 180, value: 20 }, { cost: 250, value: 25 } ],
             fireRate: [ { cost: 50, value: 7 }, { cost: 80, value: 10 }, { cost: 130, value: 12 }, { cost: 190, value: 15 }, { cost: 270, value: 18 } ]
         }
+    },
+    garderobiana: {
+        name: "Garderobiana", cost: 65, baseFireRate: 210, range: TILE_SIZE * 2.2, 
+        projectileType: 'puderDebuff', imageKey: 'garderobianaTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER,
+        debuffStats: { slowFactor: 0.65, damageTakenMultiplier: 1.20, duration: 180 }, 
+        upgrades: { // Max 3 poziomy dla nowych wież (damageLevel, fireRateLevel, special1Level, special2Level)
+            range: [ { cost: 40, value: TILE_SIZE * 0.3 }, { cost: 60, value: TILE_SIZE * 0.4 }, { cost: 80, value: TILE_SIZE * 0.5 } ], // Nazwa ulepszenia: 'range'
+            effectStrength: [ { cost: 50, slowFactorReduction: 0.05, damageTakenIncrease: 0.05 }, { cost: 75, slowFactorReduction: 0.05, damageTakenIncrease: 0.05 }, { cost: 100, slowFactorReduction: 0.05, damageTakenIncrease: 0.05 } ], // Nazwa ulepszenia: 'effectStrength'
+            effectDuration: [ { cost: 45, value: 60 }, { cost: 70, value: 60 }, { cost: 95, value: 60 } ] // Nazwa ulepszenia: 'effectDuration'
+        },
+        upgradeLevelNames: ['range', 'effectStrength', 'effectDuration'] // Dla UI
+    },
+    budkaInspicjenta: {
+        name: "Budka Inspicjenta", cost: 110, baseDamage: 65, baseFireRate: 180, range: TILE_SIZE * 5.0,
+        projectileType: 'recenzja', imageKey: 'budkaInspicjentaTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER * 0.9,
+        critChance: 0.15, critMultiplier: 1.75,
+        targetPriority: 'strongest', 
+        upgrades: { // Standardowe ulepszenia + specjalne
+            damage: [ { cost: 70, value: 20 }, { cost: 110, value: 30 }, { cost: 160, value: 40 } ],
+            fireRate: [ { cost: 80, value: -30 }, { cost: 130, value: -30 }, { cost: 190, value: -30 } ], 
+            critChance: [ { cost: 90, value: 0.05 }, { cost: 140, value: 0.05 }, { cost: 200, value: 0.05 } ] // Nazwa ulepszenia: 'critChance'
+        },
+        upgradeLevelNames: ['damage', 'fireRate', 'critChance'] // Dla UI
     }
 };
 
 export const projectileTypes = {
-    bilet: { speed: 6, damage: 0, imageKey: 'biletProjectile', width: TILE_SIZE*0.4 * PROJECTILE_SIZE_MULTIPLIER, height: TILE_SIZE*0.2 * PROJECTILE_SIZE_MULTIPLIER },
-    laser: { speed: 10, damage: 0, imageKey: 'laserProjectile', width: TILE_SIZE*0.5 * PROJECTILE_SIZE_MULTIPLIER, height: TILE_SIZE*0.15 * PROJECTILE_SIZE_MULTIPLIER }
+    bilet: { speed: 6, imageKey: 'biletProjectile', width: TILE_SIZE*0.4 * PROJECTILE_SIZE_MULTIPLIER, height: TILE_SIZE*0.2 * PROJECTILE_SIZE_MULTIPLIER },
+    laser: { speed: 10, imageKey: 'laserProjectile', width: TILE_SIZE*0.5 * PROJECTILE_SIZE_MULTIPLIER, height: TILE_SIZE*0.15 * PROJECTILE_SIZE_MULTIPLIER },
+    puderDebuff: { 
+        imageKey: 'garderobianaProjectileEffect', 
+        width: TILE_SIZE * 2.0 * EFFECT_SIZE_MULTIPLIER,
+        height: TILE_SIZE * 2.0 * EFFECT_SIZE_MULTIPLIER,
+        duration: 90 // Czas widoczności chmury (1.5s)
+    },
+    recenzja: {
+        speed: 9, imageKey: 'budkaInspicjentaProjectile',
+        width: TILE_SIZE*0.3 * PROJECTILE_SIZE_MULTIPLIER, height: TILE_SIZE*0.3 * PROJECTILE_SIZE_MULTIPLIER
+    }
 };
 
 export const levelData = [
@@ -72,34 +131,31 @@ export const levelData = [
 
 
 export const waveDefinitionsBase = [
-    { krytyk: {count: 2, level: 1}, spozniony: {count: 0, level: 1}, interval: 150 },
-    { krytyk: {count: 3, level: 1}, spozniony: {count: 1, level: 1}, interval: 140 },
-    { krytyk: {count: 4, level: 1}, spozniony: {count: 2, level: 1}, interval: 130 },
-    { krytyk: {count: 2, level: 2}, spozniony: {count: 2, level: 1}, interval: 120 },
-    { krytyk: {count: 3, level: 2}, spozniony: {count: 3, level: 2}, interval: 110, boss: {type: 'krytyk', level: 1, hpMultiplier: 1.8} },
-    { krytyk: {count: 4, level: 2}, spozniony: {count: 4, level: 2}, interval: 100 },
-    { krytyk: {count: 2, level: 3}, spozniony: {count: 5, level: 2}, interval: 95 },
-    { krytyk: {count: 3, level: 3}, spozniony: {count: 6, level: 3}, interval: 90 },
-    { krytyk: {count: 4, level: 3}, spozniony: {count: 5, level: 3}, interval: 85 },
-    { krytyk: {count: 5, level: 3}, spozniony: {count: 5, level: 3}, interval: 80, boss: {type: 'spozniony', level: 2, hpMultiplier: 2.0} }
+    { krytyk: {count: 2, level: 1}, spozniony: {count: 0, level: 1}, diva: {count: 0, level: 1}, techniczny: {count:0, level:1}, interval: 150 },
+    { krytyk: {count: 3, level: 1}, spozniony: {count: 1, level: 1}, diva: {count: 0, level: 1}, techniczny: {count:0, level:1}, interval: 140 },
+    { krytyk: {count: 4, level: 1}, spozniony: {count: 2, level: 1}, diva: {count: 0, level: 1}, techniczny: {count:1, level:1}, interval: 130 },
+    { krytyk: {count: 2, level: 2}, spozniony: {count: 2, level: 1}, diva: {count: 1, level: 1}, techniczny: {count:0, level:1}, interval: 120 },
+    { krytyk: {count: 3, level: 2}, spozniony: {count: 3, level: 2}, diva: {count: 0, level: 1}, techniczny: {count:1, level:1}, interval: 110, boss: {type: 'krytyk', level: 1, hpMultiplier: 1.8} },
+    { krytyk: {count: 4, level: 2}, spozniony: {count: 4, level: 2}, diva: {count: 1, level: 2}, techniczny: {count:1, level:2}, interval: 100 },
+    { krytyk: {count: 2, level: 3}, spozniony: {count: 5, level: 2}, diva: {count: 0, level: 2}, techniczny: {count:2, level:2}, interval: 95 },
+    { krytyk: {count: 3, level: 3}, spozniony: {count: 6, level: 3}, diva: {count: 2, level: 2}, techniczny: {count:1, level:2}, interval: 90 },
+    { krytyk: {count: 4, level: 3}, spozniony: {count: 5, level: 3}, diva: {count: 1, level: 3}, techniczny: {count:2, level:3}, interval: 85 },
+    { krytyk: {count: 5, level: 3}, spozniony: {count: 5, level: 3}, diva: {count: 2, level: 3}, techniczny: {count:2, level:3}, interval: 80, boss: {type: 'diva', level: 1, hpMultiplier: 2.2} } // Diva jako boss
 ];
 
 export const TILESET_TILE_SIZE_PX = 16; 
-
 export const tileTypes = {
     GRASS_BASIC:        { sx: 0 * TILESET_TILE_SIZE_PX, sy: 0 * TILESET_TILE_SIZE_PX },
     GRASS_FLOWER_YELLOW:{ sx: 1 * TILESET_TILE_SIZE_PX, sy: 0 * TILESET_TILE_SIZE_PX },
     GRASS_FLOWER_WHITE: { sx: 2 * TILESET_TILE_SIZE_PX, sy: 0 * TILESET_TILE_SIZE_PX },
     GRASS_BLADES_1:     { sx: 3 * TILESET_TILE_SIZE_PX, sy: 0 * TILESET_TILE_SIZE_PX },
     GRASS_BLADES_2:     { sx: 4 * TILESET_TILE_SIZE_PX, sy: 0 * TILESET_TILE_SIZE_PX },
-
     PATH_1:             { sx: 0 * TILESET_TILE_SIZE_PX, sy: 1 * TILESET_TILE_SIZE_PX },
     PATH_2:             { sx: 1 * TILESET_TILE_SIZE_PX, sy: 1 * TILESET_TILE_SIZE_PX },
     PATH_3:             { sx: 2 * TILESET_TILE_SIZE_PX, sy: 1 * TILESET_TILE_SIZE_PX },
     PATH_4:             { sx: 3 * TILESET_TILE_SIZE_PX, sy: 1 * TILESET_TILE_SIZE_PX },
     PATH_5:             { sx: 4 * TILESET_TILE_SIZE_PX, sy: 1 * TILESET_TILE_SIZE_PX },
 };
-
 export const grassVariants = [
     tileTypes.GRASS_BASIC,
     tileTypes.GRASS_FLOWER_YELLOW,
@@ -107,7 +163,6 @@ export const grassVariants = [
     tileTypes.GRASS_BLADES_1,
     tileTypes.GRASS_BLADES_2,
 ];
-
 export const pathVariants = [ 
     tileTypes.PATH_1,
     tileTypes.PATH_2,
