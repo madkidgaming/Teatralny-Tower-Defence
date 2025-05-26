@@ -239,25 +239,22 @@ export function drawLevelCompleteSummary(ctx) {
     const totalStarWidth = (3 * starSize) + (2 * 8);
     let starX = canvasWidth / 2 - totalStarWidth / 2;
     
+    // Rysowanie gwiazdek na podstawie indywidualnych stanów animacji
     for (let i = 0; i < 3; i++) {
-        // Jeśli animacja gwiazdek nie jest zakończona, rysujemy puste kontury dla tych, które jeszcze nie zostały "odsłonięte"
-        // lub wszystkie jako puste, jeśli animacja się jeszcze nie zaczęła dla tej gwiazdki.
-        // state.lastLevelStats.starsToDisplay kontroluje, ile gwiazdek jest "wypełnionych".
-        let starChar = '☆';
-        let starColor = "#777777"; // Kolor dla pustej gwiazdki
-
-        if (i < stats.starsToDisplay) { // Gwiazdka została "wypełniona" przez animację
-            starChar = '★';
-            starColor = "#ffd700";
-        } else if (!stats.isStarAnimationComplete && i < stats.stars) {
-            // Gwiazdka docelowo będzie wypełniona, ale animacja jeszcze do niej nie doszła
-            // Możemy ją rysować jako "oczekującą" lub pustą
-             starChar = '☆'; // Kontur gwiazdki
-             starColor = "#a0a0a0"; // Lekko jaśniejszy szary
-        }
-        // Jeśli i >= stats.stars, pozostaje domyślna pusta gwiazdka (ciemniejszy szary)
-
-        drawTextWithOutline(ctx, starChar, starX + starSize / 2, currentY, `bold ${starSize * 1.2}px Arial`, starColor, "black", 2, "center");
+        const starState = state.lastLevelStats.starStates[i];
+        
+        ctx.save();
+        // Ustaw środek transformacji na środek gwiazdki
+        const currentStarCenterX = starX + starSize / 2;
+        const currentStarCenterY = currentY;
+        ctx.translate(currentStarCenterX, currentStarCenterY);
+        ctx.scale(starState.scale, starState.scale);
+        ctx.globalAlpha = starState.opacity;
+        ctx.translate(-currentStarCenterX, -currentStarCenterY);
+        
+        drawTextWithOutline(ctx, starState.character, currentStarCenterX, currentStarCenterY, `bold ${starSize * 1.2}px Arial`, starState.color, "black", 2, "center");
+        ctx.restore(); // Przywróć alpha i transformację
+        
         starX += starSize + 8;
     }
     currentY += starSize + 35; 
@@ -288,7 +285,6 @@ export function drawLevelCompleteSummary(ctx) {
 
     drawTextWithOutline(ctx, `Wieże Oświetleniowców:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
     drawTextWithOutline(ctx, `${stats.towersBuilt.oswietleniowiec}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    // leftColumnY += lineHeight; // Usunięto, bo to ostatni element w tej kolumnie przed ustaleniem maxY
 
     drawTextWithOutline(ctx, "Bonus na Następny Akt:", rightColumnX + columnWidth / 2, rightColumnY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "center");
     rightColumnY += lineHeight * 1.8;
@@ -312,18 +308,17 @@ export function drawLevelCompleteSummary(ctx) {
     const totalBonusFont = "bold 14px Arial";
     drawTextWithOutline(ctx, `Łączny Bonus Aplauzu:`, rightColumnX + sectionPadding, rightColumnY, totalBonusFont, "#e0c9a6", "black", 2.2, "left");
     drawTextWithOutline(ctx, `${stats.aplauzBonusForNextLevel} Ap.`, rightColumnX + valueXOffset, rightColumnY, totalBonusFont, "#50C878", "black", 2.2, "right");
-    // rightColumnY += lineHeight; // Usunięto, bo to ostatni element tej kolumny
 
-    const maxYFromColumns = Math.max(leftColumnY, rightColumnY); // Używamy wartości Y po ostatnim tekście
+    const maxYFromColumns = Math.max(leftColumnY, rightColumnY);
     let buttonsCurrentY = maxYFromColumns + 35;
 
     const buttonWidth = 200;
     const buttonHeight = 40;
-    state.levelCompleteButtons = []; // Czyścimy przed ponownym wypełnieniem
+    state.levelCompleteButtons = [];
 
-    let numButtons = 1; // Zawsze jest przycisk "Menu Główne"
+    let numButtons = 1;
     if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
-        numButtons = 2; // Jeśli jest dostępny następny akt
+        numButtons = 2;
     }
     const requiredSpaceForButtons = numButtons * buttonHeight + (numButtons - 1) * 10; 
 

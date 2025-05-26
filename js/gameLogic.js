@@ -43,8 +43,15 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.messageTimer = 0;
     state.levelCompleteButtons = [];
 
-    // ZMIANA: Resetowanie stanu animacji gwiazdek przy rozpoczęciu nowego poziomu
-    state.lastLevelStats.starsToDisplay = 0;
+    // Resetowanie stanu animacji gwiazdek przy rozpoczęciu nowego poziomu
+    state.lastLevelStats.starStates.forEach(star => {
+        star.scale = 0;
+        star.opacity = 0;
+        star.isFilled = false;
+        star.fillProgress = 0;
+        star.character = '☆';
+        star.color = '#777777';
+    });
     state.lastLevelStats.isStarAnimationComplete = false;
 
 
@@ -308,8 +315,15 @@ export function completeLevel() {
         state.lastLevelStats.stars = 0;
     }
 
-    // ZMIANA: Resetowanie i inicjacja animacji gwiazdek
-    state.lastLevelStats.starsToDisplay = 0; // Zaczynamy od 0 wyświetlanych gwiazdek
+    // ZMIANA: Resetowanie stanu animacji gwiazdek
+    state.lastLevelStats.starStates.forEach(star => {
+        star.scale = 0.3; // Zacznij od małej skali, ale widocznej (dla "pop-in" effect)
+        star.opacity = 0;
+        star.isFilled = false;
+        star.fillProgress = 0; // Możemy animować tę wartość, aby uzyskać efekt "wypełniania"
+        star.character = '☆'; // Początkowo wszystkie są konturami
+        star.color = '#777777'; // Kolor dla pustej/nieaktywnej gwiazdki
+    });
     state.lastLevelStats.isStarAnimationComplete = false;
 
     state.lastLevelStats.aplauzBonusForNextLevel = state.aplauz + totalSellValue;
@@ -324,58 +338,96 @@ export function completeLevel() {
     state.gameOver = true;
     state.gameScreen = 'levelCompleteCanvas'; 
     state.showingLevelCompleteSummary = true; 
-    console.log(`[gameLogic.js completeLevel] Level ${state.currentLevelIndex + 1} completed. Screen: ${state.gameScreen}`);
+    console.log(`[gameLogic.js completeLevel] Level ${state.currentLevelIndex + 1} completed. Stars: ${state.lastLevelStats.stars}`);
     
-    // Inicjacja animacji gwiazdek
+    // ZMIANA: Inicjacja animacji gwiazdek
     if (typeof gsap !== 'undefined') {
-        const starRevealDelay = 0.7; // Opóźnienie przed rozpoczęciem animacji pierwszej gwiazdki
-        const interStarDelay = 0.6;  // Opóźnienie między kolejnymi gwiazdkami
-        const starAnimationDuration = 0.4; // Czas trwania "wypełniania" pojedynczej gwiazdki
-
-        gsap.killTweensOf(state.lastLevelStats); // Anuluj poprzednie animacje tego obiektu, jeśli jakieś były
+        gsap.killTweensOf(state.lastLevelStats.starStates); // Anuluj poprzednie animacje gwiazdek
 
         const tl = gsap.timeline({
             onComplete: () => {
                 state.lastLevelStats.isStarAnimationComplete = true;
+                // Upewnij się, że finalny stan gwiazdek jest poprawny
+                for(let i = 0; i < 3; i++) {
+                    if (i < state.lastLevelStats.stars) {
+                        state.lastLevelStats.starStates[i].isFilled = true;
+                        state.lastLevelStats.starStates[i].character = '★';
+                        state.lastLevelStats.starStates[i].color = '#ffd700';
+                        state.lastLevelStats.starStates[i].opacity = 1;
+                        state.lastLevelStats.starStates[i].scale = 1;
+                    } else {
+                         state.lastLevelStats.starStates[i].isFilled = false;
+                         state.lastLevelStats.starStates[i].character = '☆';
+                         state.lastLevelStats.starStates[i].color = '#777777';
+                         state.lastLevelStats.starStates[i].opacity = 1; // Puste też widoczne
+                         state.lastLevelStats.starStates[i].scale = 1;
+                    }
+                }
                 console.log("GSAP Star animation timeline complete");
             }
         });
 
-        // Pierwsza gwiazdka (jeśli jest co najmniej jedna)
-        if (state.lastLevelStats.stars > 0) {
-            tl.to(state.lastLevelStats, {
-                starsToDisplay: 1,
-                duration: starAnimationDuration,
-                delay: starRevealDelay,
-                ease: "power2.out",
-                // Można dodać onStart/onUpdate, jeśli potrzebujesz dodatkowych efektów
-            });
-        } else { // Jeśli 0 gwiazdek, oznacz animację jako zakończoną po opóźnieniu
-             tl.set(state.lastLevelStats, {isStarAnimationComplete: true, delay: starRevealDelay});
-        }
+        const starAppearDelay = 0.6;      // Opóźnienie przed pojawieniem się pierwszej "pustej" gwiazdki
+        const interStarAppearDelay = 0.2; // Opóźnienie między pojawianiem się kolejnych "pustych"
+        const starAppearDuration = 0.3;   // Czas pojawiania się (scale, opacity) "pustej"
+        
+        const starFillDelayAfterAppear = 0.4; // Opóźnienie między pojawieniem się wszystkich pustych a wypełnieniem pierwszej zdobytej
+        const interStarFillDelay = 0.5;   // Opóźnienie między wypełnianiem kolejnych zdobytych
+        const starFillDuration = 0.3;     // Czas "wypełniania" się gwiazdki
 
-        // Druga gwiazdka (jeśli są co najmniej dwie)
-        if (state.lastLevelStats.stars > 1) {
-            tl.to(state.lastLevelStats, {
-                starsToDisplay: 2,
-                duration: starAnimationDuration,
-                delay: interStarDelay, // To jest opóźnienie względem poprzedniej animacji w timeline
-                ease: "power2.out",
-            });
+        // Krok 1: Wszystkie 3 gwiazdki (jako kontury) pojawiają się sekwencyjnie
+        for (let i = 0; i < 3; i++) {
+            tl.to(state.lastLevelStats.starStates[i], {
+                scale: 1,
+                opacity: 1,
+                character: '☆', // Upewnij się, że to kontur
+                color: '#a0a0a0', // Kolor dla widocznego konturu
+                duration: starAppearDuration,
+                delay: (i === 0) ? starAppearDelay : interStarAppearDelay,
+                ease: "back.out(1.4)",
+            }, (i === 0) ? ">" : `<${interStarAppearDelay*0.8}`); // Lekkie nałożenie dla płynności
         }
         
-        // Trzecia gwiazdka (jeśli są co najmniej trzy)
-        if (state.lastLevelStats.stars > 2) {
-            tl.to(state.lastLevelStats, {
-                starsToDisplay: 3,
-                duration: starAnimationDuration,
-                delay: interStarDelay,
+        // Krok 2: Wypełnianie zdobytych gwiazdek, jedna po drugiej
+        // Dodaj etykietę do timeline, aby kolejne animacje zaczęły się po tej fazie
+        tl.addLabel("fillStars", `>${starFillDelayAfterAppear}`); 
+
+        for (let i = 0; i < state.lastLevelStats.stars; i++) {
+            tl.to(state.lastLevelStats.starStates[i], {
+                // Możemy animować 'character' i 'color' bezpośrednio, jeśli GSAP nie wspiera znaków unicode,
+                // wtedy onUpdate by je zmieniał. Prostsze jest użycie onStart/onComplete.
+                // Lub animować `fillProgress` i na tej podstawie rysować w `drawing.js`
+                scale: 1.3, // Lekki "pop" przy wypełnianiu
+                duration: starFillDuration / 2,
                 ease: "power2.out",
-            });
+                onStart: () => {
+                    state.lastLevelStats.starStates[i].character = '★';
+                    state.lastLevelStats.starStates[i].color = '#ffd700'; // Zmień na złoty
+                }
+            }, `fillStars+=${i * interStarFillDelay}`) // Użyj etykiety i opóźnienia
+            .to(state.lastLevelStats.starStates[i], {
+                scale: 1, // Powrót do normalnej skali
+                duration: starFillDuration / 2,
+                ease: "power1.in",
+                onComplete: () => {
+                    state.lastLevelStats.starStates[i].isFilled = true;
+                }
+            }, ">"); // Bezpośrednio po poprzedniej animacji dla tej gwiazdki
         }
-    } else {
-        // Fallback, jeśli GSAP nie jest dostępny
-        state.lastLevelStats.starsToDisplay = state.lastLevelStats.stars;
+    } else { // Fallback bez GSAP
+        for (let i = 0; i < 3; i++) {
+            state.lastLevelStats.starStates[i].scale = 1;
+            state.lastLevelStats.starStates[i].opacity = 1;
+            if (i < state.lastLevelStats.stars) {
+                state.lastLevelStats.starStates[i].isFilled = true;
+                state.lastLevelStats.starStates[i].character = '★';
+                state.lastLevelStats.starStates[i].color = '#ffd700';
+            } else {
+                 state.lastLevelStats.starStates[i].isFilled = false;
+                 state.lastLevelStats.starStates[i].character = '☆';
+                 state.lastLevelStats.starStates[i].color = '#777777';
+            }
+        }
         state.lastLevelStats.isStarAnimationComplete = true;
     }
 }
@@ -383,11 +435,11 @@ export function completeLevel() {
 
 export function prepareNextWave() {
     if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-        console.log(`[gameLogic.prepareNextWave] Cannot prepare wave. InProgress: ${state.waveInProgress}, GameOver: ${state.gameOver}, CurrentWave: ${state.currentWaveNumber}`);
+        // console.log(`[gameLogic.prepareNextWave] Cannot prepare wave. InProgress: ${state.waveInProgress}, GameOver: ${state.gameOver}, CurrentWave: ${state.currentWaveNumber}`);
         return;
     }
     
-    console.log(`[gameLogic.prepareNextWave] Preparing wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
+    // console.log(`[gameLogic.prepareNextWave] Preparing wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
     state.showingWaveIntro = true; 
     state.waveIntroTimer = 180;
     state.waveIntroEnemies = [];
@@ -403,7 +455,7 @@ export function prepareNextWave() {
 export function startNextWaveActual() {
     state.showingWaveIntro = false;
     state.waveInProgress = true;
-    console.log(`[gameLogic.startNextWaveActual] Starting wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
+    // console.log(`[gameLogic.startNextWaveActual] Starting wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
     showMessage(state, `Fala ${state.currentWaveNumber + 1} rozpoczęta!`, 60);
 
     const previousProgress = state.levelProgress[state.currentLevelIndex] === undefined ? -1 : state.levelProgress[state.currentLevelIndex];

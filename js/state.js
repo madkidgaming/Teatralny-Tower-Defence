@@ -42,10 +42,14 @@ export const gameState = {
     lastLevelStats: {
         completed: false,
         levelName: "",
-        stars: 0,
-        // ZMIANA: Dodane dla animacji gwiazdek
-        starsToDisplay: 0, // Ile gwiazdek aktualnie rysować jako "wypełnione" na podstawie animacji
-        isStarAnimationComplete: false, // Czy animacja gwiazdek została zakończona
+        stars: 0, // Ile gwiazdek zdobył gracz
+        // ZMIANA: Tablica obiektów gwiazdek dla indywidualnej animacji
+        starStates: [
+            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' }, // Gwiazdka 1
+            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' }, // Gwiazdka 2
+            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' }  // Gwiazdka 3
+        ],
+        isStarAnimationComplete: false, // Czy cała sekwencja animacji gwiazdek się zakończyła
         // Koniec zmiany
         finalSatisfaction: 0,
         initialMaxSatisfaction: 0,
