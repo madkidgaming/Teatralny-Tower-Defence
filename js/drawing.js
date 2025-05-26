@@ -28,17 +28,17 @@ export function drawTheaterBase(ctx) {
     const baseNode = state.currentPath[state.currentPath.length -1];
     if (!baseNode) return;
 
-    if (baseImg && !baseImg.error) {
+    if (baseImg && !baseImg.error && baseImg.width > 0 && baseImg.height > 0) { // Dodano sprawdzenie width/height
          const baseY = baseNode.y;
          const baseRenderWidth = C.TILE_SIZE * C.BASE_SIZE_MULTIPLIER;
          const baseRenderHeight = (baseImg.height / baseImg.width) * baseRenderWidth;
          ctx.drawImage(baseImg,
             (baseNode.x + 0.5) * C.TILE_SIZE - baseRenderWidth / 2,
-            (baseY + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8,
+            (baseY + 0.5) * C.TILE_SIZE - baseRenderHeight * 0.8, // Dostosuj, aby lepiej pasowało
             baseRenderWidth, baseRenderHeight);
     } else {
         ctx.fillStyle = '#8B4513'; const fallbackSize = C.TILE_SIZE * 1.5; const baseY = baseNode.y;
-        ctx.fillRect( (baseNode.x +0.5) * C.TILE_SIZE - fallbackSize/2, (baseY +0.5) * C.TILE_SIZE - fallbackSize/2, fallbackSize, fallbackSize);
+        ctx.fillRect( (baseNode.x +0.5) * C.TILE_SIZE - fallbackSize/2, (baseNode.y +0.5) * C.TILE_SIZE - fallbackSize/2, fallbackSize, fallbackSize);
     }
 }
 
@@ -62,16 +62,14 @@ export function drawSingleEnemy(ctx, enemy) {
         const h = enemy.height * scaleFactor;
 
         if (enemy.image && !enemy.image.error) {
-            // Efekt "poświaty" dla wrogów wyższego poziomu - może być kosztowny wydajnościowo.
-            // Rozważ prostsze wskaźniki (np. mała ikona, inny odcień) jeśli pojawią się problemy.
             if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { 
                 ctx.save();
                 ctx.shadowBlur = 6;
                 ctx.shadowColor = enemy.level === 2 ? "rgba(100, 180, 255, 0.9)" : "rgba(255, 100, 100, 0.9)";
-                for (let i = 0; i < 4; i++) { // Rysowanie obrazka 4 razy dla efektu
+                for (let i = 0; i < 4; i++) {
                      ctx.drawImage(enemy.image, enemy.x - w / 2 + (i === 0 ? -2 : i === 1 ? 2 : 0), enemy.y - h / 2 + (i === 2 ? -2 : i === 3 ? 2 : 0), w, h);
                 }
-                ctx.restore(); // Przywraca stan bez cienia dla głównego rysowania
+                ctx.restore();
             }
             ctx.drawImage(enemy.image, enemy.x - w / 2, enemy.y - h / 2, w, h);
         } else { 
@@ -79,7 +77,7 @@ export function drawSingleEnemy(ctx, enemy) {
             const fallbackSize = w * 0.8; 
             ctx.fillRect(enemy.x - fallbackSize / 2, enemy.y - fallbackSize / 2, fallbackSize, fallbackSize); 
         }
-        ctx.restore(); // Przywraca globalAlpha
+        ctx.restore();
 
         if ((enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) && enemy.hp > 0 && !enemy.isDying) { 
             const barWidth = C.TILE_SIZE * 0.8; const barHeight = 7;
@@ -175,7 +173,7 @@ export function drawEffects(ctx) {
 }
 
 export function drawWaveIntro(ctx) {
-    if (!state.showingWaveIntro || state.waveIntroTimer < 0) return; // Warunek, aby timer=0 się narysował
+    if (!state.showingWaveIntro || state.waveIntroTimer < 0) return;
 
     ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -204,7 +202,6 @@ export function drawWaveIntro(ctx) {
     });
     
     drawTextWithOutline(ctx, `Przygotuj się! (${Math.ceil(state.waveIntroTimer / 60)}s)`, ctx.canvas.width / 2, ctx.canvas.height - 80, C.UI_FONT_MEDIUM, "lightgray", "black");
-    // Dekrementacja timera została przeniesiona do gameLoop w main.js
 }
 
 export function drawUI(ctx) { 
@@ -221,6 +218,128 @@ export function drawUI(ctx) {
             ctx.lineWidth = 1;
         }
     }
+}
+
+export function drawLevelCompleteSummary(ctx) {
+    if (!state.showingLevelCompleteSummary) return;
+
+    const stats = state.lastLevelStats;
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    let currentY = 60;
+    
+    drawTextWithOutline(ctx, `${stats.levelName || 'Akt ' + (state.currentLevelIndex +1)} Ukończony!`, canvasWidth / 2, currentY, "bold 32px Georgia", "#ffd700", "black", 3, "center");
+    currentY += 60;
+
+    const starSize = 30;
+    const totalStarWidth = (3 * starSize) + (2 * 10);
+    let starX = canvasWidth / 2 - totalStarWidth / 2;
+    for (let i = 0; i < 3; i++) {
+        const starChar = (i < stats.stars) ? '★' : '☆';
+        const starColor = (i < stats.stars) ? "#ffd700" : "#888888";
+        drawTextWithOutline(ctx, starChar, starX + starSize / 2, currentY, `bold ${starSize * 1.2}px Arial`, starColor, "black", 2, "center");
+        starX += starSize + 10;
+    }
+    currentY += starSize + 40;
+
+    const sectionPadding = 30;
+    const sectionWidth = Math.min(canvasWidth * 0.7, 500); // Ogranicz szerokość sekcji
+    const sectionX = canvasWidth / 2 - sectionWidth / 2;
+    const lineHeight = 28;
+    const valueXOffset = sectionWidth - sectionPadding; // Pozycja dla wartości, wyrównanych do prawej
+
+    drawTextWithOutline(ctx, "Statystyki Aktu:", sectionX, currentY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "left");
+    currentY += lineHeight * 1.5;
+    
+    drawTextWithOutline(ctx, `Nazwa Aktu:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.levelName || `Akt ${state.currentLevelIndex + 1}`}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    currentY += lineHeight;
+
+    drawTextWithOutline(ctx, `Zadowolenie Widowni:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.finalSatisfaction} / ${stats.initialMaxSatisfaction}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    currentY += lineHeight;
+
+    drawTextWithOutline(ctx, `Wieże Bileterów:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.towersBuilt.bileter}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    currentY += lineHeight;
+
+    drawTextWithOutline(ctx, `Wieże Oświetleniowców:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.towersBuilt.oswietleniowiec}`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    currentY += lineHeight * 1.8;
+
+    drawTextWithOutline(ctx, "Bonus na Następny Akt:", sectionX, currentY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "left");
+    currentY += lineHeight * 1.5;
+
+    drawTextWithOutline(ctx, `Pozostały Aplauz:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.remainingAplauz} Ap.`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    currentY += lineHeight;
+
+    drawTextWithOutline(ctx, `Wartość Sprzedaży Wież:`, sectionX + sectionPadding, currentY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
+    drawTextWithOutline(ctx, `${stats.totalTowerValue} Ap.`, sectionX + valueXOffset, currentY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
+    currentY += lineHeight * 1.2;
+    
+    ctx.beginPath();
+    ctx.moveTo(sectionX + sectionPadding, currentY - lineHeight * 0.4);
+    ctx.lineTo(sectionX + sectionWidth - sectionPadding, currentY - lineHeight * 0.4);
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.2)";
+    ctx.stroke();
+
+    const totalBonusFont = "bold 15px Arial"; // nieco większa czcionka dla sumy
+    drawTextWithOutline(ctx, `Łączny Bonus Aplauzu:`, sectionX + sectionPadding, currentY + lineHeight*0.5, totalBonusFont, "#e0c9a6", "black", 2.2, "left");
+    drawTextWithOutline(ctx, `${stats.aplauzBonusForNextLevel} Ap.`, sectionX + valueXOffset, currentY + lineHeight*0.5, totalBonusFont, "#4CAF50", "black", 2.2, "right");
+    currentY += lineHeight * 2.5;
+
+    const buttonWidth = 220;
+    const buttonHeight = 45;
+    state.levelCompleteButtons = [];
+
+    let buttonsYStart = canvasHeight - 50 - buttonHeight; // Start Y for the lowest button
+    if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
+        buttonsYStart -= (buttonHeight + 15); // Make space for the "Next Act" button
+    }
+    
+    const menuButtonY = canvasHeight - buttonHeight - 30;
+     state.levelCompleteButtons.push({
+        id: 'mainMenu', text: "Menu Główne",
+        x: canvasWidth / 2 - buttonWidth / 2, y: menuButtonY,
+        width: buttonWidth, height: buttonHeight
+    });
+    drawStyledButton(ctx, "Menu Główne", canvasWidth / 2, menuButtonY + buttonHeight / 2, buttonWidth, buttonHeight);
+
+
+    if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
+        const nextLevelButtonY = menuButtonY - buttonHeight - 15;
+        state.levelCompleteButtons.push({
+            id: 'nextLevel', text: "Następny Akt",
+            x: canvasWidth / 2 - buttonWidth / 2, y: nextLevelButtonY,
+            width: buttonWidth, height: buttonHeight
+        });
+        drawStyledButton(ctx, "Następny Akt", canvasWidth / 2, nextLevelButtonY + buttonHeight / 2, buttonWidth, buttonHeight);
+    }
+}
+
+function drawStyledButton(ctx, text, centerX, centerY, width, height) {
+    const x = centerX - width / 2;
+    const y = centerY - height / 2;
+
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, "#b8860b");
+    gradient.addColorStop(1, "#8c6c0a");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, width, height);
+
+    ctx.strokeStyle = "#5c400a";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    
+    // Używamy globalnego textAlign = 'center' z drawTextWithOutline
+    const baseFontSize = parseInt(C.UI_FONT_MEDIUM.match(/\d+/)[0]) || 13;
+    drawTextWithOutline(ctx, text, centerX, centerY + baseFontSize / 3, C.UI_FONT_MEDIUM, "white", "black", 2.5, "center");
+    ctx.lineWidth = 1; // Reset lineWidth
 }
 
 export function drawGameOverScreen(ctx) { /* Pusta, nieużywana */ }

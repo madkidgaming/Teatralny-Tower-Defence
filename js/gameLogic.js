@@ -24,7 +24,7 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.initialMaxAudienceSatisfaction = state.maxZadowolenieWidowni;
     state.zadowolenieUpgradeLevel = 0;
 
-    state.currentWaveNumber = startFromWave;
+    state.currentWaveNumber = startFromWave; // startFromWave to numer fali, od której zaczynamy (0 to pierwsza)
     state.enemies.length = 0;
     state.towers.length = 0;
     state.projectiles.length = 0;
@@ -33,18 +33,31 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.gameOver = false;
     state.waveInProgress = false;
     state.showingWaveIntro = false;
+    state.showingLevelCompleteSummary = false;
     state.selectedTowerType = null;
     state.selectedTowerForUpgrade = null;
     state.isPaused = false;
     state.currentMessage = "";
     state.messageTimer = 0;
+    state.levelCompleteButtons = [];
 
     showMessage(state, `Akt ${state.currentLevelIndex + 1}${level.name ? ': ' + level.name : ''}!`, 120);
 
+    // state.levelProgress przechowuje numer ostatniej ukończonej fali (0-9)
+    // Jeśli startFromWave jest 0 (nowy poziom lub restart), to resetujemy postęp na -1 (nierozpoczęty)
+    // chyba że poziom był już ukończony, wtedy też można go zacząć od nowa.
     const currentLevelProg = state.levelProgress[state.currentLevelIndex];
-    if (startFromWave === 0 && (currentLevelProg === undefined || currentLevelProg === -1 || currentLevelProg >= C.WAVES_PER_LEVEL)) {
-        state.levelProgress[state.currentLevelIndex] = -1;
+    if (startFromWave === 0) { // Zaczynamy od początku
+         if (currentLevelProg === undefined || currentLevelProg === -1 || currentLevelProg >= C.WAVES_PER_LEVEL) {
+            state.levelProgress[state.currentLevelIndex] = -1; // Oznacz jako nierozpoczęty, jeśli zaczynamy od nowa
+        }
+        // Jeśli currentLevelProg jest między 0 a WAVES_PER_LEVEL-1, a my zaczynamy od 0,
+        // to oznacza, że gracz wybrał restart poziomu, więc progress zostaje taki jaki jest (lub -1).
+        // W praktyce, ScreenManager powinien przekazać startFromWave=0 dla "Nowa Gra" na poziomie
+        // lub startFromWave=progress+1 dla "Kontynuuj".
     }
+    // Jeśli startFromWave > 0, to znaczy, że kontynuujemy, więc levelProgress już jest ustawiony.
+
     saveGameProgress(state);
 }
 
@@ -96,14 +109,22 @@ export function updateEnemies() {
 
             if (state.zadowolenieWidowni <= 0) {
                 state.zadowolenieWidowni = 0;
-                endGame(false);
+                endGame(false); // Przegrana
             }
 
-            if (!enemy.isDying) {
-                enemy.isDying = true;
-                enemy.hp = 0;
-                enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
-                enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
+            // Usuń wroga z listy, nawet jeśli nie ma animacji (aby nie "wisiał" na końcu)
+             if (!enemy.isDying) { // Tylko jeśli jeszcze nie umiera
+                enemy.isDying = true; 
+                enemy.hp = 0; // Upewnij się, że HP to 0
+                // Można dodać animację zniknięcia
+                gsap.to(enemy, { 
+                    duration: 0.3, 
+                    currentAlpha: 0, 
+                    onComplete: () => {
+                        const index = state.enemies.indexOf(enemy);
+                        if (index > -1) state.enemies.splice(index, 1);
+                    }
+                });
             }
         }
     }
@@ -205,7 +226,7 @@ export function updateTowers() {
 function findTarget(tower) {
     let closestEnemy = null; let minDistance = tower.range;
     state.enemies.forEach(enemy => {
-        if (enemy.hp <= 0 || enemy.isDying) return;
+        if (enemy.hp <= 0 || enemy.isDying) return; // Nie celuj w umierających
         const dx = enemy.x - tower.x; const dy = enemy.y - tower.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < minDistance) { minDistance = distance; closestEnemy = enemy; }
@@ -220,11 +241,7 @@ function fireProjectile(tower, target) {
         return;
     }
     const projectileImage = images[projectileData.imageKey];
-    if (!projectileImage) {
-        console.error("Brak obrazka dla pocisku (klucz):", projectileData.imageKey);
-    } else if (projectileImage.error) {
-        console.error("Błąd ładowania obrazka dla pocisku:", projectileData.imageKey, projectileImage.src);
-    }
+    // Nie ma potrzeby sprawdzać projectileImage.error tutaj, bo jest to robione w pętli rysowania
 
     const fireY = (tower.y + C.TILE_SIZE / 2 - tower.definition.renderSize) + tower.definition.renderSize * 0.4;
     const newProjectile = {
@@ -240,7 +257,7 @@ export function updateProjectiles() {
     for (let i = state.projectiles.length - 1; i >= 0; i--) {
         const p = state.projectiles[i];
 
-        if (!p.target || p.target.hp <= 0 || p.target.isDying) {
+        if (!p.target || p.target.hp <= 0 || p.target.isDying) { // Pocisk znika, jeśli cel umarł/umiera
             state.projectiles.splice(i, 1);
             continue;
         }
@@ -251,18 +268,14 @@ export function updateProjectiles() {
             state.projectiles.splice(i, 1);
 
             const hitEffect = {
-                x: p.target.x,
-                y: p.target.y,
-                scale: 0,
-                alpha: 1,
-                durationFrames: 20,
-                maxScale: C.TILE_SIZE * 0.25,
+                x: p.target.x, y: p.target.y, scale: 0, alpha: 1,
+                durationFrames: 20, maxScale: C.TILE_SIZE * 0.25,
                 color: p.type === 'laser' ? 'rgba(255,255,100,0.9)' : 'rgba(220,220,220,0.8)',
                 isNew: true
             };
             state.effects.push(hitEffect);
 
-            if (p.target.hp <= 0 && !p.target.isDying) {
+            if (p.target.hp <= 0 && !p.target.isDying) { // Tylko jeśli jeszcze nie rozpoczął umierania
                 handleEnemyDefeated(p.target);
             }
         } else {
@@ -273,19 +286,16 @@ export function updateProjectiles() {
 }
 
 export function handleEnemyDefeated(enemy) {
-    if (enemy.isDying) {
-        return;
-    }
+    if (enemy.isDying) return; // Jeśli już umiera, nie rób nic (np. przez inne trafienie)
+    
     state.aplauz += (enemy.reward * enemy.level);
-    enemy.isDying = true;
-    enemy.currentScale = enemy.currentScale !== undefined ? enemy.currentScale : 1;
-    enemy.currentAlpha = enemy.currentAlpha !== undefined ? enemy.currentAlpha : 1;
+    enemy.isDying = true; // Oznacz jako umierający, animacja GSAP w main.js się tym zajmie
+    // GSAP w main.js ustawi isDeathAnimationStarted = true i animacje
 }
 
 
 export function completeLevel() {
-    // LOG: Dodano log na początku funkcji
-    console.log(`[GameLogic.completeLevel] Called. Current wave: ${state.currentWaveNumber}, Satisfaction: ${state.zadowolenieWidowni}`);
+    // console.log(`[GameLogic.completeLevel] Called. Current wave: ${state.currentWaveNumber}, Satisfaction: ${state.zadowolenieWidowni}`);
 
     state.lastLevelStats.completed = true;
     state.lastLevelStats.levelName = C.levelData[state.currentLevelIndex]?.name || `Akt ${state.currentLevelIndex + 1}`;
@@ -313,30 +323,39 @@ export function completeLevel() {
     } else if (state.zadowolenieWidowni > 0) {
         state.lastLevelStats.stars = 1;
     } else {
-        state.lastLevelStats.stars = 0;
+        state.lastLevelStats.stars = 0; // Mimo że technicznie przegrana, ale może być ukończony poziom z 0 zadowolenia
     }
 
     state.lastLevelStats.aplauzBonusForNextLevel = state.aplauz + totalSellValue;
     state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel;
 
-    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL;
+    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; // Oznacz poziom jako ukończony
     if (state.currentLevelIndex < C.levelData.length - 1) {
         state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2);
     }
     saveGameProgress(state);
 
-    state.gameOver = true;
-    state.gameScreen = 'levelCompleteScreen';
-    // LOG: Dodano log na końcu funkcji
-    console.log(`[GameLogic.completeLevel] Finished. Set gameOver=${state.gameOver}, gameScreen=${state.gameScreen}. Stars: ${state.lastLevelStats.stars}`);
+    state.gameOver = true; // Oznacz grę jako zakończoną (ale wygraną na tym poziomie)
+    state.gameScreen = 'levelCompleteCanvas'; 
+    state.showingLevelCompleteSummary = true; 
+
+    // console.log(`[GameLogic.completeLevel] Finished. Set gameOver=${state.gameOver}, gameScreen=${state.gameScreen}, showingLevelCompleteSummary=${state.showingLevelCompleteSummary}. Stars: ${state.lastLevelStats.stars}`);
 }
 
 
 export function prepareNextWave() {
+    // currentWaveNumber to numer fali, która *ma się odbyć* (0 to pierwsza)
+    // Jeśli currentWaveNumber >= WAVES_PER_LEVEL, to wszystkie fale się odbyły
     if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) return;
-    state.showingWaveIntro = true; state.waveIntroTimer = 180; state.waveIntroEnemies = [];
+    
+    state.showingWaveIntro = true; 
+    state.waveIntroTimer = 180; // 3 sekundy (180 klatek / 60fps)
+    state.waveIntroEnemies = [];
+
+    // Definicja fali jest oparta o state.currentWaveNumber (0 dla pierwszej fali, itd.)
     const waveIndexForDefinition = Math.min(state.currentWaveNumber, C.waveDefinitionsBase.length - 1);
     const wavePattern = C.waveDefinitionsBase[waveIndexForDefinition];
+    
     if (wavePattern.krytyk.count > 0) state.waveIntroEnemies.push({type: 'krytyk', level: wavePattern.krytyk.level, image: images.krytykTeatralny});
     if (wavePattern.spozniony.count > 0) state.waveIntroEnemies.push({type: 'spozniony', level: wavePattern.spozniony.level, image: images.spoznionyWidz});
     if (wavePattern.boss) state.waveIntroEnemies.push({type: wavePattern.boss.type, level: wavePattern.boss.level, image: images[C.baseEnemyStats[wavePattern.boss.type].imageKey], isBoss: true});
@@ -344,42 +363,47 @@ export function prepareNextWave() {
 
 export function startNextWaveActual() {
     state.showingWaveIntro = false;
-    state.currentWaveNumber++;
+    // currentWaveNumber jest już ustawione na falę, która się rozpoczyna (np. 0 dla pierwszej)
+    // state.currentWaveNumber++; // Nie inkrementujemy tutaj, currentWaveNumber to numer *nadchodzącej* fali
     state.waveInProgress = true;
-    showMessage(state, `Fala ${state.currentWaveNumber} rozpoczęta!`, 60);
+    showMessage(state, `Fala ${state.currentWaveNumber + 1} rozpoczęta!`, 60); // +1 dla wyświetlania dla gracza
 
-    const waveToRecord = state.currentWaveNumber === 1 ? 0 : state.currentWaveNumber -1;
+    // Zapisujemy postęp jako *ostatnią rozpoczętą* falę.
+    // Jeśli state.currentWaveNumber to 0 (pierwsza fala), zapisujemy 0.
     const previousProgress = state.levelProgress[state.currentLevelIndex] === undefined ? -1 : state.levelProgress[state.currentLevelIndex];
-    state.levelProgress[state.currentLevelIndex] = Math.max(previousProgress, waveToRecord);
+    state.levelProgress[state.currentLevelIndex] = Math.max(previousProgress, state.currentWaveNumber);
     saveGameProgress(state);
 
-    const waveIndexForDefinition = Math.min(state.currentWaveNumber - 1, C.waveDefinitionsBase.length - 1);
+    const waveIndexForDefinition = Math.min(state.currentWaveNumber, C.waveDefinitionsBase.length - 1);
     const waveData = JSON.parse(JSON.stringify(C.waveDefinitionsBase[waveIndexForDefinition]));
-    const difficultyScale = 1 + (state.currentWaveNumber - 1) * 0.025 + state.currentLevelIndex * 0.015;
+    const difficultyScale = 1 + (state.currentWaveNumber) * 0.025 + state.currentLevelIndex * 0.015; // currentWaveNumber jest 0-indexed
     state.currentWaveSpawns = [];
+
     if (waveData.krytyk) {
         for(let i=0; i < Math.ceil(waveData.krytyk.count * difficultyScale); i++) state.currentWaveSpawns.push({type: 'krytyk', level: waveData.krytyk.level});
     }
     if (waveData.spozniony) {
         for(let i=0; i < Math.ceil(waveData.spozniony.count * difficultyScale); i++) state.currentWaveSpawns.push({type: 'spozniony', level: waveData.spozniony.level});
     }
-    if (waveData.boss && state.currentWaveNumber % 5 === 0) {
+    // Boss pojawia się np. co 5 fal (fale 4, 9, itd. jeśli currentWaveNumber jest 0-indexed)
+    if (waveData.boss && (state.currentWaveNumber + 1) % 5 === 0) { 
          state.currentWaveSpawns.push({
             type: waveData.boss.type, level: waveData.boss.level, isBoss: true,
             hpMultiplier: waveData.boss.hpMultiplier || (1 + (waveData.boss.level-1)*0.4),
         });
     }
-    state.currentWaveSpawns.sort(() => Math.random() - 0.5);
+    state.currentWaveSpawns.sort(() => Math.random() - 0.5); // Tasowanie kolejności
     state.currentWaveSpawnsLeft = state.currentWaveSpawns.length;
-    state.spawnInterval = Math.max(35, waveData.interval * (1 - state.currentLevelIndex * 0.02) * (1 - (state.currentWaveNumber-1)*0.01) );
-    state.spawnTimer = 0;
+    state.spawnInterval = Math.max(35, waveData.interval * (1 - state.currentLevelIndex * 0.02) * (1 - (state.currentWaveNumber)*0.01) );
+    state.spawnTimer = 0; // Pierwszy spawn od razu lub po krótkim opóźnieniu
 }
 
 export function handleWaveSpawning() {
     if (state.waveInProgress && state.currentWaveSpawnsLeft > 0) {
         state.spawnTimer--;
         if (state.spawnTimer <= 0) {
-            const enemyToSpawnData = state.currentWaveSpawns.shift(); state.currentWaveSpawnsLeft--;
+            const enemyToSpawnData = state.currentWaveSpawns.shift(); 
+            state.currentWaveSpawnsLeft--;
             if (enemyToSpawnData.isBoss) {
                 const bossBaseStats = C.baseEnemyStats[enemyToSpawnData.type];
                 const bossImg = images[bossBaseStats.imageKey];
@@ -391,7 +415,7 @@ export function handleWaveSpawning() {
                     maxHp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier,
                     speed: bossBaseStats.speed * (1 - (enemyToSpawnData.level - 1) * 0.15), pathIndex: 0,
                     image: bossImg, width: bossBaseStats.width * 1.3, height: bossBaseStats.height * 1.3,
-                    reward: C.baseEnemyStats[enemyToSpawnData.type].aplauzReward,
+                    reward: C.baseEnemyStats[enemyToSpawnData.type].aplauzReward * 2, // Boss daje więcej nagrody
                     isDying: false, isDeathAnimationStarted: false
                 };
                 state.enemies.push(newBoss);
@@ -403,26 +427,27 @@ export function handleWaveSpawning() {
 
 export function endGame(isWin) {
     if (state.gameOver && !isWin) {
-        return;
+        return; // Już przegrana, nie rób nic
     }
     if (isWin) {
-        if (!state.gameOver) {
-            completeLevel();
+        if (!state.gameOver) { 
+            completeLevel(); // To ustawi gameOver na true i odpowiedni screen
         }
         return;
     }
 
+    // Przegrana
     state.gameOver = true;
     state.waveInProgress = false;
     showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 30000);
-    saveGameProgress(state);
+    saveGameProgress(state); // Zapisz stan przegranej (np. żeby nie można było kontynuować tego poziomu)
     state.gameScreen = 'levelLost';
 }
 
 
 export function togglePauseGame() {
     state.isPaused = !state.isPaused;
-    if (state.isPaused) showMessage(state, "Pauza", 36000);
+    if (state.isPaused) showMessage(state, "Pauza", 360000); // Dłuższy czas dla pauzy
     else showMessage(state, "Wznowiono", 60);
 }
 
@@ -438,6 +463,6 @@ export function sellTower(towerToSell) {
     const spot = state.currentTowerSpots.find(s => s.x === towerToSell.xGrid && s.y === towerToSell.yGrid);
     if (spot) spot.occupied = false;
     showMessage(state, `Sprzedano wieżę za ${sellValue} Aplauzu.`, 120);
-    state.selectedTowerForUpgrade = null;
+    state.selectedTowerForUpgrade = null; // Odznacz wieżę po sprzedaży
     saveGameProgress(state);
 }

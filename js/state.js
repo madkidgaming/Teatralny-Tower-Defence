@@ -3,9 +3,9 @@ export const gameState = {
     aplauz: 250,
     zadowolenieWidowni: 100,
     maxZadowolenieWidowni: 100,
-    initialMaxAudienceSatisfaction: 100, // Do śledzenia początkowego max zadowolenia na poziomie
+    initialMaxAudienceSatisfaction: 100,
     zadowolenieUpgradeLevel: 0,
-    currentWaveNumber: 0,
+    currentWaveNumber: 0, // Oznacza, która fala jest *następna* do rozegrania lub *aktualnie* trwa (0 dla pierwszej fali, która będzie falą 1 dla gracza)
     gameOver: false, 
     waveInProgress: false,
     showingWaveIntro: false,
@@ -13,10 +13,12 @@ export const gameState = {
     waveIntroEnemies: [],
     currentLevelIndex: 0,
     unlockedLevels: 1,
-    levelProgress: {}, 
+    levelProgress: {}, // Klucz to index poziomu, wartość to numer *ostatniej ukończonej* fali (0-9) lub -1 (nierozpoczęty) lub C.WAVES_PER_LEVEL (ukończony)
     
     isPaused: false,
-    gameScreen: 'menu', // Możliwe stany: 'menu', 'levelSelection', 'credits', 'playing', 'paused', 'levelCompleteScreen', 'levelLost'
+    gameScreen: 'menu', // Możliwe stany: 'menu', 'levelSelection', 'credits', 'playing', 'paused', 'levelCompleteCanvas', 'levelLost', 'levelCompleteScreen' (HTML)
+    showingLevelCompleteSummary: false,
+    levelCompleteButtons: [], // Przechowuje definicje przycisków dla ekranu podsumowania na canvasie
 
     enemies: [],
     towers: [],

@@ -97,28 +97,10 @@
         <button id="backToMainMenuFromCredits" class="ui-button">Powrót do Menu</button>
     </div>
 
-    <!-- ZMIANA: Nowy ekran podsumowania aktu -->
-    <div id="levelCompleteScreen" class="menu-screen hidden">
-        <h2 id="levelCompleteTitle">Akt Ukończony!</h2>
-        <div id="starRatingContainer" class="star-rating">
-            <!-- Gwiazdki będą dodawane przez JS -->
-        </div>
-        <div class="summary-section">
-            <h3>Statystyki Aktu</h3>
-            <p>Nazwa Aktu: <strong id="summaryLevelName">-</strong></p>
-            <p>Zadowolenie Widowni: <strong id="summarySatisfaction">-</strong></p>
-            <p>Wieże Bileterów: <strong id="summaryBileterTowers">-</strong></p>
-            <p>Wieże Oświetleniowców: <strong id="summaryOswietleniowiecTowers">-</strong></p>
-        </div>
-        <div class="summary-section">
-            <h3>Bonus na Następny Akt</h3>
-            <p>Pozostały Aplauz: <strong id="summaryRemainingAplauz">-</strong> Ap.</p>
-            <p>Wartość Sprzedaży Wież: <strong id="summaryTowerValue">-</strong> Ap.</p>
-            <p class="total-bonus">Łączny Bonus Aplauzu: <strong id="summaryAplauzBonus">-</strong> Ap.</p>
-        </div>
-        <button id="nextLevelButton" class="ui-button">Następny Akt</button>
-        <button id="backToMenuFromSummary" class="ui-button">Menu Główne</button>
-    </div>
+    <!-- ZMIANA: HTMLowy ekran podsumowania aktu jest teraz zakomentowany/usunięty -->
+    <!-- Zostawiam pusty div, aby uniknąć błędów, jeśli jakieś skrypty (np. stare wersje) odwołują się do tego ID -->
+    <div id="levelCompleteScreen" class="hidden"></div> 
+
 
     <div id="pauseMenu" class="menu-screen hidden">
         <h2>Pauza</h2>
@@ -137,6 +119,9 @@
         </div>
     </div>
 
+    <!-- Kolejność importu modułów ma znaczenie -->
+    <script type="module" src="js/uiManager.js"></script>
+    <script type="module" src="js/screenManager.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
