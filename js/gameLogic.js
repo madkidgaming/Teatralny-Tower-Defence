@@ -42,18 +42,42 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.currentMessage = "";
     state.messageTimer = 0;
     state.levelCompleteButtons = [];
-
-    // Resetowanie stanu animacji gwiazdek przy rozpoczęciu nowego poziomu
     state.lastLevelStats.starStates.forEach(star => {
-        star.scale = 0;
-        star.opacity = 0;
-        star.isFilled = false;
-        star.fillProgress = 0;
-        star.character = '☆';
-        star.color = '#777777';
+        star.scale = 0; star.opacity = 0; star.isFilled = false;
+        star.fillProgress = 0; star.character = '☆'; star.color = '#777777';
     });
     state.lastLevelStats.isStarAnimationComplete = false;
 
+    // ZMIANA: Generowanie i zapisywanie mapy kafelków tła
+    state.currentBackgroundTileMap = [];
+    for (let row = 0; row < C.ROWS; row++) {
+        state.currentBackgroundTileMap[row] = [];
+        for (let col = 0; col < C.COLS; col++) {
+            let tileData;
+            const isPathTile = state.currentPath.some(p => p.x === col && p.y === row);
+
+            if (isPathTile) {
+                // Losowy wariant ścieżki - wylosowany raz na początku poziomu
+                tileData = C.pathVariants[Math.floor(Math.random() * C.pathVariants.length)];
+            } else {
+                // Trawa - z przewagą podstawowej, wylosowana raz na początku poziomu
+                const rand = Math.random();
+                if (rand < 0.75) { // 75% szans na podstawową trawę
+                    tileData = C.tileTypes.GRASS_BASIC;
+                } else {
+                    const decorativeGrass = [ // Bez GRASS_BASIC
+                        C.tileTypes.GRASS_FLOWER_YELLOW,
+                        C.tileTypes.GRASS_FLOWER_WHITE,
+                        C.tileTypes.GRASS_BLADES_1,
+                        C.tileTypes.GRASS_BLADES_2
+                    ];
+                    tileData = decorativeGrass[Math.floor(Math.random() * decorativeGrass.length)];
+                }
+            }
+            state.currentBackgroundTileMap[row][col] = tileData;
+        }
+    }
+    // Koniec zmiany generowania mapy kafelków
 
     showMessage(state, `Akt ${state.currentLevelIndex + 1}${level.name ? ': ' + level.name : ''}!`, 120);
 
@@ -289,7 +313,7 @@ export function completeLevel() {
     state.lastLevelStats.completed = true;
     state.lastLevelStats.levelName = C.levelData[state.currentLevelIndex]?.name || `Akt ${state.currentLevelIndex + 1}`;
     state.lastLevelStats.finalSatisfaction = state.zadowolenieWidowni;
-    state.lastLevelStats.initialMaxSatisfaction = state.initialMaxAudienceSatisfaction;
+    state.lastLevelStats.initialMaxAudienceSatisfaction = state.initialMaxAudienceSatisfaction;
 
     state.lastLevelStats.towersBuilt.bileter = state.towers.filter(t => t.type === 'bileter').length;
     state.lastLevelStats.towersBuilt.oswietleniowiec = state.towers.filter(t => t.type === 'oswietleniowiec').length;
@@ -315,14 +339,13 @@ export function completeLevel() {
         state.lastLevelStats.stars = 0;
     }
 
-    // ZMIANA: Resetowanie stanu animacji gwiazdek
     state.lastLevelStats.starStates.forEach(star => {
-        star.scale = 0.3; // Zacznij od małej skali, ale widocznej (dla "pop-in" effect)
+        star.scale = 0.3; 
         star.opacity = 0;
         star.isFilled = false;
-        star.fillProgress = 0; // Możemy animować tę wartość, aby uzyskać efekt "wypełniania"
-        star.character = '☆'; // Początkowo wszystkie są konturami
-        star.color = '#777777'; // Kolor dla pustej/nieaktywnej gwiazdki
+        star.fillProgress = 0; 
+        star.character = '☆'; 
+        star.color = '#777777'; 
     });
     state.lastLevelStats.isStarAnimationComplete = false;
 
@@ -340,14 +363,12 @@ export function completeLevel() {
     state.showingLevelCompleteSummary = true; 
     console.log(`[gameLogic.js completeLevel] Level ${state.currentLevelIndex + 1} completed. Stars: ${state.lastLevelStats.stars}`);
     
-    // ZMIANA: Inicjacja animacji gwiazdek
     if (typeof gsap !== 'undefined') {
-        gsap.killTweensOf(state.lastLevelStats.starStates); // Anuluj poprzednie animacje gwiazdek
+        gsap.killTweensOf(state.lastLevelStats.starStates); 
 
         const tl = gsap.timeline({
             onComplete: () => {
                 state.lastLevelStats.isStarAnimationComplete = true;
-                // Upewnij się, że finalny stan gwiazdek jest poprawny
                 for(let i = 0; i < 3; i++) {
                     if (i < state.lastLevelStats.stars) {
                         state.lastLevelStats.starStates[i].isFilled = true;
@@ -359,7 +380,7 @@ export function completeLevel() {
                          state.lastLevelStats.starStates[i].isFilled = false;
                          state.lastLevelStats.starStates[i].character = '☆';
                          state.lastLevelStats.starStates[i].color = '#777777';
-                         state.lastLevelStats.starStates[i].opacity = 1; // Puste też widoczne
+                         state.lastLevelStats.starStates[i].opacity = 1; 
                          state.lastLevelStats.starStates[i].scale = 1;
                     }
                 }
@@ -367,54 +388,48 @@ export function completeLevel() {
             }
         });
 
-        const starAppearDelay = 0.6;      // Opóźnienie przed pojawieniem się pierwszej "pustej" gwiazdki
-        const interStarAppearDelay = 0.2; // Opóźnienie między pojawianiem się kolejnych "pustych"
-        const starAppearDuration = 0.3;   // Czas pojawiania się (scale, opacity) "pustej"
+        const starAppearDelay = 0.6;      
+        const interStarAppearDelay = 0.2; 
+        const starAppearDuration = 0.3;   
         
-        const starFillDelayAfterAppear = 0.4; // Opóźnienie między pojawieniem się wszystkich pustych a wypełnieniem pierwszej zdobytej
-        const interStarFillDelay = 0.5;   // Opóźnienie między wypełnianiem kolejnych zdobytych
-        const starFillDuration = 0.3;     // Czas "wypełniania" się gwiazdki
+        const starFillDelayAfterAppear = 0.4; 
+        const interStarFillDelay = 0.5;   
+        const starFillDuration = 0.3;     
 
-        // Krok 1: Wszystkie 3 gwiazdki (jako kontury) pojawiają się sekwencyjnie
         for (let i = 0; i < 3; i++) {
             tl.to(state.lastLevelStats.starStates[i], {
                 scale: 1,
                 opacity: 1,
-                character: '☆', // Upewnij się, że to kontur
-                color: '#a0a0a0', // Kolor dla widocznego konturu
+                character: '☆', 
+                color: '#a0a0a0', 
                 duration: starAppearDuration,
                 delay: (i === 0) ? starAppearDelay : interStarAppearDelay,
                 ease: "back.out(1.4)",
-            }, (i === 0) ? ">" : `<${interStarAppearDelay*0.8}`); // Lekkie nałożenie dla płynności
+            }, (i === 0) ? ">" : `<${interStarAppearDelay*0.8}`); 
         }
         
-        // Krok 2: Wypełnianie zdobytych gwiazdek, jedna po drugiej
-        // Dodaj etykietę do timeline, aby kolejne animacje zaczęły się po tej fazie
         tl.addLabel("fillStars", `>${starFillDelayAfterAppear}`); 
 
         for (let i = 0; i < state.lastLevelStats.stars; i++) {
             tl.to(state.lastLevelStats.starStates[i], {
-                // Możemy animować 'character' i 'color' bezpośrednio, jeśli GSAP nie wspiera znaków unicode,
-                // wtedy onUpdate by je zmieniał. Prostsze jest użycie onStart/onComplete.
-                // Lub animować `fillProgress` i na tej podstawie rysować w `drawing.js`
-                scale: 1.3, // Lekki "pop" przy wypełnianiu
+                scale: 1.3, 
                 duration: starFillDuration / 2,
                 ease: "power2.out",
                 onStart: () => {
                     state.lastLevelStats.starStates[i].character = '★';
-                    state.lastLevelStats.starStates[i].color = '#ffd700'; // Zmień na złoty
+                    state.lastLevelStats.starStates[i].color = '#ffd700'; 
                 }
-            }, `fillStars+=${i * interStarFillDelay}`) // Użyj etykiety i opóźnienia
+            }, `fillStars+=${i * interStarFillDelay}`) 
             .to(state.lastLevelStats.starStates[i], {
-                scale: 1, // Powrót do normalnej skali
+                scale: 1, 
                 duration: starFillDuration / 2,
                 ease: "power1.in",
                 onComplete: () => {
                     state.lastLevelStats.starStates[i].isFilled = true;
                 }
-            }, ">"); // Bezpośrednio po poprzedniej animacji dla tej gwiazdki
+            }, ">"); 
         }
-    } else { // Fallback bez GSAP
+    } else { 
         for (let i = 0; i < 3; i++) {
             state.lastLevelStats.starStates[i].scale = 1;
             state.lastLevelStats.starStates[i].opacity = 1;
@@ -435,11 +450,9 @@ export function completeLevel() {
 
 export function prepareNextWave() {
     if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-        // console.log(`[gameLogic.prepareNextWave] Cannot prepare wave. InProgress: ${state.waveInProgress}, GameOver: ${state.gameOver}, CurrentWave: ${state.currentWaveNumber}`);
         return;
     }
     
-    // console.log(`[gameLogic.prepareNextWave] Preparing wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
     state.showingWaveIntro = true; 
     state.waveIntroTimer = 180;
     state.waveIntroEnemies = [];
@@ -455,7 +468,6 @@ export function prepareNextWave() {
 export function startNextWaveActual() {
     state.showingWaveIntro = false;
     state.waveInProgress = true;
-    // console.log(`[gameLogic.startNextWaveActual] Starting wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
     showMessage(state, `Fala ${state.currentWaveNumber + 1} rozpoczęta!`, 60);
 
     const previousProgress = state.levelProgress[state.currentLevelIndex] === undefined ? -1 : state.levelProgress[state.currentLevelIndex];

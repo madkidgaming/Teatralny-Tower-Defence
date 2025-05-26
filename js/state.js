@@ -28,6 +28,9 @@ export const gameState = {
     currentPath: [],
     currentTowerSpots: [],
 
+    // ZMIANA: Dodana właściwość do przechowywania wygenerowanej mapy kafelków tła
+    currentBackgroundTileMap: [], 
+
     currentWaveSpawns: [],
     currentWaveSpawnsLeft: 0,
     spawnInterval: 0,
@@ -42,15 +45,13 @@ export const gameState = {
     lastLevelStats: {
         completed: false,
         levelName: "",
-        stars: 0, // Ile gwiazdek zdobył gracz
-        // ZMIANA: Tablica obiektów gwiazdek dla indywidualnej animacji
+        stars: 0,
         starStates: [
-            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' }, // Gwiazdka 1
-            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' }, // Gwiazdka 2
-            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' }  // Gwiazdka 3
+            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' },
+            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' },
+            { scale: 0, opacity: 0, isFilled: false, fillProgress: 0, character: '☆', color: '#777777' } 
         ],
-        isStarAnimationComplete: false, // Czy cała sekwencja animacji gwiazdek się zakończyła
-        // Koniec zmiany
+        isStarAnimationComplete: false,
         finalSatisfaction: 0,
         initialMaxSatisfaction: 0,
         towersBuilt: { bileter: 0, oswietleniowiec: 0 },

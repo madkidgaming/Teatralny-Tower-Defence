@@ -25,7 +25,6 @@ export const imageSources = {
     spoznionyWidz: 'https://kaliskie.org/wp-content/uploads/2025/05/SPOZNIONY-WIDZ.png',
     krytykTeatralny: 'https://kaliskie.org/wp-content/uploads/2025/05/KRYTYK-TEATRALNY.png',
     reflektorTowerIcon: 'https://kaliskie.org/wp-content/uploads/2025/05/reflektor.png',
-    // ZMIANA: Dodano tileset
     tileset: 'assets/images/TILESET TOWER DEFENCE.png' // Upewnij się, że ta ścieżka jest poprawna!
 };
 
@@ -63,7 +62,6 @@ export const projectileTypes = {
     laser: { speed: 10, damage: 0, imageKey: 'laserProjectile', width: TILE_SIZE*0.5 * PROJECTILE_SIZE_MULTIPLIER, height: TILE_SIZE*0.15 * PROJECTILE_SIZE_MULTIPLIER }
 };
 
-// ZMIANA: Usunięto bgColor i pathColor z definicji poziomów, bo tło będzie z kafelków
 export const levelData = [
     { name: "Premiera w Foyer", path: [ { x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 3, y: 3 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 }, { x: 7, y: 6 }, { x: 8, y: 6 }, { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 },{ x: 12, y: 5 },{ x: 12, y: 4 },{ x: 12, y: 3 },{ x: 13, y: 3 },{ x: 14, y: 3 },{ x: 15, y: 3 },{ x: 16, y: 3 },{ x: 17, y: 3 },{ x: 18, y: 3 },{ x: 19, y: 3 } ], towerSpots: [ { x: 2, y: 3 }, { x: 4, y: 1 }, { x: 5, y: 3 }, { x: 7, y: 5 }, { x: 9, y: 5 }, { x: 11, y: 7 }, { x: 13, y: 2 }, { x: 15, y: 4 }  ]},
     { name: "Chaos w Kulisach", path: [ { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }, { x: 2, y: 5 }, { x: 2, y: 6 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }, { x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }, { x: 8, y: 7 }, { x: 9, y: 7 }, { x: 10, y: 7 }, { x: 11, y: 7 }, { x: 12, y: 7 }, { x: 13, y: 7 }, { x: 14, y: 7 }, { x: 15, y: 7 }, { x: 16, y: 7 }, { x: 16, y: 6 }, { x: 16, y: 5 }, { x: 16, y: 4 }, { x: 16, y: 3 }, { x: 16, y: 2 }, { x: 17, y: 2 }, { x: 18, y: 2 }, { x: 19, y: 2 } ], towerSpots: [ { x: 1, y: 2 }, { x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 6 }, { x: 8, y: 6 }, { x: 11, y:6 }, { x: 14, y: 6 }, { x: 15, y: 3 }, { x: 17, y: 1 } ]},
@@ -86,8 +84,7 @@ export const waveDefinitionsBase = [
     { krytyk: {count: 5, level: 3}, spozniony: {count: 5, level: 3}, interval: 80, boss: {type: 'spozniony', level: 2, hpMultiplier: 2.0} }
 ];
 
-// ZMIANA: Definicje dla tilesetu
-export const TILESET_TILE_SIZE_PX = 16; // Rozmiar kafelka W PLIKU tilesetu (np. 16x16)
+export const TILESET_TILE_SIZE_PX = 16; 
 
 export const tileTypes = {
     GRASS_BASIC:        { sx: 0 * TILESET_TILE_SIZE_PX, sy: 0 * TILESET_TILE_SIZE_PX },
@@ -103,7 +100,6 @@ export const tileTypes = {
     PATH_5:             { sx: 4 * TILESET_TILE_SIZE_PX, sy: 1 * TILESET_TILE_SIZE_PX },
 };
 
-// Tablice wariantów dla łatwiejszego losowania
 export const grassVariants = [
     tileTypes.GRASS_BASIC,
     tileTypes.GRASS_FLOWER_YELLOW,
@@ -112,7 +108,7 @@ export const grassVariants = [
     tileTypes.GRASS_BLADES_2,
 ];
 
-export const pathVariants = [ // Ponieważ wszystkie wyglądają podobnie, można wybrać jeden lub losować
+export const pathVariants = [ 
     tileTypes.PATH_1,
     tileTypes.PATH_2,
     tileTypes.PATH_3,

@@ -6,24 +6,28 @@ import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
 import * as GameLogic from './gameLogic.js';
 import * as UIManager from './uiManager.js';
-import * as ScreenManager from './screenManager.js';
+import *as ScreenManager from './screenManager.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Inicjalizacja ScreenManager z callbackami
 ScreenManager.initializeScreenManager({
     startGameLevel: startGameLevel,
     updateContinueButtonState: updateContinueButtonState,
     goToMainMenu: goToMainMenu
 });
 
+// Elementy DOM dla menu, które są nadal obsługiwane przez main.js lub ScreenManager
 const continueGameButton = document.getElementById('continueGameButton');
 const newGameButtonFromMenu = document.getElementById('newGameButtonFromMenu');
 const levelSelectButton = document.getElementById('levelSelectButton');
 const creditsButton = document.getElementById('creditsButton');
 const backToMainMenuFromLevelSelection = document.getElementById('backToMainMenuFromLevelSelection');
 const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCredits');
+
 const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
+
 const customConfirmOverlay = document.getElementById('customConfirmOverlay');
 const customConfirmTitle = document.getElementById('customConfirmTitle');
 const customConfirmMessage = document.getElementById('customConfirmMessage');
@@ -33,8 +37,10 @@ const customConfirmCancelButton = document.getElementById('customConfirmCancelBu
 if (!customConfirmOverlay || !customConfirmTitle || !customConfirmMessage || !customConfirmOkButton || !customConfirmCancelButton) {
     console.error("CRITICAL: One or more custom confirm dialog DOM elements are missing! Check IDs in index.html and main.js.");
 }
+
 let confirmResolve = null;
 
+// Elementy UI do interakcji w grze (event listenery pozostają w main.js)
 const uiButtonBileter = document.getElementById('uiButtonBileter');
 const uiButtonOswietleniowiec = document.getElementById('uiButtonOswietleniowiec');
 const uiButtonUpgradeSatisfaction = document.getElementById('uiButtonUpgradeSatisfaction');
@@ -42,17 +48,20 @@ const uiButtonStartWave = document.getElementById('uiButtonStartWave');
 const uiButtonUpgradeDamage = document.getElementById('uiButtonUpgradeDamage');
 const uiButtonUpgradeFireRate = document.getElementById('uiButtonUpgradeFireRate');
 const uiButtonSellTower = document.getElementById('uiButtonSellTower');
+
 const pauseButton = document.getElementById('pauseButton');
 const resumeButton = document.getElementById('resumeButton');
 const returnToMenuButtonGame = document.getElementById('returnToMenuButtonGame');
 const menuFromPauseButton = document.getElementById('menuFromPauseButton');
+
 
 function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
     return new Promise((resolve) => {
         confirmResolve = resolve;
         if (!customConfirmTitle || !customConfirmMessage || !customConfirmOverlay) {
             console.error("[showCustomConfirm] Dialog elements (title, message, or overlay) are null. Aborting dialog.");
-            resolve(false); return;
+            resolve(false);
+            return;
         }
         customConfirmTitle.textContent = title;
         customConfirmMessage.textContent = message;
@@ -64,26 +73,51 @@ function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
 function hideCustomConfirm() {
     if (customConfirmOverlay) {
         customConfirmOverlay.classList.remove('visible');
-        setTimeout(() => { customConfirmOverlay.classList.add('hidden'); }, 300);
+        setTimeout(() => {
+            customConfirmOverlay.classList.add('hidden');
+        }, 300);
     }
     confirmResolve = null;
 }
 
-customConfirmOkButton.addEventListener('click', () => { if (confirmResolve) confirmResolve(true); hideCustomConfirm(); });
-customConfirmCancelButton.addEventListener('click', () => { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); });
-customConfirmOverlay.addEventListener('click', (event) => { if (event.target === customConfirmOverlay) { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); }});
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && customConfirmOverlay?.classList.contains('visible')) { if (confirmResolve) confirmResolve(false); hideCustomConfirm(); }});
+customConfirmOkButton.addEventListener('click', () => {
+    if (confirmResolve) confirmResolve(true);
+    hideCustomConfirm();
+});
+
+customConfirmCancelButton.addEventListener('click', () => {
+    if (confirmResolve) confirmResolve(false);
+    hideCustomConfirm();
+});
+
+customConfirmOverlay.addEventListener('click', (event) => {
+    if (event.target === customConfirmOverlay) {
+        if (confirmResolve) confirmResolve(false);
+        hideCustomConfirm();
+    }
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && customConfirmOverlay && customConfirmOverlay.classList.contains('visible')) {
+        if (confirmResolve) confirmResolve(false);
+        hideCustomConfirm();
+    }
+});
 
 export function startGameLevel(levelIndex, startFromWave = 0) {
     console.log(`[main.js startGameLevel] Called with levelIndex: ${levelIndex}, startFromWave: ${startFromWave}`);
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave); 
+    
     ScreenManager.showScreen('playing'); 
+    
     UIManager.updateUiStats();
     UIManager.updateTowerUpgradePanel();
     UIManager.updateSelectedTowerButtonUI();
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
     animationFrameId = null;
     gameLoop();
 }
@@ -102,19 +136,40 @@ export function updateContinueButtonState() {
 function preloadImagesAndStart() {
     Storage.loadGameProgress(state);
     setTotalImagesToLoad(Object.keys(C.imageSources).length);
+
+    let imagesToLoadCount = Object.keys(C.imageSources).length;
+    let loadedCount = 0;
+
+    function checkAllImagesLoaded() {
+        loadedCount++;
+        if (loadedCount === imagesToLoadCount) {
+            initGame();
+        }
+    }
+
     for (const key in C.imageSources) {
         images[key] = new Image();
         images[key].src = C.imageSources[key];
         images[key].onload = () => {
-            incrementImagesLoadedCount();
-            if (imagesLoadedCount === totalImagesToLoad) initGame();
+            console.log(`Image loaded: ${key} from ${images[key].src}`);
+            images[key].error = false; // Upewnij się, że flaga błędu jest false
+            incrementImagesLoadedCount(); // Ta funkcja w state.js powinna być używana
+            if (imagesLoadedCount === totalImagesToLoad) { // Używamy globalnych liczników ze state.js
+                initGame();
+            }
         };
         images[key].onerror = (e) => {
             console.error(`Błąd ładowania obrazka: ${key} z ${C.imageSources[key]}`, e);
             images[key].error = true;
             incrementImagesLoadedCount();
-            if (imagesLoadedCount === totalImagesToLoad) initGame();
+            if (imagesLoadedCount === totalImagesToLoad) {
+                initGame();
+            }
         }
+    }
+     // Na wypadek gdyby nie było żadnych obrazków do załadowania (chociaż to mało prawdopodobne)
+    if (totalImagesToLoad === 0) {
+        initGame();
     }
 }
 
@@ -130,8 +185,14 @@ let autoStartTimerId = null;
 let autoStartCountdown = 0;
 
 function gameLoop() {
-    if (state.gameScreen === 'menu' || state.gameScreen === 'levelSelection' || state.gameScreen === 'credits' || state.gameScreen === 'levelCompleteScreen') {
-        if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+    if (state.gameScreen === 'menu' ||
+        state.gameScreen === 'levelSelection' ||
+        state.gameScreen === 'credits' ||
+        state.gameScreen === 'levelCompleteScreen') { // HTML version
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
         return;
     }
 
