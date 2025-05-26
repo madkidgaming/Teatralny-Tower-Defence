@@ -238,9 +238,25 @@ export function drawLevelCompleteSummary(ctx) {
     const starSize = 28;
     const totalStarWidth = (3 * starSize) + (2 * 8);
     let starX = canvasWidth / 2 - totalStarWidth / 2;
+    
     for (let i = 0; i < 3; i++) {
-        const starChar = (i < stats.stars) ? '★' : '☆';
-        const starColor = (i < stats.stars) ? "#ffd700" : "#888888";
+        // Jeśli animacja gwiazdek nie jest zakończona, rysujemy puste kontury dla tych, które jeszcze nie zostały "odsłonięte"
+        // lub wszystkie jako puste, jeśli animacja się jeszcze nie zaczęła dla tej gwiazdki.
+        // state.lastLevelStats.starsToDisplay kontroluje, ile gwiazdek jest "wypełnionych".
+        let starChar = '☆';
+        let starColor = "#777777"; // Kolor dla pustej gwiazdki
+
+        if (i < stats.starsToDisplay) { // Gwiazdka została "wypełniona" przez animację
+            starChar = '★';
+            starColor = "#ffd700";
+        } else if (!stats.isStarAnimationComplete && i < stats.stars) {
+            // Gwiazdka docelowo będzie wypełniona, ale animacja jeszcze do niej nie doszła
+            // Możemy ją rysować jako "oczekującą" lub pustą
+             starChar = '☆'; // Kontur gwiazdki
+             starColor = "#a0a0a0"; // Lekko jaśniejszy szary
+        }
+        // Jeśli i >= stats.stars, pozostaje domyślna pusta gwiazdka (ciemniejszy szary)
+
         drawTextWithOutline(ctx, starChar, starX + starSize / 2, currentY, `bold ${starSize * 1.2}px Arial`, starColor, "black", 2, "center");
         starX += starSize + 8;
     }
@@ -259,15 +275,9 @@ export function drawLevelCompleteSummary(ctx) {
     let rightColumnY = currentY;
     const valueXOffset = columnWidth - sectionPadding;
 
-    // --- LEWA KOLUMNA: Statystyki Aktu ---
     drawTextWithOutline(ctx, "Statystyki Aktu:", leftColumnX + columnWidth / 2, leftColumnY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "center");
     leftColumnY += lineHeight * 1.8; 
     
-    // ZMIANA: Usunięto "Nazwa Aktu:", ponieważ jest już w tytule głównym
-    // drawTextWithOutline(ctx, `Nazwa Aktu:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
-    // drawTextWithOutline(ctx, `${stats.levelName || `Akt ${state.currentLevelIndex + 1}`}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    // leftColumnY += lineHeight; // Usunięto, więc nie ma potrzeby inkrementacji Y
-
     drawTextWithOutline(ctx, `Zadowolenie Widowni:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
     drawTextWithOutline(ctx, `${stats.finalSatisfaction} / ${stats.initialMaxSatisfaction}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
     leftColumnY += lineHeight;
@@ -278,10 +288,8 @@ export function drawLevelCompleteSummary(ctx) {
 
     drawTextWithOutline(ctx, `Wieże Oświetleniowców:`, leftColumnX + sectionPadding, leftColumnY, C.UI_FONT_MEDIUM, "#d0bfa6", "black", 2, "left");
     drawTextWithOutline(ctx, `${stats.towersBuilt.oswietleniowiec}`, leftColumnX + valueXOffset, leftColumnY, C.UI_FONT_MEDIUM, "#ffd700", "black", 2, "right");
-    leftColumnY += lineHeight;
+    // leftColumnY += lineHeight; // Usunięto, bo to ostatni element w tej kolumnie przed ustaleniem maxY
 
-
-    // --- PRAWA KOLUMNA: Bonus na Następny Akt ---
     drawTextWithOutline(ctx, "Bonus na Następny Akt:", rightColumnX + columnWidth / 2, rightColumnY, C.UI_FONT_LARGE, "#f0e0c0", "black", 2.5, "center");
     rightColumnY += lineHeight * 1.8;
 
@@ -304,28 +312,27 @@ export function drawLevelCompleteSummary(ctx) {
     const totalBonusFont = "bold 14px Arial";
     drawTextWithOutline(ctx, `Łączny Bonus Aplauzu:`, rightColumnX + sectionPadding, rightColumnY, totalBonusFont, "#e0c9a6", "black", 2.2, "left");
     drawTextWithOutline(ctx, `${stats.aplauzBonusForNextLevel} Ap.`, rightColumnX + valueXOffset, rightColumnY, totalBonusFont, "#50C878", "black", 2.2, "right");
-    // rightColumnY += lineHeight; // Już niepotrzebne, przyciski poniżej
+    // rightColumnY += lineHeight; // Usunięto, bo to ostatni element tej kolumny
 
-    const maxYFromColumns = Math.max(leftColumnY, rightColumnY);
+    const maxYFromColumns = Math.max(leftColumnY, rightColumnY); // Używamy wartości Y po ostatnim tekście
     let buttonsCurrentY = maxYFromColumns + 35;
 
     const buttonWidth = 200;
     const buttonHeight = 40;
-    state.levelCompleteButtons = [];
+    state.levelCompleteButtons = []; // Czyścimy przed ponownym wypełnieniem
 
-    let numButtons = 1;
+    let numButtons = 1; // Zawsze jest przycisk "Menu Główne"
     if (state.currentLevelIndex < C.levelData.length - 1 && C.levelData.length > 1) {
-        numButtons = 2;
+        numButtons = 2; // Jeśli jest dostępny następny akt
     }
     const requiredSpaceForButtons = numButtons * buttonHeight + (numButtons - 1) * 10; 
 
-    if (buttonsCurrentY + requiredSpaceForButtons + 20 > canvasHeight) { // Sprawdzenie, czy przyciski nie wyjdą poza ekran
+    if (buttonsCurrentY + requiredSpaceForButtons + 20 > canvasHeight) {
         buttonsCurrentY = canvasHeight - requiredSpaceForButtons - 20;
     }
     
-    // Przycisk "Menu Główne" zawsze na dole (lub prawie na dole)
     let menuButtonActualY = buttonsCurrentY;
-    if (numButtons === 2) { // Jeśli są dwa przyciski, "Menu Główne" jest niżej
+    if (numButtons === 2) {
         menuButtonActualY = buttonsCurrentY + buttonHeight + 10;
     }
      state.levelCompleteButtons.push({
@@ -335,10 +342,10 @@ export function drawLevelCompleteSummary(ctx) {
     });
     drawStyledButton(ctx, "Menu Główne", canvasWidth / 2, menuButtonActualY + buttonHeight / 2, buttonWidth, buttonHeight);
 
-    if (numButtons === 2) { // Jeśli jest przycisk "Następny Akt", rysujemy go nad "Menu Główne"
+    if (numButtons === 2) {
         state.levelCompleteButtons.push({
             id: 'nextLevel', text: "Następny Akt",
-            x: canvasWidth / 2 - buttonWidth / 2, y: buttonsCurrentY, // buttonsCurrentY jest teraz dla górnego przycisku
+            x: canvasWidth / 2 - buttonWidth / 2, y: buttonsCurrentY,
             width: buttonWidth, height: buttonHeight
         });
         drawStyledButton(ctx, "Następny Akt", canvasWidth / 2, buttonsCurrentY + buttonHeight / 2, buttonWidth, buttonHeight);

@@ -5,7 +5,7 @@ export const gameState = {
     maxZadowolenieWidowni: 100,
     initialMaxAudienceSatisfaction: 100,
     zadowolenieUpgradeLevel: 0,
-    currentWaveNumber: 0, // Oznacza, która fala jest *następna* do rozegrania lub *aktualnie* trwa (0 dla pierwszej fali, która będzie falą 1 dla gracza)
+    currentWaveNumber: 0, 
     gameOver: false, 
     waveInProgress: false,
     showingWaveIntro: false,
@@ -13,12 +13,12 @@ export const gameState = {
     waveIntroEnemies: [],
     currentLevelIndex: 0,
     unlockedLevels: 1,
-    levelProgress: {}, // Klucz to index poziomu, wartość to numer *ostatniej ukończonej* fali (0-9) lub -1 (nierozpoczęty) lub C.WAVES_PER_LEVEL (ukończony)
+    levelProgress: {}, 
     
     isPaused: false,
-    gameScreen: 'menu', // Możliwe stany: 'menu', 'levelSelection', 'credits', 'playing', 'paused', 'levelCompleteCanvas', 'levelLost', 'levelCompleteScreen' (HTML)
+    gameScreen: 'menu', 
     showingLevelCompleteSummary: false,
-    levelCompleteButtons: [], // Przechowuje definicje przycisków dla ekranu podsumowania na canvasie
+    levelCompleteButtons: [], 
 
     enemies: [],
     towers: [],
@@ -43,6 +43,10 @@ export const gameState = {
         completed: false,
         levelName: "",
         stars: 0,
+        // ZMIANA: Dodane dla animacji gwiazdek
+        starsToDisplay: 0, // Ile gwiazdek aktualnie rysować jako "wypełnione" na podstawie animacji
+        isStarAnimationComplete: false, // Czy animacja gwiazdek została zakończona
+        // Koniec zmiany
         finalSatisfaction: 0,
         initialMaxSatisfaction: 0,
         towersBuilt: { bileter: 0, oswietleniowiec: 0 },

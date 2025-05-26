@@ -24,7 +24,6 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.initialMaxAudienceSatisfaction = state.maxZadowolenieWidowni;
     state.zadowolenieUpgradeLevel = 0;
 
-    // startFromWave to numer fali, od której zaczynamy (0 to pierwsza fala)
     state.currentWaveNumber = startFromWave; 
     console.log(`[gameLogic.setupLevel] Level ${levelIdx} starting at wave (0-indexed): ${startFromWave}`);
 
@@ -44,15 +43,17 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.messageTimer = 0;
     state.levelCompleteButtons = [];
 
+    // ZMIANA: Resetowanie stanu animacji gwiazdek przy rozpoczęciu nowego poziomu
+    state.lastLevelStats.starsToDisplay = 0;
+    state.lastLevelStats.isStarAnimationComplete = false;
+
+
     showMessage(state, `Akt ${state.currentLevelIndex + 1}${level.name ? ': ' + level.name : ''}!`, 120);
 
     const currentLevelProg = state.levelProgress[state.currentLevelIndex];
-    // Jeśli zaczynamy od fali 0 (nowy start poziomu lub restart po ukończeniu)
-    // i poziom nie był wcześniej rozpoczęty LUB był ukończony, ustawiamy progress na -1 (nierozpoczęty).
     if (startFromWave === 0 && (currentLevelProg === undefined || currentLevelProg === -1 || currentLevelProg >= C.WAVES_PER_LEVEL)) {
         state.levelProgress[state.currentLevelIndex] = -1; 
     }
-    // Jeśli kontynuujemy (startFromWave > 0), levelProgress już powinien być poprawnie ustawiony.
     saveGameProgress(state);
 }
 
@@ -77,11 +78,11 @@ export function updateEnemies() {
     for (let i = state.enemies.length - 1; i >= 0; i--) {
         const enemy = state.enemies[i];
 
-        if (enemy.isDying) { // Jeśli animacja śmierci już się rozpoczęła, GSAP się tym zajmie
+        if (enemy.isDying) {
             continue;
         }
 
-        if (enemy.hp <= 0 && !enemy.isDying) { // Jeśli HP spadło do zera, ale nie jest jeszcze oznaczony jako umierający
+        if (enemy.hp <= 0 && !enemy.isDying) {
             handleEnemyDefeated(enemy);
             continue;
         }
@@ -99,17 +100,16 @@ export function updateEnemies() {
                 enemy.x += (dx / distance) * enemy.speed;
                 enemy.y += (dy / distance) * enemy.speed;
             }
-        } else { // Wróg dotarł do bazy
+        } else { 
             state.zadowolenieWidowni--;
 
             if (state.zadowolenieWidowni <= 0) {
                 state.zadowolenieWidowni = 0;
-                endGame(false); // Przegrana
+                endGame(false);
             }
             
-            // Oznacz wroga jako umierającego, aby animacja GSAP mogła go usunąć
             if (!enemy.isDying) {
-                handleEnemyDefeated(enemy, false); // false oznacza, że nie ma nagrody
+                handleEnemyDefeated(enemy, false); 
             }
         }
     }
@@ -269,7 +269,6 @@ export function updateProjectiles() {
     }
 }
 
-// Dodano parametr withReward, domyślnie true
 export function handleEnemyDefeated(enemy, withReward = true) {
     if (enemy.isDying) return; 
     
@@ -277,7 +276,6 @@ export function handleEnemyDefeated(enemy, withReward = true) {
         state.aplauz += (enemy.reward * enemy.level);
     }
     enemy.isDying = true;
-    // Animacja śmierci jest obsługiwana przez GSAP w main.js, który sprawdza enemy.isDying
 }
 
 export function completeLevel() {
@@ -310,11 +308,13 @@ export function completeLevel() {
         state.lastLevelStats.stars = 0;
     }
 
+    // ZMIANA: Resetowanie i inicjacja animacji gwiazdek
+    state.lastLevelStats.starsToDisplay = 0; // Zaczynamy od 0 wyświetlanych gwiazdek
+    state.lastLevelStats.isStarAnimationComplete = false;
+
     state.lastLevelStats.aplauzBonusForNextLevel = state.aplauz + totalSellValue;
     state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel;
 
-    // Zamiast ustawiać levelProgress na state.currentWaveNumber, ustawiamy na C.WAVES_PER_LEVEL
-    // bo to oznacza, że wszystkie fale zostały ukończone.
     state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; 
     if (state.currentLevelIndex < C.levelData.length - 1) {
         state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2);
@@ -325,11 +325,63 @@ export function completeLevel() {
     state.gameScreen = 'levelCompleteCanvas'; 
     state.showingLevelCompleteSummary = true; 
     console.log(`[gameLogic.js completeLevel] Level ${state.currentLevelIndex + 1} completed. Screen: ${state.gameScreen}`);
+    
+    // Inicjacja animacji gwiazdek
+    if (typeof gsap !== 'undefined') {
+        const starRevealDelay = 0.7; // Opóźnienie przed rozpoczęciem animacji pierwszej gwiazdki
+        const interStarDelay = 0.6;  // Opóźnienie między kolejnymi gwiazdkami
+        const starAnimationDuration = 0.4; // Czas trwania "wypełniania" pojedynczej gwiazdki
+
+        gsap.killTweensOf(state.lastLevelStats); // Anuluj poprzednie animacje tego obiektu, jeśli jakieś były
+
+        const tl = gsap.timeline({
+            onComplete: () => {
+                state.lastLevelStats.isStarAnimationComplete = true;
+                console.log("GSAP Star animation timeline complete");
+            }
+        });
+
+        // Pierwsza gwiazdka (jeśli jest co najmniej jedna)
+        if (state.lastLevelStats.stars > 0) {
+            tl.to(state.lastLevelStats, {
+                starsToDisplay: 1,
+                duration: starAnimationDuration,
+                delay: starRevealDelay,
+                ease: "power2.out",
+                // Można dodać onStart/onUpdate, jeśli potrzebujesz dodatkowych efektów
+            });
+        } else { // Jeśli 0 gwiazdek, oznacz animację jako zakończoną po opóźnieniu
+             tl.set(state.lastLevelStats, {isStarAnimationComplete: true, delay: starRevealDelay});
+        }
+
+        // Druga gwiazdka (jeśli są co najmniej dwie)
+        if (state.lastLevelStats.stars > 1) {
+            tl.to(state.lastLevelStats, {
+                starsToDisplay: 2,
+                duration: starAnimationDuration,
+                delay: interStarDelay, // To jest opóźnienie względem poprzedniej animacji w timeline
+                ease: "power2.out",
+            });
+        }
+        
+        // Trzecia gwiazdka (jeśli są co najmniej trzy)
+        if (state.lastLevelStats.stars > 2) {
+            tl.to(state.lastLevelStats, {
+                starsToDisplay: 3,
+                duration: starAnimationDuration,
+                delay: interStarDelay,
+                ease: "power2.out",
+            });
+        }
+    } else {
+        // Fallback, jeśli GSAP nie jest dostępny
+        state.lastLevelStats.starsToDisplay = state.lastLevelStats.stars;
+        state.lastLevelStats.isStarAnimationComplete = true;
+    }
 }
 
 
 export function prepareNextWave() {
-    // state.currentWaveNumber jest indeksem następnej fali (0 dla pierwszej)
     if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
         console.log(`[gameLogic.prepareNextWave] Cannot prepare wave. InProgress: ${state.waveInProgress}, GameOver: ${state.gameOver}, CurrentWave: ${state.currentWaveNumber}`);
         return;
@@ -351,12 +403,9 @@ export function prepareNextWave() {
 export function startNextWaveActual() {
     state.showingWaveIntro = false;
     state.waveInProgress = true;
-    // state.currentWaveNumber już wskazuje na falę, która się rozpoczyna
     console.log(`[gameLogic.startNextWaveActual] Starting wave (0-indexed): ${state.currentWaveNumber}. Displayed as: ${state.currentWaveNumber + 1}`);
     showMessage(state, `Fala ${state.currentWaveNumber + 1} rozpoczęta!`, 60);
 
-    // Zapisz postęp: state.currentWaveNumber to numer fali, która właśnie się rozpoczęła (0-indexed)
-    // state.levelProgress powinien przechowywać *ostatnią ukończoną* lub *aktualnie trwającą najwyższą* falę
     const previousProgress = state.levelProgress[state.currentLevelIndex] === undefined ? -1 : state.levelProgress[state.currentLevelIndex];
     state.levelProgress[state.currentLevelIndex] = Math.max(previousProgress, state.currentWaveNumber);
     saveGameProgress(state);
