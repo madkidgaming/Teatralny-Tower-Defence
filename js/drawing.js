@@ -62,14 +62,16 @@ export function drawSingleEnemy(ctx, enemy) {
         const h = enemy.height * scaleFactor;
 
         if (enemy.image && !enemy.image.error) {
+            // Efekt "poświaty" dla wrogów wyższego poziomu - może być kosztowny wydajnościowo.
+            // Rozważ prostsze wskaźniki (np. mała ikona, inny odcień) jeśli pojawią się problemy.
             if (enemy.level > 1 && (enemy.currentAlpha === undefined || enemy.currentAlpha > 0.1)) { 
                 ctx.save();
                 ctx.shadowBlur = 6;
                 ctx.shadowColor = enemy.level === 2 ? "rgba(100, 180, 255, 0.9)" : "rgba(255, 100, 100, 0.9)";
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < 4; i++) { // Rysowanie obrazka 4 razy dla efektu
                      ctx.drawImage(enemy.image, enemy.x - w / 2 + (i === 0 ? -2 : i === 1 ? 2 : 0), enemy.y - h / 2 + (i === 2 ? -2 : i === 3 ? 2 : 0), w, h);
                 }
-                ctx.restore();
+                ctx.restore(); // Przywraca stan bez cienia dla głównego rysowania
             }
             ctx.drawImage(enemy.image, enemy.x - w / 2, enemy.y - h / 2, w, h);
         } else { 
@@ -77,7 +79,7 @@ export function drawSingleEnemy(ctx, enemy) {
             const fallbackSize = w * 0.8; 
             ctx.fillRect(enemy.x - fallbackSize / 2, enemy.y - fallbackSize / 2, fallbackSize, fallbackSize); 
         }
-        ctx.restore();
+        ctx.restore(); // Przywraca globalAlpha
 
         if ((enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) && enemy.hp > 0 && !enemy.isDying) { 
             const barWidth = C.TILE_SIZE * 0.8; const barHeight = 7;
@@ -173,8 +175,7 @@ export function drawEffects(ctx) {
 }
 
 export function drawWaveIntro(ctx) {
-    // ZMIANA: Warunek, aby ostatnia klatka (timer=0) się narysowała, a ujemne nie.
-    if (!state.showingWaveIntro || state.waveIntroTimer < 0) return;
+    if (!state.showingWaveIntro || state.waveIntroTimer < 0) return; // Warunek, aby timer=0 się narysował
 
     ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -203,8 +204,7 @@ export function drawWaveIntro(ctx) {
     });
     
     drawTextWithOutline(ctx, `Przygotuj się! (${Math.ceil(state.waveIntroTimer / 60)}s)`, ctx.canvas.width / 2, ctx.canvas.height - 80, C.UI_FONT_MEDIUM, "lightgray", "black");
-
-    // ZMIANA: Usunięto dekrementację timera, została przeniesiona do main.js
+    // Dekrementacja timera została przeniesiona do gameLoop w main.js
 }
 
 export function drawUI(ctx) { 

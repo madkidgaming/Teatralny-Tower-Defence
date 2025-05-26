@@ -2,15 +2,13 @@ export const TILE_SIZE = 40;
 export const ROWS = 12;
 export const COLS = 20;
 
-// ZMIANA: Zmniejszono rozmiary czcionek UI
-export const UI_FONT_LARGE = "bold 16px Arial";     // Było: "bold 18px Arial"
-export const UI_FONT_MEDIUM = "bold 13px Arial";    // Było: "bold 15px Arial"
-export const UI_FONT_SMALL = "12px Arial";          // Było: "13px Arial"
-export const UI_FONT_TINY = `bold 10px Arial`;      // Było: `bold 11px Arial`
-
-export const UI_BUTTON_HEIGHT = 55; // Ta stała nie jest chyba nigdzie używana w JS do rysowania, tylko CSS
-export const UI_BUTTON_WIDTH = 140; // Ta stała nie jest chyba nigdzie używana w JS do rysowania, tylko CSS
-export const UI_PADDING = 10;       // Ta stała nie jest chyba nigdzie używana w JS do rysowania, tylko CSS
+// ZMIANA: Usunięto nieużywane w JS stałe UI_BUTTON_HEIGHT, UI_BUTTON_WIDTH, UI_PADDING.
+// Jeśli są potrzebne dla CSS, lepiej użyć zmiennych CSS.
+// Rozmiary czcionek UI
+export const UI_FONT_LARGE = "bold 16px Arial";
+export const UI_FONT_MEDIUM = "bold 13px Arial";
+export const UI_FONT_SMALL = "12px Arial";
+export const UI_FONT_TINY = `bold 10px Arial`;
 
 export const WAVES_PER_LEVEL = 10;
 export const MAX_ZADOWOLENIE_UPGRADE_LEVEL = 5;
@@ -21,6 +19,8 @@ export const TOWER_RENDER_SIZE_MULTIPLIER = 1.6;
 export const PROJECTILE_SIZE_MULTIPLIER = 1.2;
 export const BASE_SIZE_MULTIPLIER = 2.2;
 
+// UWAGA: Dla stabilności i niezależności gry, zaleca się hostowanie zasobów graficznych
+// na tym samym serwerze co gra, zamiast linkowania do zewnętrznych domen (np. kaliskie.org).
 export const imageSources = {
     teatrBase: 'https://kaliskie.org/wp-content/uploads/2025/05/TEATR.png',
     laserProjectile: 'https://kaliskie.org/wp-content/uploads/2025/05/LASER-PROJECTILE.png',

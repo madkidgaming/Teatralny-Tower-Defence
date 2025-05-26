@@ -5,6 +5,8 @@ import * as Storage from './storage.js';
 import * as Utils from './utils.js';
 import * as Drawing from './drawing.js';
 import * as GameLogic from './gameLogic.js';
+// ZMIANA: Import UIManager
+import * as UIManager from './uiManager.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -27,7 +29,6 @@ const backToMainMenuFromCredits = document.getElementById('backToMainMenuFromCre
 const nextLevelButton = document.getElementById('nextLevelButton');
 const backToMenuFromSummary = document.getElementById('backToMenuFromSummary');
 
-
 const saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
 const saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
 
@@ -44,23 +45,20 @@ if (!customConfirmOverlay || !customConfirmTitle || !customConfirmMessage || !cu
 }
 console.log("Initial check: customConfirmOverlay element:", customConfirmOverlay);
 
-
 let confirmResolve = null;
 
-const uiCurrentAct = document.getElementById('uiCurrentAct');
-const uiCurrentWave = document.getElementById('uiCurrentWave');
-const uiAplauz = document.getElementById('uiAplauz');
-const uiAudienceSatisfaction = document.getElementById('uiAudienceSatisfaction');
+// ZMIANA: Elementy UI, które były tu cachowane tylko dla funkcji przeniesionych do UIManager,
+// zostały usunięte stąd. UIManager będzie je cachował wewnętrznie.
+// Pozostają te, które są używane bezpośrednio w main.js (np. do event listenerów lub showScreen).
 const uiButtonBileter = document.getElementById('uiButtonBileter');
 const uiButtonOswietleniowiec = document.getElementById('uiButtonOswietleniowiec');
 const uiButtonUpgradeSatisfaction = document.getElementById('uiButtonUpgradeSatisfaction');
 const uiButtonStartWave = document.getElementById('uiButtonStartWave');
-const towerUpgradePanel = document.getElementById('towerUpgradePanel');
-const upgradePanelTowerName = document.getElementById('upgradePanelTowerName');
+// const towerUpgradePanel = document.getElementById('towerUpgradePanel'); // Przeniesione
 const uiButtonUpgradeDamage = document.getElementById('uiButtonUpgradeDamage');
 const uiButtonUpgradeFireRate = document.getElementById('uiButtonUpgradeFireRate');
 const uiButtonSellTower = document.getElementById('uiButtonSellTower');
-const uiMessages = document.getElementById('uiMessages');
+// const uiMessages = document.getElementById('uiMessages'); // Przeniesione
 
 const pauseButton = document.getElementById('pauseButton');
 const resumeButton = document.getElementById('resumeButton');
@@ -139,111 +137,9 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+// ZMIANA: Funkcje updateUiStats, showUiMessage, updateTowerUpgradePanel, updateSelectedTowerButtonUI
+// zostały przeniesione do UIManager.js i są teraz wywoływane przez UIManager.<nazwaFunkcji>()
 
-function updateUiStats() {
-    if (!C.levelData[state.currentLevelIndex] &&
-        state.gameScreen !== 'menu' &&
-        state.gameScreen !== 'levelSelection' &&
-        state.gameScreen !== 'credits' &&
-        state.gameScreen !== 'levelCompleteScreen') {
-        return;
-    }
-
-     if (state.gameScreen === 'playing' || state.gameScreen === 'paused' || state.gameScreen === 'levelLost') {
-        uiCurrentAct.textContent = state.currentLevelIndex + 1;
-        let waveDisplay;
-        if (state.currentWaveNumber > C.WAVES_PER_LEVEL) {
-            waveDisplay = C.WAVES_PER_LEVEL;
-        } else if (state.currentWaveNumber > 0) {
-            waveDisplay = state.currentWaveNumber;
-        } else {
-            const progress = state.levelProgress[state.currentLevelIndex];
-            if (progress === undefined || progress === -1) {
-                waveDisplay = '-';
-            } else {
-                waveDisplay = '0';
-            }
-        }
-        uiCurrentWave.textContent = `${waveDisplay}/${C.WAVES_PER_LEVEL}`;
-        uiAplauz.textContent = state.aplauz;
-        uiAudienceSatisfaction.textContent = `${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`;
-    }
-
-
-    if (C.towerDefinitions.bileter) {
-        uiButtonBileter.querySelector('.cost').textContent = C.towerDefinitions.bileter.cost;
-    }
-    if (C.towerDefinitions.oswietleniowiec) {
-        uiButtonOswietleniowiec.querySelector('.cost').textContent = C.towerDefinitions.oswietleniowiec.cost;
-    }
-
-    if (state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL && C.zadowolenieUpgrades[state.zadowolenieUpgradeLevel]) {
-        uiButtonUpgradeSatisfaction.querySelector('.cost').textContent = C.zadowolenieUpgrades[state.zadowolenieUpgradeLevel].cost;
-        uiButtonUpgradeSatisfaction.classList.remove('disabled');
-    } else {
-        uiButtonUpgradeSatisfaction.querySelector('.cost').textContent = "MAX";
-        uiButtonUpgradeSatisfaction.classList.add('disabled');
-    }
-
-    const isStartWaveDisabled = state.gameOver || state.waveInProgress || state.showingWaveIntro || state.currentWaveNumber >= C.WAVES_PER_LEVEL || state.gameScreen === 'levelCompleteScreen';
-    if (isStartWaveDisabled) uiButtonStartWave.classList.add('disabled');
-    else uiButtonStartWave.classList.remove('disabled');
-}
-
-function showUiMessage(message) {
-    if(message && message.trim() !== "") {
-        uiMessages.textContent = message;
-        uiMessages.style.opacity = '1';
-    } else {
-        if (uiMessages.textContent !== "") {
-            uiMessages.style.opacity = '0';
-            setTimeout(() => {
-                if (uiMessages.style.opacity === '0') uiMessages.textContent = '';
-            }, 300);
-        }
-    }
-}
-
-function updateTowerUpgradePanel() {
-    if (state.selectedTowerForUpgrade && C.towerDefinitions[state.selectedTowerForUpgrade.type]) {
-        towerUpgradePanel.classList.remove('hidden');
-        const tower = state.selectedTowerForUpgrade;
-        const towerDef = C.towerDefinitions[tower.type];
-        upgradePanelTowerName.textContent = tower.type === 'bileter' ? 'Bileter' : 'Oświetleniowiec';
-
-        if (tower.damageLevel < C.MAX_UPGRADE_LEVEL && towerDef.upgrades.damage[tower.damageLevel]) {
-            uiButtonUpgradeDamage.querySelector('.cost').textContent = towerDef.upgrades.damage[tower.damageLevel].cost;
-            uiButtonUpgradeDamage.classList.remove('disabled');
-        } else {
-            uiButtonUpgradeDamage.querySelector('.cost').textContent = "MAX";
-            uiButtonUpgradeDamage.classList.add('disabled');
-        }
-        if (tower.fireRateLevel < C.MAX_UPGRADE_LEVEL && towerDef.upgrades.fireRate[tower.fireRateLevel]) {
-            uiButtonUpgradeFireRate.querySelector('.cost').textContent = towerDef.upgrades.fireRate[tower.fireRateLevel].cost;
-            uiButtonUpgradeFireRate.classList.remove('disabled');
-        } else {
-            uiButtonUpgradeFireRate.querySelector('.cost').textContent = "MAX";
-            uiButtonUpgradeFireRate.classList.add('disabled');
-        }
-        let sellValue = Math.floor(towerDef.cost * 0.75);
-        for(let i=0; i < tower.damageLevel; i++) sellValue += Math.floor(towerDef.upgrades.damage[i].cost * 0.5);
-        for(let i=0; i < tower.fireRateLevel; i++) sellValue += Math.floor(towerDef.upgrades.fireRate[i].cost * 0.5);
-        uiButtonSellTower.querySelector('.value').textContent = sellValue;
-    } else {
-        towerUpgradePanel.classList.add('hidden');
-    }
-}
-
-function updateSelectedTowerButtonUI() {
-    uiButtonBileter.classList.remove('selected-for-build');
-    uiButtonOswietleniowiec.classList.remove('selected-for-build');
-
-    if (state.selectedTowerType === 'bileter') {
-        uiButtonBileter.classList.add('selected-for-build');
-    } else if (state.selectedTowerType === 'oswietleniowiec') {
-        uiButtonOswietleniowiec.classList.add('selected-for-build');
-    }
-}
 
 function showScreen(screenName) {
     // Ukryj wszystkie główne kontenery ekranów na początku
@@ -312,9 +208,9 @@ function showScreen(screenName) {
         }
         returnToMenuButtonGame.classList.add('hidden');
         pauseButton.classList.remove('hidden');
-        updateUiStats();
-        updateTowerUpgradePanel();
-        updateSelectedTowerButtonUI();
+        UIManager.updateUiStats(); // ZMIANA
+        UIManager.updateTowerUpgradePanel(); // ZMIANA
+        UIManager.updateSelectedTowerButtonUI(); // ZMIANA
     } else if (screenName === 'paused') {
         gameLayout.classList.remove('hidden');
         gameLayout.classList.add('visible');
@@ -325,8 +221,8 @@ function showScreen(screenName) {
         gameLayout.classList.add('visible');
         returnToMenuButtonGame.classList.remove('hidden');
         pauseButton.classList.add('hidden');
-        showUiMessage(state.currentMessage);
-        updateUiStats();
+        UIManager.showUiMessage(state.currentMessage); // ZMIANA
+        UIManager.updateUiStats(); // ZMIANA
     }
     state.gameScreen = screenName;
 }
@@ -521,7 +417,7 @@ function gameLoop() {
         Drawing.drawEffects(ctx);
         Drawing.drawUI(ctx);
         Drawing.drawWaveIntro(ctx);
-        showUiMessage(state.currentMessage || "Pauza");
+        UIManager.showUiMessage(state.currentMessage || "Pauza"); // ZMIANA
         animationFrameId = requestAnimationFrame(gameLoop);
         return;
     }
@@ -574,7 +470,7 @@ function gameLoop() {
 
         if (state.showingWaveIntro) {
             if (!state.isPaused) {
-                state.waveIntroTimer--;
+                state.waveIntroTimer--; // ZMIANA: Przeniesiono dekrementację timera tutaj z drawing.js
             }
             if (state.waveIntroTimer <= 0) {
                 GameLogic.startNextWaveActual();
@@ -597,14 +493,14 @@ function gameLoop() {
         Drawing.drawUI(ctx);
         Drawing.drawWaveIntro(ctx);
 
-        updateUiStats();
-        updateTowerUpgradePanel();
+        UIManager.updateUiStats(); // ZMIANA
+        UIManager.updateTowerUpgradePanel(); // ZMIANA
         if (state.messageTimer > 0 && state.currentMessage) {
-            showUiMessage(state.currentMessage);
+            UIManager.showUiMessage(state.currentMessage); // ZMIANA
             if (!state.isPaused && state.currentMessage !== "Pauza") state.messageTimer--;
-        } else if (state.messageTimer <= 0 && uiMessages.textContent !== "") {
+        } else if (state.messageTimer <= 0 && document.getElementById('uiMessages').textContent !== "") { // Sprawdzamy bezpośrednio element, bo UIManager może go wyczyścić z opóźnieniem
             if (!(state.currentMessage === "Pauza" && state.isPaused)) {
-                showUiMessage("");
+                UIManager.showUiMessage(""); // ZMIANA
                 state.currentMessage = "";
             }
         }
@@ -635,7 +531,7 @@ function checkWaveCompletion() {
             Utils.showMessage(state, `Fala ${state.currentWaveNumber} pokonana! Następna za chwilę...`, 180);
             if (state.autoStartNextWaveEnabled) prepareAutoStartNextWave(5);
         }
-        updateUiStats();
+        UIManager.updateUiStats(); // ZMIANA
     } else {
         console.log(`[checkWaveCompletion] Wave ${state.currentWaveNumber} not fully cleared. Active/Animating: ${activeOrAnimatingEnemies.length}, SpawnsLeft: ${state.currentWaveSpawnsLeft}`);
     }
@@ -655,14 +551,14 @@ function prepareAutoStartNextWave(seconds) {
         autoStartCountdown--;
         Utils.showMessage(state, `Następna fala za: ${autoStartCountdown}s`, 65);
         if (autoStartCountdown > 0) autoStartTimerId = setTimeout(countdownTick, 1000);
-        else { Utils.showMessage(state, `Rozpoczynanie fali...`, 60); GameLogic.prepareNextWave(); updateUiStats(); }
+        else { Utils.showMessage(state, `Rozpoczynanie fali...`, 60); GameLogic.prepareNextWave(); UIManager.updateUiStats(); } // ZMIANA
     }
     autoStartTimerId = setTimeout(countdownTick, 1000);
 }
 
-uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); }});
-uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); }});
-uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); updateUiStats(); }});
+uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }}); // ZMIANA
+uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }}); // ZMIANA
+uiButtonUpgradeSatisfaction.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused && state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL) { GameLogic.upgradeZadowolenie(); UIManager.updateUiStats(); }}); // ZMIANA
 uiButtonStartWave.addEventListener('click', () => {
     console.log("[uiButtonStartWave] Clicked. Current wave:", state.currentWaveNumber, "WaveInProgress:", state.waveInProgress, "ShowingIntro:", state.showingWaveIntro);
     clearTimeout(autoStartTimerId);
@@ -670,14 +566,14 @@ uiButtonStartWave.addEventListener('click', () => {
     if (state.gameScreen === 'playing' && !state.isPaused && !state.waveInProgress && !state.showingWaveIntro && !state.gameOver && state.currentWaveNumber < C.WAVES_PER_LEVEL) {
         console.log("[uiButtonStartWave] Conditions met, calling prepareNextWave.");
         GameLogic.prepareNextWave();
-        updateUiStats();
+        UIManager.updateUiStats(); // ZMIANA
     } else {
         console.log("[uiButtonStartWave] Conditions NOT met for starting wave.");
     }
 });
-uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); updateTowerUpgradePanel(); updateUiStats(); }});
-uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); updateTowerUpgradePanel(); updateUiStats(); }});
-uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); updateTowerUpgradePanel(); updateUiStats(); }});
+uiButtonUpgradeDamage.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'damage'); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }}); // ZMIANA
+uiButtonUpgradeFireRate.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.upgradeTower(state.selectedTowerForUpgrade, 'fireRate'); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }}); // ZMIANA
+uiButtonSellTower.addEventListener('click', () => { if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) { GameLogic.sellTower(state.selectedTowerForUpgrade); UIManager.updateTowerUpgradePanel(); UIManager.updateUiStats(); }}); // ZMIANA
 
 pauseButton.addEventListener('click', () => {
     if (state.gameScreen === 'playing' && !state.isPaused) {
@@ -764,14 +660,14 @@ canvas.addEventListener('click', (event) => {
     const gridX = Math.floor(clickX / C.TILE_SIZE); const gridY = Math.floor(clickY / C.TILE_SIZE);
     if (gridY < C.ROWS && gridX < C.COLS && gridY >= 0 && gridX >= 0) {
         const clickedTower = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY);
-        if (clickedTower) { state.selectedTowerForUpgrade = clickedTower; state.selectedTowerType = null; updateTowerUpgradePanel(); updateSelectedTowerButtonUI(); return; }
+        if (clickedTower) { state.selectedTowerForUpgrade = clickedTower; state.selectedTowerType = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); return; } // ZMIANA
         if (state.selectedTowerType) {
             const spot = state.currentTowerSpots.find(s => s.x === gridX && s.y === gridY);
             if (spot) { if (spot.occupied) Utils.showMessage(state, "To miejsce jest już zajęte!", 120); else if (!GameLogic.buildTower(gridX, gridY, state.selectedTowerType)) {}
             } else Utils.showMessage(state, "Tutaj nie można budować wieży.", 120);
             return;
         }
-        if (!clickedTower && !state.selectedTowerType) { state.selectedTowerForUpgrade = null; updateTowerUpgradePanel(); }
+        if (!clickedTower && !state.selectedTowerType) { state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); } // ZMIANA
     }
 });
 canvas.addEventListener('mousemove', (event) => {
@@ -792,7 +688,7 @@ document.addEventListener('keydown', (event) => {
         event.preventDefault();
         state.isDevModeActive = !state.isDevModeActive;
         Utils.showMessage(state, `Tryb deweloperski ${state.isDevModeActive ? 'AKTYWNY' : 'WYŁĄCZONY'}`, 120);
-        updateUiStats();
+        UIManager.updateUiStats(); // ZMIANA
     }
 
     if (state.isDevModeActive && (state.gameScreen === 'playing' || state.gameScreen === 'paused') && customConfirmOverlay && !customConfirmOverlay.classList.contains('visible') ) {
@@ -800,7 +696,7 @@ document.addEventListener('keydown', (event) => {
             event.preventDefault();
             state.aplauz += 1000;
             Utils.showMessage(state, "+1000 Aplauzu (DEV)", 90);
-            updateUiStats();
+            UIManager.updateUiStats(); // ZMIANA
         } else if (event.shiftKey && event.key === 'W') {
             event.preventDefault();
             if (state.waveInProgress || state.showingWaveIntro) {
@@ -814,7 +710,7 @@ document.addEventListener('keydown', (event) => {
             } else {
                 Utils.showMessage(state, "Nie można rozpocząć/przeskoczyć fali. (DEV)", 90);
             }
-            updateUiStats();
+            UIManager.updateUiStats(); // ZMIANA
         } else if (event.shiftKey && event.key === 'L') {
             event.preventDefault();
             state.unlockedLevels = C.levelData.length;
@@ -825,12 +721,12 @@ document.addEventListener('keydown', (event) => {
             Utils.showMessage(state, "Wszystkie akty odblokowane i ukończone! (DEV)", 120);
             if (state.gameScreen === 'playing' && !state.gameOver) GameLogic.completeLevel();
             else if (state.gameScreen !== 'menu') showScreen('menu');
-            updateUiStats();
+            UIManager.updateUiStats(); // ZMIANA
         } else if (event.shiftKey && event.key === 'H') {
              event.preventDefault();
              state.zadowolenieWidowni = state.maxZadowolenieWidowni;
              Utils.showMessage(state, "Zadowolenie przywrócone! (DEV)", 90);
-             updateUiStats();
+             UIManager.updateUiStats(); // ZMIANA
         }
     }
 });
