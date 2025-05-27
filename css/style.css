@@ -1,3 +1,14 @@
+/* css/style.css */
+
+@font-face {
+    font-family: 'Born2bSportyFS'; 
+    src: url('../assets/fonts/Born2bSportyFS.otf') format('opentype');
+    font-weight: normal; 
+    font-style: normal;
+    font-display: swap; 
+}
+
+/* Importy Google Fonts (jeśli nadal ich używasz, mogą być tutaj jako fallbacki) */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
 
 html, body { 
@@ -8,7 +19,7 @@ html, body {
 }
 
 body {
-    font-family: 'Merriweather', serif;
+    font-family: 'Born2bSportyFS', 'Merriweather', serif;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -19,19 +30,19 @@ body {
     background-attachment: fixed; 
     background-color: #1a0505; 
     color: #e0c9a6;
-    font-size: 0.95em;
+    font-size: 1em; /* Dostosuj bazowy rozmiar fontu, jeśli Born2bSportyFS tego wymaga */
     position: relative; 
 }
 
 h1#pageTitle { 
     display: none; 
-    font-family: 'Cinzel Decorative', cursive;
+    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
     color: #ffd700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
     margin: 15px 0 20px 0;
-    font-size: 2.5em;
+    font-size: 2.8em; /* Dostosuj */
     text-align: center;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.5px; /* Może wymagać korekty */
     position: relative; 
     z-index: 5; 
 }
@@ -122,19 +133,20 @@ canvas {
     width: auto;
     min-width: 120px; 
     padding: 10px 22px;
-    font-size: 0.98em;
+    font-size: 1em; /* Dostosuj do nowego fontu, jeśli trzeba */
 }
 
 .ui-panel-section h3 {
-    font-family: 'Cinzel Decorative', cursive;
+    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
     margin-bottom: 12px; 
     border-bottom: 1px solid rgba(255, 215, 0, 0.3);
     padding-bottom: 8px; 
-    font-size: 1.35em; 
+    font-size: 1.5em; /* Dostosuj */
     text-align: left;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px; /* Może wymagać korekty */
+    text-transform: uppercase; /* Opcjonalnie */
 }
 
 .ui-button { 
@@ -142,9 +154,9 @@ canvas {
     color: #ffffff;
     border: 1px solid #5c400a;
     padding: 10px 15px;
-    font-size: 0.9em;
-    font-family: 'Merriweather', serif;
-    font-weight: bold;
+    font-family: 'Born2bSportyFS', 'Merriweather', serif;
+    font-size: 1em; /* Dostosuj */
+    font-weight: normal; 
     cursor: pointer;
     border-radius: 6px;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
@@ -153,6 +165,7 @@ canvas {
     width: 100%;
     box-sizing: border-box;
     text-align: center;
+    text-transform: uppercase; /* Opcjonalnie */
 }
 
 .ui-button:hover {
@@ -176,14 +189,14 @@ canvas {
 }
 
 .panel-stat {
-    font-size: 1em;
+    font-size: 1.1em; /* Dostosuj */
     margin-bottom: 8px;
     line-height: 1.4;
 }
 
 .panel-stat strong {
     color: #ffd700;
-    font-weight: 700;
+    font-weight: normal; 
 }
 
 #uiMessages {
@@ -193,10 +206,10 @@ canvas {
     border-radius: 5px;
     border: 1px solid rgba(255, 215, 0, 0.2);
     color: #ffd700;
-    font-weight: bold;
+    font-weight: normal; 
     transition: opacity 0.4s ease-in-out;
     opacity: 0;
-    font-size: 0.9em;
+    font-size: 1em; /* Dostosuj */
     line-height: 1.3;
     display: flex;
     align-items: center;
@@ -211,6 +224,7 @@ canvas {
     justify-content: flex-start;
     text-align: left;
     padding: 8px 10px;
+    font-size: 0.95em; /* Nieco mniejszy tekst na tych przyciskach */
 }
 
 .tower-buy-button img {
@@ -227,7 +241,7 @@ canvas {
 .tower-buy-button .cost {
     margin-left: auto;
     padding-left: 8px;
-    font-size: 0.85em;
+    font-size: 0.9em; 
     color: #e0c9a6;
 }
 
@@ -262,21 +276,22 @@ canvas {
     position: relative; 
 }
 .menu-screen h2 { 
-    font-family: 'Cinzel Decorative', cursive;
+    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
     margin-bottom: 30px;
-    font-size: 2.2em;
+    font-size: 2.5em; /* Dostosuj */
     text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+    text-transform: uppercase; /* Opcjonalnie */
 }
 .menu-screen button { 
+    font-family: 'Born2bSportyFS', 'Merriweather', serif;
     background: linear-gradient(to bottom, #b8860b, #8c6c0a);
     color: #ffffff;
     border: 1px solid #5c400a;
     padding: 10px 15px;
-    font-size: 1em; 
-    font-family: 'Merriweather', serif;
-    font-weight: bold;
+    font-size: 1.1em; /* Dostosuj */
+    font-weight: normal; 
     cursor: pointer;
     border-radius: 6px;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
@@ -286,6 +301,7 @@ canvas {
     min-width: 180px;
     margin-top: 10px;
     padding: 10px 25px;
+    text-transform: uppercase; /* Opcjonalnie */
 }
 .menu-screen button:hover {
     background: linear-gradient(to bottom, #daa520, #b8860b);
@@ -346,9 +362,9 @@ canvas {
 .main-menu-button { 
     background-color: #7a501a; 
     color: #f0e0c0; 
-    font-family: 'Cinzel Decorative', cursive; 
-    font-size: 1.2em; 
-    font-weight: bold;
+    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
+    font-size: 1.4em; /* Dostosuj */
+    font-weight: normal;
     padding: 10px 20px; 
     border: 2px solid #4d3110; 
     border-radius: 6px; 
@@ -361,6 +377,7 @@ canvas {
     box-sizing: border-box;
     text-align: center;
     outline: none;
+    text-transform: uppercase; 
 }
 
 .main-menu-button:hover {
@@ -393,7 +410,7 @@ canvas {
     left: 50%;
     transform: translateX(-50%);
     color: #f0e0c0; 
-    font-size: 0.9em;
+    font-size: 1em; /* Dostosuj */
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     background-color: rgba(0,0,0,0.4);
     padding: 6px 12px;
@@ -404,7 +421,7 @@ canvas {
     position: absolute;
     bottom: 10px; 
     left: 15px;   
-    font-size: 0.7em;
+    font-size: 0.8em; /* Dostosuj */
     color: rgba(255, 255, 255, 0.6); 
     text-shadow: 1px 1px 1px rgba(0,0,0,0.9);
 }
@@ -436,9 +453,9 @@ canvas {
     color: #ffebb3;
     border: 2px solid #4d2103;
     padding: 15px 20px;
-    font-size: 1.1em;
-    font-family: 'Merriweather', serif;
-    font-weight: 700;
+    font-size: 1.2em; /* Dostosuj */
+    font-family: 'Born2bSportyFS', 'Merriweather', serif; 
+    font-weight: normal;
     cursor: pointer;
     border-radius: 8px;
     text-align: left;
@@ -451,6 +468,7 @@ canvas {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    text-transform: uppercase; 
 }
 
 .level-button:hover:not(.locked) {
@@ -474,14 +492,14 @@ canvas {
 }
 
 .level-button .level-name {
-    font-size: 1em;
-    font-weight: bold;
+    font-size: 1em; 
+    font-weight: normal;
     color: #ffebb3;
     margin-right: 8px;
 }
 
 .level-button .level-progress {
-    font-size: 0.85em;
+    font-size: 0.85em; 
     color: #d0bfa6;
     white-space: nowrap;
 }
@@ -496,7 +514,7 @@ canvas {
 #saveStatusLevelSelection { 
     font-style: italic;
     color: #a08c76;
-    font-size: 0.85em;
+    font-size: 0.9em; /* Dostosuj */
     margin-top: 20px;
 }
 
@@ -538,6 +556,7 @@ canvas {
     max-width: 450px;
     transform: scale(0.9);
     transition: transform 0.3s ease-in-out;
+    font-family: 'Born2bSportyFS', 'Merriweather', serif; /* Zapewniamy font dla modala */
 }
 
 .custom-modal-overlay.visible .custom-modal-box {
@@ -545,15 +564,16 @@ canvas {
 }
 
 .custom-modal-box h3 {
-    font-family: 'Cinzel Decorative', cursive;
+    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
     margin-bottom: 15px;
-    font-size: 1.6em;
+    font-size: 1.8em; /* Dostosuj */
+    text-transform: uppercase; /* Opcjonalnie */
 }
 
 .custom-modal-box p {
-    font-size: 1em;
+    font-size: 1.1em; /* Dostosuj */
     line-height: 1.5;
     margin-bottom: 25px;
 }
@@ -567,6 +587,7 @@ canvas {
 .custom-modal-buttons .ui-button {
     min-width: 100px;
     padding: 8px 18px;
+    font-size: 1em; /* Dostosuj */
 }
 
 .custom-modal-buttons .ui-button.cancel {
