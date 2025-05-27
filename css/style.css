@@ -5,12 +5,12 @@ display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: flex-start;
-background-image: url('../assets/images/BACKGROUND_LEVELS.png'); /* DOMYŚLNE TŁO STRONY /
+/* background-image będzie ustawiany dynamicznie przez JS */
 background-size: cover;
 background-position: center center;
 background-repeat: no-repeat;
-background-attachment: fixed; / Tło pozostaje statyczne podczas przewijania /
-background-color: #1a0505; / Kolor rezerwowy, jeśli obrazek tła się nie załaduje */
+background-attachment: fixed; 
+background-color: #1a0505; /* Kolor rezerwowy, jeśli obrazek tła się nie załaduje */
 color: #e0c9a6;
 margin: 0;
 padding: 15px;
@@ -36,10 +36,10 @@ gap: 15px;
 max-width: 1400px;
 width: 100%;
 margin-top: 15px;
-/* gameLayout jest przezroczysty, więc tło body (BACKGROUND_LEVELS.png) będzie widoczne za nim */
+/* gameLayout jest przezroczysty, więc tło body (BACKGROUND_LEVELS.png lub BACKGROUND_MENU.png) będzie widoczne za nim */
 }
 #leftUiPanel, #rightUiPanel {
-background-color: rgba(30, 5, 5, 0.85); /* Panele UI mają własne, nieprzezroczyste tło */
+background-color: rgba(30, 5, 5, 0.85); /* Panele UI mają własne, ciemne, półprzezroczyste tło */
 padding: 15px;
 border: 2px solid #b8860b;
 border-radius: 10px;
@@ -69,7 +69,7 @@ canvas {
 border: 4px solid #800020;
 box-shadow: 0 0 20px rgba(255,215,0,0.3), inset 0 0 10px rgba(0,0,0,0.4);
 cursor: default;
-background-color: #3d291a; /* Tło samego płótna gry */
+background-color: #3d291a; /* Tło samego płótna gry, widoczne jeśli kafelki nie pokrywają całości */
 border-radius: 4px;
 }
 #inGameUI {
@@ -208,11 +208,8 @@ border: 2px solid #b8860b;
 box-shadow: 0 6px 20px rgba(0,0,0,0.7);
 }
 #mainMenu.menu-screen {
-background-image: url('../assets/images/BACKGROUND_MENU.png');
-background-size: cover;
-background-position: center center;
-background-repeat: no-repeat;
-/* background-color jest dziedziczony, jeśli obrazek ma przezroczystości, lub nadpisany, jeśli jest pełny */
+/* Usunięto specyficzne tło dla mainMenu, ponieważ tło body będzie ustawiane dynamicznie na BACKGROUND_MENU.png */
+/* #mainMenu zachowa background-color z .menu-screen dla półprzezroczystości */
 }
 #pauseMenu.menu-screen {
 position: absolute;
@@ -232,7 +229,7 @@ margin-bottom: 30px;
 font-size: 2.2em;
 text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
 }
-#levelSelectionContainer { /* Usunięto #levelSelection, bo to ten sam kontener */
+#levelSelectionContainer { 
 display: flex;
 flex-direction: column;
 gap: 15px;
@@ -294,7 +291,7 @@ white-space: nowrap;
 color: #8c7566;
 }
 #saveStatusMainMenu,
-#saveStatusLevelSelection { /* Usunięto #saveStatus bo nie ma takiego ID w HTML */
+#saveStatusLevelSelection { 
 font-style: italic;
 color: #a08c76;
 font-size: 0.85em;
@@ -331,7 +328,7 @@ opacity: 1;
 pointer-events: auto;
 }
 .custom-modal-box {
-background-color: rgba(40, 15, 10, 0.96); /* Półprzezroczysta nakładka, aby tło body prześwitywało */
+background-color: rgba(40, 15, 10, 0.96); 
 padding: 25px 35px;
 border-radius: 10px;
 border: 2px solid #b8860b;
@@ -375,12 +372,12 @@ border-color: #404040;
 background: linear-gradient(to bottom, #8c8c8c, #606060);
 border-color: #707070;
 }
-/* Style dla ekranu podsumowania aktu (HTML div, nie canvas) /
-/ #levelCompleteScreen jest obecnie pustym div, więc te style nie będą widoczne,
+/* Style dla ekranu podsumowania aktu (HTML div, nie canvas) */
+/* #levelCompleteScreen jest obecnie pustym div, więc te style nie będą widoczne,
 ale są tu na wypadek przyszłego użycia dla treści HTML na tym ekranie.
-Obecnie podsumowanie jest rysowane na canvasie. /
+Obecnie podsumowanie jest rysowane na canvasie. */
 #levelCompleteScreen {
-/ Jeśli to ma być ekran jak inne menu, można dodać:
+/* Jeśli to ma być ekran jak inne menu, można dodać:
 display: flex;
 flex-direction: column;
 align-items: center;
@@ -420,10 +417,10 @@ opacity: 0.3;
 .star-rating .star.filled {
 opacity: 1;
 }
-.star-rating .star::before { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj /
+.star-rating .star::before { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
 content: '☆';
 }
-.star-rating .star.filled::before { / Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
+.star-rating .star.filled::before { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
 content: '★';
 }
 .summary-section { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
@@ -457,14 +454,14 @@ color: #d0bfa6;
 color: #ffd700;
 float: right;
 }
-.summary-section .total-bonus { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj /
+.summary-section .total-bonus { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
 font-size: 1.1em;
 font-weight: bold;
 margin-top: 15px;
 padding-top: 10px;
 border-top: 1px dashed rgba(255, 215, 0, 0.2);
 }
-.summary-section .total-bonus strong { / Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
+.summary-section .total-bonus strong { /* Ten styl jest używany przez rysowanie na canvas, nie HTML tutaj */
 color: #4CAF50;
 }
 #levelCompleteScreen .ui-button { /* Dotyczy przycisków HTML wewnątrz #levelCompleteScreen, jeśli by były */

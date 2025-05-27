@@ -45,6 +45,14 @@ export function showScreen(screenName) {
 
     console.log(`[ScreenManager.showScreen] Attempting to switch to screen: ${screenName}`);
 
+    // ZMIANA TŁA STRONY (BODY) W ZALEŻNOŚCI OD EKRANU
+    if (screenName === 'menu') {
+        document.body.style.backgroundImage = "url('../assets/images/BACKGROUND_MENU.png')";
+    } else {
+        document.body.style.backgroundImage = "url('../assets/images/BACKGROUND_LEVELS.png')";
+    }
+
+
     if (['menu', 'levelSelection', 'credits'].includes(screenName)) {
         if (pageTitle) pageTitle.textContent = "Teatr Tower Defense";
         const currentSaveStatusEl = screenName === 'menu' ? saveStatusMainMenu :
@@ -128,6 +136,7 @@ export function showScreen(screenName) {
                 mainMenuScreen.classList.remove('hidden');
                 mainMenuScreen.classList.add('visible');
             }
+            document.body.style.backgroundImage = "url('../assets/images/BACKGROUND_MENU.png')"; // Domyślne tło dla 'menu'
             if (_updateContinueButtonStateCallback) _updateContinueButtonStateCallback();
             screenName = 'menu'; 
             break;
