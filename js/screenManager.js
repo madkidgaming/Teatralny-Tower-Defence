@@ -24,7 +24,7 @@ function cacheDOMElements() {
     saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
     saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
 }
-cacheDOMElements(); 
+cacheDOMElements();
 
 export function initializeScreenManager(callbacks) {
     if (callbacks.startGameLevel) _startGameLevelCallback = callbacks.startGameLevel;
@@ -33,7 +33,7 @@ export function initializeScreenManager(callbacks) {
 }
 
 export function showScreen(screenName) {
-    if (!mainMenuScreen) cacheDOMElements(); 
+    if (!mainMenuScreen) cacheDOMElements();
 
     const screens = [mainMenuScreen, levelSelectionScreen, creditsScreen, levelCompleteScreenHTML, gameLayout, pauseMenuScreen];
     screens.forEach(screen => {
@@ -45,11 +45,11 @@ export function showScreen(screenName) {
 
     console.log(`[ScreenManager.showScreen] Attempting to switch to screen: ${screenName}`);
 
-    // ZMIANA TŁA STRONY (BODY) W ZALEŻNOŚCI OD EKRANU
+    // ZMIANA TŁA STRONY (BODY) W ZALEŻNOŚCI OD EKRANU - POPRAWIONE ŚCIEŻKI
     if (screenName === 'menu') {
-        document.body.style.backgroundImage = "url('../assets/images/BACKGROUND_MENU.png')";
+        document.body.style.backgroundImage = "url('assets/images/BACKGROUND_MENU.png')"; // Usunięto ../
     } else {
-        document.body.style.backgroundImage = "url('../assets/images/BACKGROUND_LEVELS.png')";
+        document.body.style.backgroundImage = "url('assets/images/BACKGROUND_LEVELS.png')"; // Usunięto ../
     }
 
 
@@ -136,15 +136,15 @@ export function showScreen(screenName) {
                 mainMenuScreen.classList.remove('hidden');
                 mainMenuScreen.classList.add('visible');
             }
-            document.body.style.backgroundImage = "url('../assets/images/BACKGROUND_MENU.png')"; // Domyślne tło dla 'menu'
+            document.body.style.backgroundImage = "url('assets/images/BACKGROUND_MENU.png')"; // Domyślne tło dla 'menu' - POPRAWIONA ŚCIEŻKA
             if (_updateContinueButtonStateCallback) _updateContinueButtonStateCallback();
-            screenName = 'menu'; 
+            screenName = 'menu';
             break;
     }
     state.gameScreen = screenName;
 }
 
-export function renderLevelSelection() { 
+export function renderLevelSelection() {
     if (!levelSelectionContainer) {
         console.error("levelSelectionContainer is not found for renderLevelSelection.");
         return;
