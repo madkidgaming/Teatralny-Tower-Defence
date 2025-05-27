@@ -8,9 +8,9 @@ let _goToMainMenuCallback = null;
 
 let pageTitleElement, gameLayout, mainMenuScreen, levelSelectionScreen, creditsScreen,
     levelCompleteScreenHTML, levelSelectionContainer, pauseMenuScreen,
-    returnToMenuButtonGame, pauseButton, saveStatusMainMenu, saveStatusLevelSelection;
+    returnToMenuButtonGame, pauseButton, saveStatusMainMenu, saveStatusLevelSelection,
+    gameHorizontalTitleContainer; 
 
-// Referencja do globalnego H1 tytułu strony
 const siteTitleH1 = document.getElementById('pageTitle');
 
 
@@ -27,6 +27,7 @@ function cacheDOMElements() {
     pauseButton = document.getElementById('pauseButton');
     saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
     saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
+    gameHorizontalTitleContainer = document.getElementById('gameHorizontalTitleContainer'); 
 }
 cacheDOMElements(); 
 
@@ -49,18 +50,21 @@ export function showScreen(screenName) {
 
     console.log(`[ScreenManager.showScreen] Attempting to switch to screen: ${screenName}`);
 
-    if (siteTitleH1) {
-        if (screenName === 'menu') {
-            siteTitleH1.classList.add('hidden'); 
-        } else {
-            siteTitleH1.classList.remove('hidden'); 
+    if (siteTitleH1) siteTitleH1.classList.add('hidden'); 
+    if (gameHorizontalTitleContainer) gameHorizontalTitleContainer.classList.add('hidden'); 
+
+    if (screenName === 'menu') {
+        // W menu głównym żaden z tych tytułów nie jest pokazywany z #pageTitle ani #gameHorizontalTitleContainer
+    } else if (['playing', 'paused', 'levelCompleteCanvas', 'levelLost'].includes(screenName)) {
+        if (gameHorizontalTitleContainer) gameHorizontalTitleContainer.classList.remove('hidden'); 
+    } else {
+        if (siteTitleH1) siteTitleH1.classList.remove('hidden');
+        if (pageTitleElement) { 
+             if (screenName === 'levelSelection') pageTitleElement.textContent = "Teatr Tower Defense - Wybierz Akt";
+             else if (screenName === 'credits') pageTitleElement.textContent = "Teatr Tower Defense - Autorzy";
+             else pageTitleElement.textContent = "Teatr Tower Defense"; 
         }
     }
-
-    if (['levelSelection', 'credits'].includes(screenName)) {
-        if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense"; 
-    }
-
 
     if (screenName === 'menu' && saveStatusMainMenu) {
         if (!saveStatusMainMenu.textContent.toLowerCase().includes("błąd") &&
@@ -90,7 +94,6 @@ export function showScreen(screenName) {
                 levelSelectionScreen.classList.remove('hidden');
                 levelSelectionScreen.classList.add('visible');
             }
-            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Wybierz Akt"; 
             renderLevelSelection();
             break;
         case 'credits':
@@ -98,53 +101,34 @@ export function showScreen(screenName) {
                 creditsScreen.classList.remove('hidden');
                 creditsScreen.classList.add('visible');
             }
-            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Autorzy"; 
             break;
         case 'levelCompleteCanvas':
-            if (gameLayout) {
-                gameLayout.classList.remove('hidden');
-                gameLayout.classList.add('visible');
-            }
-            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Podsumowanie Aktu";
-            if (pauseButton) pauseButton.classList.add('hidden');
-            if (returnToMenuButtonGame) returnToMenuButtonGame.classList.add('hidden');
-            state.showingLevelCompleteSummary = true;
-            break;
         case 'playing':
-            if (gameLayout) {
-                gameLayout.classList.remove('hidden');
-                gameLayout.classList.add('visible');
-            }
-            if (pageTitleElement && C.levelData && C.levelData[state.currentLevelIndex]) {
-                 pageTitleElement.textContent = `Teatr Tower Defense - Akt ${state.currentLevelIndex + 1}`;
-            }
-            if (returnToMenuButtonGame) returnToMenuButtonGame.classList.add('hidden');
-            if (pauseButton) pauseButton.classList.remove('hidden');
-            state.showingLevelCompleteSummary = false;
-            break;
         case 'paused':
-            if (gameLayout) {
-                gameLayout.classList.remove('hidden');
-                gameLayout.classList.add('visible');
-            }
-            if (pauseMenuScreen) {
-                pauseMenuScreen.classList.remove('hidden');
-                pauseMenuScreen.classList.add('visible');
-            }
-             if (pageTitleElement && C.levelData && C.levelData[state.currentLevelIndex]) { 
-                 pageTitleElement.textContent = `Teatr Tower Defense - Akt ${state.currentLevelIndex + 1} (Pauza)`;
-            }
-            state.showingLevelCompleteSummary = false;
-            break;
         case 'levelLost':
             if (gameLayout) {
                 gameLayout.classList.remove('hidden');
                 gameLayout.classList.add('visible');
             }
-            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Koniec Gry";
-            if (returnToMenuButtonGame) returnToMenuButtonGame.classList.remove('hidden');
-            if (pauseButton) pauseButton.classList.add('hidden');
-            state.showingLevelCompleteSummary = false;
+            if (screenName === 'paused' && pauseMenuScreen) {
+                pauseMenuScreen.classList.remove('hidden');
+                pauseMenuScreen.classList.add('visible');
+            }
+            if (screenName === 'levelCompleteCanvas') {
+                if (pauseButton) pauseButton.classList.add('hidden');
+                if (returnToMenuButtonGame) returnToMenuButtonGame.classList.add('hidden');
+                state.showingLevelCompleteSummary = true;
+            } else if (screenName === 'playing') {
+                if (returnToMenuButtonGame) returnToMenuButtonGame.classList.add('hidden');
+                if (pauseButton) pauseButton.classList.remove('hidden');
+                state.showingLevelCompleteSummary = false;
+            } else if (screenName === 'paused') {
+                state.showingLevelCompleteSummary = false;
+            } else if (screenName === 'levelLost') {
+                if (returnToMenuButtonGame) returnToMenuButtonGame.classList.remove('hidden');
+                if (pauseButton) pauseButton.classList.add('hidden');
+                state.showingLevelCompleteSummary = false;
+            }
             break;
         default:
             console.warn(`[ScreenManager.showScreen] Unknown screen name: ${screenName}. Defaulting to 'menu'.`);
@@ -153,6 +137,7 @@ export function showScreen(screenName) {
                 mainMenuScreen.classList.add('visible');
             }
             if (siteTitleH1) siteTitleH1.classList.add('hidden'); 
+            if (gameHorizontalTitleContainer) gameHorizontalTitleContainer.classList.add('hidden');
             if (_updateContinueButtonStateCallback) _updateContinueButtonStateCallback();
             screenName = 'menu'; 
             break;

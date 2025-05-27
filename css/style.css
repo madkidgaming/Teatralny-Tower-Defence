@@ -1,78 +1,105 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
 
+html, body { 
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
+}
+
 body {
     font-family: 'Merriweather', serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    background-image: url('../assets/images/BACKGROUND_LEVELS.png'); /* Domyślne tło dla strony poza menu */
+    background-image: url('../assets/images/BACKGROUND_LEVELS.png'); 
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
     background-attachment: fixed; 
     background-color: #1a0505; 
     color: #e0c9a6;
-    margin: 0;
-    padding: 0; /* Usunięto padding z body, #mainMenu będzie go kontrolować */
-    min-height: 100vh;
-    box-sizing: border-box;
-    overflow-x: hidden;
     font-size: 0.95em;
+    position: relative; 
 }
 
 h1#pageTitle { 
+    display: none; 
     font-family: 'Cinzel Decorative', cursive;
     color: #ffd700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-    margin-top: 15px; 
-    margin-bottom: 20px;
+    margin: 15px 0 20px 0;
     font-size: 2.5em;
     text-align: center;
     letter-spacing: 1.5px;
+    position: relative; 
+    z-index: 5; 
 }
+
+#gameHorizontalTitleContainer {
+    position: absolute; 
+    top: 2vh; 
+    left: 50%;
+    transform: translateX(-50%); 
+    z-index: 20; 
+    width: auto;
+}
+#gameHorizontalTitleContainer img {
+    display: block; 
+    max-width: 90vw; 
+    max-height: 10vh; 
+    width: auto; 
+    height: auto; 
+}
+
 
 #gameLayout {
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 15px;
-    max-width: 1400px;
-    width: 100%;
-    margin-top: 15px;
-    padding: 15px; 
+    flex-direction: row; 
+    align-items: flex-start; 
+    justify-content: center; 
+    gap: 20px; 
+    width: 100%; 
+    max-width: 95vw; 
+    margin: 0 auto; 
+    padding-top: 15vh; 
+    padding-bottom: 5vh; 
     box-sizing: border-box;
+    position: relative; 
+    z-index: 10; 
 }
 
 #leftUiPanel, #rightUiPanel {
-    background-color: rgba(30, 5, 5, 0.85);
-    padding: 15px;
+    background-color: rgba(30, 5, 5, 0.88); 
+    padding: 18px; 
     border: 2px solid #b8860b;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.6), inset 0 0 8px rgba(0,0,0,0.3);
+    border-radius: 12px; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.65), inset 0 0 10px rgba(0,0,0,0.35);
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 18px;
     color: #e0c9a6;
+    max-height: 78vh; 
+    overflow-y: auto; 
 }
 
 #leftUiPanel {
-    min-width: 200px;
-    max-width: 260px;
+    min-width: 220px; 
+    max-width: 280px;
 }
 
 #rightUiPanel {
-    min-width: 220px;
-    max-width: 280px;
+    min-width: 240px; 
+    max-width: 300px;
 }
 
 #gameCanvasContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-grow: 1;
+    flex-grow: 1; 
 }
 
 canvas {
@@ -84,28 +111,28 @@ canvas {
 }
 
 #inGameUI {
-    margin-top: 10px;
+    margin-top: 12px; 
     display: flex;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     justify-content: center;
 }
 
 #inGameUI .ui-button {
     width: auto;
-    min-width: 110px;
-    padding: 10px 20px;
-    font-size: 0.95em;
+    min-width: 120px; 
+    padding: 10px 22px;
+    font-size: 0.98em;
 }
 
 .ui-panel-section h3 {
     font-family: 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 12px; 
     border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-    padding-bottom: 6px;
-    font-size: 1.3em;
+    padding-bottom: 8px; 
+    font-size: 1.35em; 
     text-align: left;
     letter-spacing: 0.8px;
 }
@@ -225,13 +252,14 @@ canvas {
     margin: 30px auto 0 auto;
     background-color: rgba(30, 10, 10, 0.92);
     color: white;
-    z-index: 10;
+    z-index: 30; 
     padding: 30px;
     box-sizing: border-box;
     text-align: center;
     border-radius: 12px;
     border: 2px solid #b8860b;
     box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+    position: relative; 
 }
 .menu-screen h2 { 
     font-family: 'Cinzel Decorative', cursive;
@@ -265,7 +293,7 @@ canvas {
     box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
-#mainMenu.menu-screen {
+#mainMenu.menu-screen { 
     background-image: url('../assets/images/BACKGROUND_MENU.png');
     background-size: cover;
     background-position: center center;
@@ -278,99 +306,111 @@ canvas {
     border: none; 
     box-shadow: none; 
     display: flex; 
-    align-items: stretch; 
-    position: relative; 
+    position: fixed; 
+    top: 0;
+    left: 0;
     overflow: hidden; 
     background-color: transparent; 
+    z-index: 100; 
 }
 
 .main-menu-content {
+    position: absolute;
+    top: 50%; 
+    left: 70%; 
+    transform: translate(-50%, -50%); 
     display: flex;
-    flex-direction: column; 
-    align-items: flex-end; 
-    justify-content: flex-start; 
-    width: auto; 
-    max-width: 50%; 
-    padding: 8vh 8vw 5vh 2vw; 
+    flex-direction: column;
+    align-items: center; 
+    width: auto;
+    max-width: 33vw; 
+    padding: 20px; 
     box-sizing: border-box;
-    margin-left: auto; 
-    height: 100%; 
 }
 
-#gameTitleImage {
-    width: auto; 
-    max-width: 90%; 
-    /* max-width: 450px; */
-    height: auto;
-    margin-bottom: 40px; 
-    align-self: flex-end; 
+#gameTitleImage { 
+    width: 100%; 
+    max-width: 400px; 
+    height: auto; 
+    margin-bottom: 35px; 
 }
 
 .main-menu-buttons {
     display: flex;
-    flex-direction: column; 
-    gap: 25px; 
-    align-items: flex-end; 
+    flex-direction: column;
+    gap: 18px; 
+    align-items: center; 
     width: 100%; 
 }
 
 .main-menu-button { 
-    background-color: #e8af49; 
-    color: #5d3a0a; 
+    background-color: #7a501a; 
+    color: #f0e0c0; 
     font-family: 'Cinzel Decorative', cursive; 
-    font-size: 1.4em; 
+    font-size: 1.2em; 
     font-weight: bold;
-    padding: 12px 30px; 
-    border: 3px solid #a06c29; 
-    border-radius: 10px; 
-    text-shadow: 1px 1px 0px #fce5b0; 
-    box-shadow: 0px 4px 0px #a06c29; 
+    padding: 10px 20px; 
+    border: 2px solid #4d3110; 
+    border-radius: 6px; 
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.6); 
+    box-shadow: 0px 3px 0px #4d3110, 0px 3px 5px rgba(0,0,0,0.3); 
     cursor: pointer;
-    transition: all 0.1s ease-out;
-    min-width: 260px; 
-    width: auto; 
-    align-self: flex-end; 
+    transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out;
+    width: 100%; 
+    max-width: 280px; 
+    box-sizing: border-box;
     text-align: center;
     outline: none;
 }
 
 .main-menu-button:hover {
-    background-color: #f0c160; 
-    border-color: #b8860b;
-    box-shadow: 0px 5px 0px #b8860b;
+    background-color: #8c602c; 
+    border-color: #5e3c18;
+    box-shadow: 0px 4px 0px #5e3c18, 0px 4px 7px rgba(0,0,0,0.3);
     transform: translateY(-1px);
 }
 
 .main-menu-button:active {
-    background-color: #d8a138;
-    box-shadow: 0px 2px 0px #8c6c0a;
-    transform: translateY(2px);
+    background-color: #694616;
+    box-shadow: 0px 1px 0px #3c250b, 0px 1px 3px rgba(0,0,0,0.4);
+    transform: translateY(1px);
 }
+
+.main-menu-button.disabled {
+    background-color: #4a3a2a !important; 
+    color: #8b7d6b !important;
+    cursor: not-allowed !important;
+    border-color: #3b2e1e !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.5) !important; 
+    text-shadow: none !important;
+    transform: none !important;
+}
+
 
 #mainMenu #saveStatusMainMenu {
     position: absolute;
-    bottom: 60px; 
+    bottom: 70px; 
     left: 50%;
     transform: translateX(-50%);
     color: #f0e0c0; 
     font-size: 0.9em;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
-    background-color: rgba(0,0,0,0.3);
-    padding: 5px 10px;
-    border-radius: 4px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    background-color: rgba(0,0,0,0.4);
+    padding: 6px 12px;
+    border-radius: 5px;
 }
 
 #mainMenu .copyright-text {
     position: absolute;
-    bottom: 15px; 
-    left: 20px;   
-    font-size: 0.75em;
-    color: rgba(255, 255, 255, 0.7); 
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+    bottom: 10px; 
+    left: 15px;   
+    font-size: 0.7em;
+    color: rgba(255, 255, 255, 0.6); 
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.9);
 }
 
 #pauseMenu.menu-screen {
-    position: absolute;
+    position: fixed; 
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -378,6 +418,7 @@ canvas {
     width: auto;
     min-width: 360px;
     max-width: 500px;
+    z-index: 110; 
 }
 
 #levelSelectionContainer { 
@@ -474,7 +515,7 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1000; 
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease-in-out;
