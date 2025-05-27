@@ -6,12 +6,16 @@ let _startGameLevelCallback = null;
 let _updateContinueButtonStateCallback = null;
 let _goToMainMenuCallback = null;
 
-let pageTitle, gameLayout, mainMenuScreen, levelSelectionScreen, creditsScreen,
+let pageTitleElement, gameLayout, mainMenuScreen, levelSelectionScreen, creditsScreen,
     levelCompleteScreenHTML, levelSelectionContainer, pauseMenuScreen,
     returnToMenuButtonGame, pauseButton, saveStatusMainMenu, saveStatusLevelSelection;
 
+// Referencja do globalnego H1 tytułu strony
+const siteTitleH1 = document.getElementById('pageTitle');
+
+
 function cacheDOMElements() {
-    pageTitle = document.getElementById('pageTitle');
+    pageTitleElement = document.getElementById('pageTitle'); 
     gameLayout = document.getElementById('gameLayout');
     mainMenuScreen = document.getElementById('mainMenu');
     levelSelectionScreen = document.getElementById('levelSelectionScreen');
@@ -24,7 +28,7 @@ function cacheDOMElements() {
     saveStatusMainMenu = document.getElementById('saveStatusMainMenu');
     saveStatusLevelSelection = document.getElementById('saveStatusLevelSelection');
 }
-cacheDOMElements();
+cacheDOMElements(); 
 
 export function initializeScreenManager(callbacks) {
     if (callbacks.startGameLevel) _startGameLevelCallback = callbacks.startGameLevel;
@@ -33,7 +37,7 @@ export function initializeScreenManager(callbacks) {
 }
 
 export function showScreen(screenName) {
-    if (!mainMenuScreen) cacheDOMElements();
+    if (!mainMenuScreen) cacheDOMElements(); 
 
     const screens = [mainMenuScreen, levelSelectionScreen, creditsScreen, levelCompleteScreenHTML, gameLayout, pauseMenuScreen];
     screens.forEach(screen => {
@@ -45,26 +49,33 @@ export function showScreen(screenName) {
 
     console.log(`[ScreenManager.showScreen] Attempting to switch to screen: ${screenName}`);
 
-    // ZMIANA TŁA STRONY (BODY) W ZALEŻNOŚCI OD EKRANU - POPRAWIONE ŚCIEŻKI
-    if (screenName === 'menu') {
-        document.body.style.backgroundImage = "url('assets/images/BACKGROUND_MENU.png')"; // Usunięto ../
-    } else {
-        document.body.style.backgroundImage = "url('assets/images/BACKGROUND_LEVELS.png')"; // Usunięto ../
-    }
-
-
-    if (['menu', 'levelSelection', 'credits'].includes(screenName)) {
-        if (pageTitle) pageTitle.textContent = "Teatr Tower Defense";
-        const currentSaveStatusEl = screenName === 'menu' ? saveStatusMainMenu :
-                                 screenName === 'levelSelection' ? saveStatusLevelSelection : null;
-        if (currentSaveStatusEl) {
-            if (!currentSaveStatusEl.textContent.toLowerCase().includes("błąd") &&
-                !currentSaveStatusEl.textContent.toLowerCase().includes("nowa gra") &&
-                !currentSaveStatusEl.textContent.toLowerCase().includes("wyczyszczony")) {
-                currentSaveStatusEl.textContent = "Postęp gry jest zapisywany automatycznie.";
-            }
+    if (siteTitleH1) {
+        if (screenName === 'menu') {
+            siteTitleH1.classList.add('hidden'); 
+        } else {
+            siteTitleH1.classList.remove('hidden'); 
         }
     }
+
+    if (['levelSelection', 'credits'].includes(screenName)) {
+        if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense"; 
+    }
+
+
+    if (screenName === 'menu' && saveStatusMainMenu) {
+        if (!saveStatusMainMenu.textContent.toLowerCase().includes("błąd") &&
+            !saveStatusMainMenu.textContent.toLowerCase().includes("nowa gra") &&
+            !saveStatusMainMenu.textContent.toLowerCase().includes("wyczyszczony")) {
+            saveStatusMainMenu.textContent = "Postęp gry jest zapisywany automatycznie.";
+        }
+    } else if (screenName === 'levelSelection' && saveStatusLevelSelection) {
+         if (!saveStatusLevelSelection.textContent.toLowerCase().includes("błąd") &&
+            !saveStatusLevelSelection.textContent.toLowerCase().includes("nowa gra") &&
+            !saveStatusLevelSelection.textContent.toLowerCase().includes("wyczyszczony")) {
+            saveStatusLevelSelection.textContent = "Postęp gry jest zapisywany automatycznie.";
+        }
+    }
+
 
     switch (screenName) {
         case 'menu':
@@ -79,6 +90,7 @@ export function showScreen(screenName) {
                 levelSelectionScreen.classList.remove('hidden');
                 levelSelectionScreen.classList.add('visible');
             }
+            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Wybierz Akt"; 
             renderLevelSelection();
             break;
         case 'credits':
@@ -86,13 +98,14 @@ export function showScreen(screenName) {
                 creditsScreen.classList.remove('hidden');
                 creditsScreen.classList.add('visible');
             }
+            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Autorzy"; 
             break;
         case 'levelCompleteCanvas':
             if (gameLayout) {
                 gameLayout.classList.remove('hidden');
                 gameLayout.classList.add('visible');
             }
-            if (pageTitle) pageTitle.textContent = "Teatr Tower Defense - Podsumowanie Aktu";
+            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Podsumowanie Aktu";
             if (pauseButton) pauseButton.classList.add('hidden');
             if (returnToMenuButtonGame) returnToMenuButtonGame.classList.add('hidden');
             state.showingLevelCompleteSummary = true;
@@ -102,8 +115,8 @@ export function showScreen(screenName) {
                 gameLayout.classList.remove('hidden');
                 gameLayout.classList.add('visible');
             }
-            if (pageTitle && C.levelData && C.levelData[state.currentLevelIndex]) {
-                 pageTitle.textContent = `Teatr Tower Defense - Akt ${state.currentLevelIndex + 1}`;
+            if (pageTitleElement && C.levelData && C.levelData[state.currentLevelIndex]) {
+                 pageTitleElement.textContent = `Teatr Tower Defense - Akt ${state.currentLevelIndex + 1}`;
             }
             if (returnToMenuButtonGame) returnToMenuButtonGame.classList.add('hidden');
             if (pauseButton) pauseButton.classList.remove('hidden');
@@ -118,6 +131,9 @@ export function showScreen(screenName) {
                 pauseMenuScreen.classList.remove('hidden');
                 pauseMenuScreen.classList.add('visible');
             }
+             if (pageTitleElement && C.levelData && C.levelData[state.currentLevelIndex]) { 
+                 pageTitleElement.textContent = `Teatr Tower Defense - Akt ${state.currentLevelIndex + 1} (Pauza)`;
+            }
             state.showingLevelCompleteSummary = false;
             break;
         case 'levelLost':
@@ -125,7 +141,7 @@ export function showScreen(screenName) {
                 gameLayout.classList.remove('hidden');
                 gameLayout.classList.add('visible');
             }
-            if (pageTitle) pageTitle.textContent = "Teatr Tower Defense - Koniec Gry";
+            if (pageTitleElement) pageTitleElement.textContent = "Teatr Tower Defense - Koniec Gry";
             if (returnToMenuButtonGame) returnToMenuButtonGame.classList.remove('hidden');
             if (pauseButton) pauseButton.classList.add('hidden');
             state.showingLevelCompleteSummary = false;
@@ -136,15 +152,15 @@ export function showScreen(screenName) {
                 mainMenuScreen.classList.remove('hidden');
                 mainMenuScreen.classList.add('visible');
             }
-            document.body.style.backgroundImage = "url('assets/images/BACKGROUND_MENU.png')"; // Domyślne tło dla 'menu' - POPRAWIONA ŚCIEŻKA
+            if (siteTitleH1) siteTitleH1.classList.add('hidden'); 
             if (_updateContinueButtonStateCallback) _updateContinueButtonStateCallback();
-            screenName = 'menu';
+            screenName = 'menu'; 
             break;
     }
     state.gameScreen = screenName;
 }
 
-export function renderLevelSelection() {
+export function renderLevelSelection() { 
     if (!levelSelectionContainer) {
         console.error("levelSelectionContainer is not found for renderLevelSelection.");
         return;
@@ -157,7 +173,7 @@ export function renderLevelSelection() {
 
     C.levelData.forEach((level, index) => {
         const button = document.createElement('button');
-        button.classList.add('level-button');
+        button.classList.add('level-button'); 
         const isUnlocked = index < state.unlockedLevels;
         let progress = state.levelProgress[index] === undefined ? -1 : state.levelProgress[index];
 

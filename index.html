@@ -31,11 +31,11 @@
                     Oświetleniowiec (<span class="cost">0</span> Ap.)
                 </button>
                 <button id="uiButtonGarderobiana" class="ui-button tower-buy-button">
-                    <img src="assets/images/GARDEROBIANA.png" alt="Garderobiana"> <!-- Upewnij się, że ścieżka jest poprawna -->
+                    <img src="assets/images/GARDEROBIANA.png" alt="Garderobiana">
                     Garderobiana (<span class="cost">0</span> Ap.)
                 </button>
                 <button id="uiButtonBudkaInspicjenta" class="ui-button tower-buy-button">
-                    <img src="assets/images/BUDKA_INSPICJENTA.png" alt="Budka Inspicjenta"> <!-- Upewnij się, że ścieżka jest poprawna -->
+                    <img src="assets/images/BUDKA_INSPICJENTA.png" alt="Budka Inspicjenta">
                     Budka Inspicjenta (<span class="cost">0</span> Ap.)
                 </button>
             </div>
@@ -62,7 +62,6 @@
                 <h3 id="upgradePanelTowerName">Ulepsz Wieżę</h3>
                 <button id="uiButtonUpgradeDamage" class="ui-button">Obrażenia+ (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonUpgradeFireRate" class="ui-button">Szybkostrzelność+ (<span class="cost">0</span> Ap.)</button>
-                <!-- Dodatkowe przyciski ulepszeń dla specyficznych wież (np. zasięg Garderobiany) będą dodawane/ukrywane przez JS -->
                 <button id="uiButtonUpgradeSpecial1" class="ui-button hidden">Ulepszenie Specjalne 1 (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonUpgradeSpecial2" class="ui-button hidden">Ulepszenie Specjalne 2 (<span class="cost">0</span> Ap.)</button>
                 <button id="uiButtonSellTower" class="ui-button">Sprzedaj (<span class="value">0</span> Ap.)</button>
@@ -76,12 +75,17 @@
     </div>
 
     <div id="mainMenu" class="menu-screen visible">
-        <h2>Menu Główne</h2>
-        <button id="continueGameButton" class="ui-button">Kontynuuj</button>
-        <button id="newGameButtonFromMenu" class="ui-button">Nowa Gra</button>
-        <button id="levelSelectButton" class="ui-button">Wybór Poziomu</button>
-        <button id="creditsButton" class="ui-button">Autorzy</button>
-        <p id="saveStatusMainMenu" style="margin-top: 20px;">Postęp gry jest zapisywany automatycznie.</p>
+        <div class="main-menu-content">
+            <img src="assets/images/GAME_TITLE.png" alt="Ostatni Akt Obrony" id="gameTitleImage">
+            <div class="main-menu-buttons">
+                <button id="continueGameButton" class="ui-button main-menu-button">Kontynuuj</button>
+                <button id="newGameButtonFromMenu" class="ui-button main-menu-button">Nowa Gra</button>
+                <button id="levelSelectButton" class="ui-button main-menu-button">Wybór Poziomu</button>
+                <button id="creditsButton" class="ui-button main-menu-button">Autorzy</button>
+            </div>
+        </div>
+        <p id="saveStatusMainMenu">Postęp gry jest zapisywany automatycznie.</p>
+        <p class="copyright-text">2025, Piotr Józefiak</p>
     </div>
 
     <div id="levelSelectionScreen" class="menu-screen hidden">
