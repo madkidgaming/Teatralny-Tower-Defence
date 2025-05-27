@@ -1,8 +1,8 @@
 /* css/style.css */
 
 @font-face {
-    font-family: 'Born2bSportyFS'; 
-    src: url('../assets/fonts/Born2bSportyFS.otf') format('opentype');
+    font-family: 'Jersey10-Regular'; 
+    src: url('../assets/fonts/Jersey10-Regular.ttf') format('truetype');
     font-weight: normal; 
     font-style: normal;
     font-display: swap; 
@@ -19,7 +19,7 @@ html, body {
 }
 
 body {
-    font-family: 'Born2bSportyFS', 'Merriweather', serif;
+    font-family: 'Jersey10-Regular', 'Merriweather', serif;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -30,13 +30,13 @@ body {
     background-attachment: fixed; 
     background-color: #1a0505; 
     color: #e0c9a6;
-    font-size: 1em; /* Dostosuj bazowy rozmiar fontu, jeśli Born2bSportyFS tego wymaga */
+    font-size: 1em; /* Dostosuj bazowy rozmiar fontu, jeśli Jersey10-Regular tego wymaga */
     position: relative; 
 }
 
 h1#pageTitle { 
     display: none; 
-    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
+    font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
     margin: 15px 0 20px 0;
@@ -137,7 +137,7 @@ canvas {
 }
 
 .ui-panel-section h3 {
-    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
+    font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
     margin-bottom: 12px; 
@@ -154,7 +154,7 @@ canvas {
     color: #ffffff;
     border: 1px solid #5c400a;
     padding: 10px 15px;
-    font-family: 'Born2bSportyFS', 'Merriweather', serif;
+    font-family: 'Jersey10-Regular', 'Merriweather', serif;
     font-size: 1em; /* Dostosuj */
     font-weight: normal; 
     cursor: pointer;
@@ -276,7 +276,7 @@ canvas {
     position: relative; 
 }
 .menu-screen h2 { 
-    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
+    font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
     margin-bottom: 30px;
@@ -285,7 +285,7 @@ canvas {
     text-transform: uppercase; /* Opcjonalnie */
 }
 .menu-screen button { 
-    font-family: 'Born2bSportyFS', 'Merriweather', serif;
+    font-family: 'Jersey10-Regular', 'Merriweather', serif;
     background: linear-gradient(to bottom, #b8860b, #8c6c0a);
     color: #ffffff;
     border: 1px solid #5c400a;
@@ -362,7 +362,7 @@ canvas {
 .main-menu-button { 
     background-color: #7a501a; 
     color: #f0e0c0; 
-    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
+    font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     font-size: 1.4em; /* Dostosuj */
     font-weight: normal;
     padding: 10px 20px; 
@@ -454,7 +454,7 @@ canvas {
     border: 2px solid #4d2103;
     padding: 15px 20px;
     font-size: 1.2em; /* Dostosuj */
-    font-family: 'Born2bSportyFS', 'Merriweather', serif; 
+    font-family: 'Jersey10-Regular', 'Merriweather', serif; 
     font-weight: normal;
     cursor: pointer;
     border-radius: 8px;
@@ -556,7 +556,7 @@ canvas {
     max-width: 450px;
     transform: scale(0.9);
     transition: transform 0.3s ease-in-out;
-    font-family: 'Born2bSportyFS', 'Merriweather', serif; /* Zapewniamy font dla modala */
+    font-family: 'Jersey10-Regular', 'Merriweather', serif; /* Zapewniamy font dla modala */
 }
 
 .custom-modal-overlay.visible .custom-modal-box {
@@ -564,7 +564,7 @@ canvas {
 }
 
 .custom-modal-box h3 {
-    font-family: 'Born2bSportyFS', 'Cinzel Decorative', cursive;
+    font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
     margin-bottom: 15px;
