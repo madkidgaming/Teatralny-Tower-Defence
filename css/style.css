@@ -8,7 +8,6 @@
     font-display: swap; 
 }
 
-/* Importy Google Fonts (jeśli nadal ich używasz, mogą być tutaj jako fallbacki) */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
 
 html, body { 
@@ -23,31 +22,27 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Tło główne (kurtyna) pozostaje na body */
-    background-image: url('../assets/images/BACKGROUND_LEVELS.png'); 
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-attachment: fixed; 
-    background-color: #1a0505; /* Kolor tła, jeśli obrazek się nie załaduje */
+    /* Usunięto background-image stąd */
+    background-color: #1a0505; /* Podstawowy kolor tła dla body, jeśli coś pójdzie nie tak */
     color: #e0c9a6;
     font-size: 1em;
-    position: relative; /* Ważne dla kontekstu z-index */
+    position: relative; 
 }
 
 /* Styl dla kontenera particles.js */
 #particles-js {
-    position: fixed; /* Pokrywa całe okno */
+    position: fixed; 
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
-    /* z-index: 0; sprawia, że jest to warstwa bazowa dla innych elementów pozycjonowanych,
-       ale nad bezpośrednim tłem body. */
-    z-index: 0; 
-    /* Kluczowe: tło kontenera cząsteczek jest przezroczyste,
-       więc widać przez nie tło body (kurtynę) */
-    background-color: transparent; 
+    z-index: 0; /* Warstwa bazowa dla efektu tła */
+    /* Ustawienie obrazu tła bezpośrednio na kontenerze cząsteczek */
+    background-image: url('../assets/images/BACKGROUND_LEVELS.png'); 
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Można usunąć, jeśli 'fixed' powoduje problemy z wydajnością particles.js */
 }
 
 
@@ -61,7 +56,7 @@ h1#pageTitle {
     text-align: center;
     letter-spacing: 1.5px;
     position: relative; 
-    z-index: 5; /* Nad cząsteczkami */
+    z-index: 5; 
 }
 
 #gameHorizontalTitleContainer {
@@ -69,7 +64,7 @@ h1#pageTitle {
     top: 2vh; 
     left: 50%;
     transform: translateX(-50%); 
-    z-index: 20; /* Nad cząsteczkami i innymi elementami UI */
+    z-index: 20; 
     width: auto;
 }
 #gameHorizontalTitleContainer img {
@@ -93,8 +88,8 @@ h1#pageTitle {
     padding-top: 15vh; 
     padding-bottom: 5vh; 
     box-sizing: border-box;
-    position: relative; /* Kontekst dla z-index */
-    z-index: 10; /* Główne elementy gry są nad warstwą cząsteczek */
+    position: relative; 
+    z-index: 10; /* Główne elementy gry są nad warstwą #particles-js */
 }
 
 #leftUiPanel, #rightUiPanel {
@@ -111,7 +106,7 @@ h1#pageTitle {
     color: #e0c9a6;
     max-height: 78vh; 
     overflow-y: auto; 
-    position: relative; /* Upewnienie się, że są nad cząsteczkami */
+    position: relative; 
     z-index: 11; 
 }
 
@@ -131,17 +126,13 @@ h1#pageTitle {
     align-items: center;
     flex-grow: 1; 
     position: relative; 
-    z-index: 5; /* Canvas i jego UI nad cząsteczkami */
+    z-index: 5; 
 }
 
 canvas {
     border: 4px solid #800020;
     box-shadow: 0 0 20px rgba(255,215,0,0.3), inset 0 0 10px rgba(0,0,0,0.4);
     cursor: default;
-    /* Można usunąć background-color canvasa, jeśli tło particles.js ma być widoczne,
-       ale przy obecnej konfiguracji particles.js z przezroczystym tłem,
-       to tło body będzie widoczne pod canvasem, jeśli canvas też będzie przezroczysty.
-       Jeśli chcesz, aby canvas miał swoje tło (np. trawę), zostaw to. */
     background-color: #3d291a; 
     border-radius: 4px;
     position: relative; 
@@ -155,7 +146,7 @@ canvas {
     width: 100%;
     justify-content: center;
     position: relative;
-    z-index: 6; /* UI w grze nad canvasem i cząsteczkami */
+    z-index: 6; 
 }
 
 #inGameUI .ui-button {
@@ -196,7 +187,7 @@ canvas {
     text-align: center;
     text-transform: uppercase;
     position: relative; 
-    z-index: 3; /* Przyciski nad cząsteczkami */
+    z-index: 3; 
 }
 
 .ui-button:hover {
@@ -247,7 +238,7 @@ canvas {
     justify-content: center;
     text-align: center;
     position: relative; 
-    z-index: 3; /* Komunikaty nad cząsteczkami */
+    z-index: 3; 
 }
 
 .tower-buy-button {
@@ -299,7 +290,7 @@ canvas {
     margin: 30px auto 0 auto;
     background-color: rgba(30, 10, 10, 0.92);
     color: white;
-    z-index: 30; /* Ekrany menu nad cząsteczkami i grą */
+    z-index: 30; 
     padding: 30px;
     box-sizing: border-box;
     text-align: center;
@@ -343,6 +334,8 @@ canvas {
 }
 
 #mainMenu.menu-screen { 
+    /* Tło dla mainMenu jest ustawiane tutaj, particles.js nie powinno go nadpisywać,
+       bo #particles-js ma z-index: 0, a #mainMenu ma z-index: 100 */
     background-image: url('../assets/images/BACKGROUND_MENU.png');
     background-size: cover;
     background-position: center center;
@@ -359,7 +352,7 @@ canvas {
     top: 0;
     left: 0;
     overflow: hidden; 
-    background-color: transparent; 
+    /* background-color: transparent; - usunięte, bo ma własny image */
     z-index: 100; 
 }
 
@@ -542,7 +535,6 @@ canvas {
 }
 
 #saveStatusMainMenu { 
-    /* Już ostylowane w sekcji #mainMenu #saveStatusMainMenu */
 }
 #saveStatusLevelSelection { 
     font-style: italic;
