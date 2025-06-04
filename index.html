@@ -7,8 +7,13 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- GSAP CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <!-- particles.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
+    <!-- Kontener dla particles.js -->
+    <div id="particles-js"></div>
+
     <h1 id="pageTitle">Teatr Tower Defense</h1>
 
     <div id="gameHorizontalTitleContainer" class="hidden">
@@ -27,11 +32,11 @@
              <div class="ui-panel-section">
                 <h3>Wieże</h3>
                 <button id="uiButtonBileter" class="ui-button tower-buy-button">
-                    <img src="https://kaliskie.org/wp-content/uploads/2025/05/BILETER.png" alt="Bileter">
+                    <img src="assets/images/BILETER.png" alt="Bileter">
                     Bileter (<span class="cost">0</span> Ap.)
                 </button>
                 <button id="uiButtonOswietleniowiec" class="ui-button tower-buy-button">
-                    <img src="https://kaliskie.org/wp-content/uploads/2025/05/reflektor.png" alt="Oświetleniowiec">
+                    <img src="assets/images/reflektor.png" alt="Oświetleniowiec">
                     Oświetleniowiec (<span class="cost">0</span> Ap.)
                 </button>
                 <button id="uiButtonGarderobiana" class="ui-button tower-buy-button">
