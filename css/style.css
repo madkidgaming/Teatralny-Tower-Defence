@@ -109,9 +109,8 @@ h1#pageTitle {
     overflow-y: auto; 
     position: relative; 
     z-index: 11; 
-    /* Ustawienie stałej szerokości */
-    width: 280px; /* Możesz dostosować tę wartość */
-    flex-shrink: 0; /* Zapobiega kurczeniu się panelu */
+    width: 290px; /* Ustawiona stała szerokość, dostosuj w razie potrzeby */
+    flex-shrink: 0; 
 }
 
 
@@ -168,22 +167,45 @@ canvas#gameCanvas {
     background-color: #8c6c0a; 
     color: #ffffff;
     border: 1px solid #5c400a;
-    padding: 12px 18px; 
+    padding: 10px 15px; /* Zmniejszony padding dla ogólnych przycisków */
     font-family: 'Jersey10-Regular', 'Merriweather', serif;
-    font-size: 1.05em; 
+    font-size: 1em; /* Zmniejszony font dla ogólnych przycisków */
     font-weight: normal; 
     cursor: pointer;
     border-radius: 8px; 
     text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
     box-shadow: 0 2px 3px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15); 
-    transition: background-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.15s ease-out;
+    transition: background-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.15s ease-out, opacity 0.2s ease-out;
     width: 100%;
     box-sizing: border-box;
     text-align: center;
     text-transform: uppercase;
     position: relative; 
     z-index: 3; 
+    display: flex; /* Umożliwia lepsze centrowanie i rozmieszczenie tekstu */
+    align-items: center;
+    justify-content: center; /* Domyślne centrowanie dla przycisków bez wielu spanów */
 }
+
+/* Style dla wewnętrznych spanów przycisków */
+.ui-button .button-text-main {
+    flex-grow: 1;
+    text-align: left; /* Wyrównanie do lewej dla głównego tekstu */
+}
+.ui-button .button-text-cost-wrapper {
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin-left: 8px; /* Odstęp od głównego tekstu */
+    font-size: 0.9em;
+    color: #f0e0c0;
+}
+.ui-button .button-text-cost-wrapper .cost-value {
+    /* Styl dla samej wartości, jeśli potrzebny */
+}
+.ui-button .button-text-cost-wrapper .cost-currency {
+    /* Styl dla "Ap.", jeśli potrzebny */
+}
+
 
 .ui-button:hover {
     background-color: #a07c1a; 
@@ -197,6 +219,7 @@ canvas#gameCanvas {
     box-shadow: 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 2px rgba(0,0,0,0.15);
 }
 
+/* Styl dla nieaktywnych/niedostępnych przycisków */
 .ui-button.disabled {
     background-color: #504231 !important; 
     color: #8a7c6a !important;
@@ -204,7 +227,14 @@ canvas#gameCanvas {
     border-color: #403526 !important;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
     transform: none !important;
+    opacity: 0.6; /* Dodatkowe wyszarzenie */
 }
+.ui-button.disabled:hover { /* Usunięcie efektu hover dla nieaktywnych */
+    background-color: #504231 !important;
+    border-color: #403526 !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+
 
 .panel-stat {
     font-size: 1.05em; 
@@ -239,13 +269,9 @@ canvas#gameCanvas {
 
 /* Poprawki dla przycisków zakupu wież */
 .tower-buy-button {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Zmniejszony odstęp dla zwartości */
-    justify-content: flex-start;
-    text-align: left;
+    justify-content: flex-start; /* Wyrównanie do lewej dla zawartości */
+    gap: 8px; 
     padding: 10px 12px; 
-    font-size: 1em; 
 }
 
 .tower-buy-button img {
@@ -257,25 +283,15 @@ canvas#gameCanvas {
     border-radius: 4px; 
     background: rgba(0,0,0,0.15);
     padding: 3px;
+    margin-right: 4px; /* Mały odstęp od tekstu */
 }
 
-/* Dodatkowe style dla elementów wewnątrz .tower-buy-button */
-.tower-buy-button .tower-name {
-    flex-grow: 1; /* Pozwala nazwie wieży zająć dostępną przestrzeń */
-    margin-right: 5px; /* Mały odstęp od kosztu */
+.tower-buy-button .button-text-main {
+    /* Już zdefiniowane ogólnie dla .ui-button .button-text-main */
 }
 
-.tower-buy-button .tower-cost-container {
-    flex-shrink: 0; /* Zapobiega kurczeniu się kontenera kosztu */
-    white-space: nowrap; /* Zapobiega łamaniu linii w koszcie */
-    font-size: 0.9em; 
-    color: #d0bfa6; 
-}
-.tower-buy-button .tower-cost-container .cost-value {
-    /* Można dodać specyficzne style dla samej wartości, jeśli potrzeba */
-}
-.tower-buy-button .tower-cost-container .cost-currency {
-    margin-left: 2px; /* Mały odstęp między wartością a "Ap." */
+.tower-buy-button .button-text-cost-wrapper {
+    color: #d0bfa6; /* Kolor dla kosztu w przyciskach wież */
 }
 
 
@@ -286,7 +302,7 @@ canvas#gameCanvas {
     color: #fff !important;
 }
 
-.tower-buy-button.selected-for-build .tower-cost-container {
+.tower-buy-button.selected-for-build .button-text-cost-wrapper {
     color: #ffe080; 
 }
 

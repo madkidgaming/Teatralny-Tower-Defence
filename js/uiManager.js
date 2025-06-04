@@ -6,7 +6,7 @@ let uiCurrentAct, uiCurrentWave, uiAplauz, uiAudienceSatisfaction,
     uiButtonBileter, uiButtonOswietleniowiec, uiButtonGarderobiana, uiButtonBudkaInspicjenta,
     uiButtonUpgradeSatisfaction, uiButtonStartWave, uiMessages, 
     towerUpgradePanel, upgradePanelTowerName, uiButtonUpgradeDamage, uiButtonUpgradeFireRate, 
-    uiButtonUpgradeSpecial1, uiButtonUpgradeSpecial2, uiButtonUpgradeSpecial3, // Dodany przycisk dla 3. specjalnego ulepszenia
+    uiButtonUpgradeSpecial1, uiButtonUpgradeSpecial2, 
     uiButtonSellTower;
 
 function cacheDOMElements() {
@@ -28,31 +28,25 @@ function cacheDOMElements() {
     upgradePanelTowerName = document.getElementById('upgradePanelTowerName');
     uiButtonUpgradeDamage = document.getElementById('uiButtonUpgradeDamage');
     uiButtonUpgradeFireRate = document.getElementById('uiButtonUpgradeFireRate');
-    uiButtonUpgradeSpecial1 = document.getElementById('uiButtonUpgradeSpecial1'); // Możesz chcieć go dodać do HTML
-    uiButtonUpgradeSpecial2 = document.getElementById('uiButtonUpgradeSpecial2'); // Możesz chcieć go dodać do HTML
-    // uiButtonUpgradeSpecial3 = document.getElementById('uiButtonUpgradeSpecial3'); // Jeśli dodasz trzeci przycisk
+    uiButtonUpgradeSpecial1 = document.getElementById('uiButtonUpgradeSpecial1'); 
+    uiButtonUpgradeSpecial2 = document.getElementById('uiButtonUpgradeSpecial2'); 
     uiButtonSellTower = document.getElementById('uiButtonSellTower');
 }
-cacheDOMElements();
+cacheDOMElements(); // Wywołaj od razu, aby mieć pewność, że elementy są dostępne
 
 
 export function updateUiStats() {
-    if (!uiCurrentAct) cacheDOMElements();
+    if (!uiCurrentAct) cacheDOMElements(); // Ponowne sprawdzenie, na wszelki wypadek
     if (!uiCurrentAct) { 
         console.error("UIManager: DOM elements not cached for updateUiStats.");
         return;
     }
 
-    if (!C.levelData[state.currentLevelIndex] &&
-        !['menu', 'levelSelection', 'credits', 'levelCompleteScreen', 'levelCompleteCanvas'].includes(state.gameScreen)
-    ) {
-        return;
-    }
-
-     if (['playing', 'paused', 'levelLost', 'levelCompleteCanvas'].includes(state.gameScreen)) {
+    if (['playing', 'paused', 'levelLost', 'levelCompleteCanvas'].includes(state.gameScreen)) {
         uiCurrentAct.textContent = state.currentLevelIndex + 1;
         
         let displayWaveNumber = state.currentWaveNumber;
+        // ... (reszta logiki dla displayWaveNumber - bez zmian) ...
         if (state.gameScreen === 'playing' || state.gameScreen === 'paused') {
             if (state.waveInProgress || state.showingWaveIntro) {
                 displayWaveNumber = state.currentWaveNumber + 1;
@@ -60,52 +54,79 @@ export function updateUiStats() {
                 displayWaveNumber = "-";
             } else if (state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
                  displayWaveNumber = C.WAVES_PER_LEVEL;
-            } else { // Między falami
+            } else { 
                 displayWaveNumber = state.currentWaveNumber +1; 
             }
-        } else { // levelLost or levelCompleteCanvas
+        } else { 
             if (state.gameScreen === 'levelCompleteCanvas') {
                 displayWaveNumber = C.WAVES_PER_LEVEL;
-            } else { // levelLost
+            } else { 
                 displayWaveNumber = (state.currentWaveNumber > 0 && state.currentWaveNumber <= C.WAVES_PER_LEVEL) ? state.currentWaveNumber : (state.levelProgress[state.currentLevelIndex] === -1 ? "-" : (state.levelProgress[state.currentLevelIndex] || 0) + 1) ;
                 if(displayWaveNumber > C.WAVES_PER_LEVEL) displayWaveNumber = C.WAVES_PER_LEVEL;
             }
         }
         if (state.currentWaveNumber === 0 && !state.waveInProgress && !state.showingWaveIntro && (state.levelProgress[state.currentLevelIndex] === undefined || state.levelProgress[state.currentLevelIndex] === -1)){
-            displayWaveNumber = "-"; // Przed pierwszą falą
+            displayWaveNumber = "-"; 
         }
-
 
         uiCurrentWave.textContent = `${displayWaveNumber}/${C.WAVES_PER_LEVEL}`;
         uiAplauz.textContent = state.aplauz;
         uiAudienceSatisfaction.textContent = `${state.zadowolenieWidowni}/${state.maxZadowolenieWidowni}`;
     }
 
-    ['bileter', 'oswietleniowiec', 'garderobiana', 'budkaInspicjenta'].forEach(towerType => {
-        const buttonId = `uiButton${towerType.charAt(0).toUpperCase() + towerType.slice(1)}`;
-        const buttonEl = document.getElementById(buttonId);
-        if (buttonEl && C.towerDefinitions[towerType]) {
-            buttonEl.querySelector('.cost').textContent = C.towerDefinitions[towerType].cost;
-        }
-    });
+    // Aktualizacja kosztów i dostępności przycisków wież
+    const towerButtonsMap = {
+        'bileter': uiButtonBileter,
+        'oswietleniowiec': uiButtonOswietleniowiec,
+        'garderobiana': uiButtonGarderobiana,
+        'budkaInspicjenta': uiButtonBudkaInspicjenta
+    };
 
+    for (const towerType in towerButtonsMap) {
+        const buttonEl = towerButtonsMap[towerType];
+        const towerDef = C.towerDefinitions[towerType];
+        if (buttonEl && towerDef) {
+            const costValueSpan = buttonEl.querySelector('.cost-value');
+            if (costValueSpan) costValueSpan.textContent = towerDef.cost;
+
+            if (state.aplauz >= towerDef.cost) {
+                buttonEl.classList.remove('disabled');
+            } else {
+                buttonEl.classList.add('disabled');
+            }
+        }
+    }
+
+    // Aktualizacja kosztu i dostępności ulepszenia satysfakcji
     if (uiButtonUpgradeSatisfaction) {
+        const costValueSpan = uiButtonUpgradeSatisfaction.querySelector('.cost-value');
         if (state.zadowolenieUpgradeLevel < C.MAX_ZADOWOLENIE_UPGRADE_LEVEL && C.zadowolenieUpgrades[state.zadowolenieUpgradeLevel]) {
-            uiButtonUpgradeSatisfaction.querySelector('.cost').textContent = C.zadowolenieUpgrades[state.zadowolenieUpgradeLevel].cost;
-            uiButtonUpgradeSatisfaction.classList.remove('disabled');
+            const upgradeCost = C.zadowolenieUpgrades[state.zadowolenieUpgradeLevel].cost;
+            if (costValueSpan) costValueSpan.textContent = upgradeCost;
+            if (state.aplauz >= upgradeCost) {
+                uiButtonUpgradeSatisfaction.classList.remove('disabled');
+            } else {
+                uiButtonUpgradeSatisfaction.classList.add('disabled');
+            }
         } else {
-            uiButtonUpgradeSatisfaction.querySelector('.cost').textContent = "MAX";
+            if (costValueSpan) costValueSpan.textContent = "MAX";
             uiButtonUpgradeSatisfaction.classList.add('disabled');
         }
     }
 
+    // Dostępność przycisku Start Fali
     if (uiButtonStartWave) {
         const isStartWaveDisabled = state.gameOver || state.waveInProgress || state.showingWaveIntro || 
                                   state.currentWaveNumber >= C.WAVES_PER_LEVEL || 
                                   state.gameScreen === 'levelCompleteCanvas' || state.gameScreen === 'levelCompleteScreen';
-        if (isStartWaveDisabled) uiButtonStartWave.classList.add('disabled');
-        else uiButtonStartWave.classList.remove('disabled');
+        if (isStartWaveDisabled) {
+            uiButtonStartWave.classList.add('disabled');
+        } else {
+            uiButtonStartWave.classList.remove('disabled');
+        }
     }
+    // Aktualizacja panelu ulepszeń wieży (w tym dostępności przycisków)
+    updateTowerUpgradePanel();
 }
 
 export function showUiMessage(message) {
@@ -129,9 +150,9 @@ export function updateTowerUpgradePanel() {
     if (!towerUpgradePanel) cacheDOMElements();
     if (!towerUpgradePanel) return;
 
-    const specialButtons = [uiButtonUpgradeSpecial1, uiButtonUpgradeSpecial2 /*, uiButtonUpgradeSpecial3 */];
-    specialButtons.forEach(btn => btn?.classList.add('hidden'));
-    [uiButtonUpgradeDamage, uiButtonUpgradeFireRate].forEach(btn => btn?.classList.add('hidden'));
+    const specialButtons = [uiButtonUpgradeSpecial1, uiButtonUpgradeSpecial2];
+    specialButtons.forEach(btn => btn?.classList.add('hidden')); // Ukryj wszystkie specjalne na początku
+    [uiButtonUpgradeDamage, uiButtonUpgradeFireRate].forEach(btn => btn?.classList.add('hidden')); // Ukryj standardowe na początku
 
 
     if (state.selectedTowerForUpgrade && C.towerDefinitions[state.selectedTowerForUpgrade.type]) {
@@ -143,56 +164,72 @@ export function updateTowerUpgradePanel() {
 
         const standardUpgradeMap = { damage: uiButtonUpgradeDamage, fireRate: uiButtonUpgradeFireRate };
 
-        towerDef.upgradeLevelNames?.forEach((upgradeKey, index) => {
+        let specialButtonCounter = 0; // Licznik dla przycisków specjalnych
+
+        towerDef.upgradeLevelNames?.forEach((upgradeKey) => {
             let button;
-            let isStandard = false;
+            let buttonTextMainSpan;
+            let buttonCostValueSpan;
+
             if (standardUpgradeMap[upgradeKey]) {
                 button = standardUpgradeMap[upgradeKey];
-                isStandard = true;
             } else {
-                // Mapowanie specjalnych ulepszeń na przyciski Special1, Special2 itd.
-                // To zakłada, że pierwsze specjalne ulepszenie w upgradeLevelNames to Special1 itd.
-                let specialButtonIndex = 0;
-                for(let i=0; i < index; i++){
-                    if(!standardUpgradeMap[towerDef.upgradeLevelNames[i]]) specialButtonIndex++;
+                if (specialButtonCounter < specialButtons.length) {
+                    button = specialButtons[specialButtonCounter];
+                    specialButtonCounter++;
                 }
-                button = specialButtons[specialButtonIndex];
             }
 
             if (button && towerDef.upgrades[upgradeKey]) {
                 button.classList.remove('hidden');
+                buttonTextMainSpan = button.querySelector('.button-text-main');
+                buttonCostValueSpan = button.querySelector('.cost-value');
+
                 let buttonText = upgradeKey.charAt(0).toUpperCase() + upgradeKey.slice(1);
-                // Poprawki nazw dla standardowych
                 if (upgradeKey === 'damage') buttonText = "Obrażenia+";
                 else if (upgradeKey === 'fireRate') buttonText = "Szybkostrzelność+";
                 else if (upgradeKey === 'range') buttonText = "Zasięg+";
                 else if (upgradeKey === 'effectStrength') buttonText = "Siła Efektu+";
                 else if (upgradeKey === 'effectDuration') buttonText = "Czas Efektu+";
                 else if (upgradeKey === 'critChance') buttonText = "Szansa Kryt.+";
+                
+                if (buttonTextMainSpan) buttonTextMainSpan.textContent = buttonText;
 
                 const currentLevel = tower[`${upgradeKey}Level`] || 0;
                 const maxLevelForThisSpecificUpgrade = towerDef.upgrades[upgradeKey].length;
 
-
                 if (currentLevel < maxLevelForThisSpecificUpgrade) {
-                    button.innerHTML = `${buttonText} (<span class="cost">${towerDef.upgrades[upgradeKey][currentLevel].cost}</span> Ap.)`;
-                    button.classList.remove('disabled');
+                    const upgradeCost = towerDef.upgrades[upgradeKey][currentLevel].cost;
+                    if (buttonCostValueSpan) buttonCostValueSpan.textContent = upgradeCost;
+                    if (state.aplauz >= upgradeCost) {
+                        button.classList.remove('disabled');
+                    } else {
+                        button.classList.add('disabled');
+                    }
                 } else {
-                    button.innerHTML = `${buttonText} (<span class="cost">MAX</span> Ap.)`;
+                    if (buttonCostValueSpan) buttonCostValueSpan.textContent = "MAX";
                     button.classList.add('disabled');
                 }
             }
         });
         
         if (uiButtonSellTower) {
-            let sellValue = Math.floor(towerDef.cost * 0.75);
-             tower.definition.upgradeLevelNames?.forEach(upgradeName => {
-                const levelKey = `${upgradeName}Level`;
-                for(let i = 0; i < (tower[levelKey] || 0); i++) {
-                    sellValue += Math.floor((tower.definition.upgrades[upgradeName]?.[i]?.cost || 0) * 0.5);
-                }
-            });
-            uiButtonSellTower.querySelector('.value').textContent = sellValue;
+            let sellValue = 0; // Wartość sprzedaży jest liczona w gameLogic, tutaj tylko wyświetlamy
+            const sellValueSpan = uiButtonSellTower.querySelector('.cost-value');
+            // Logika obliczania wartości sprzedaży powinna być w gameLogic i przekazywana lub odczytywana
+            // Dla uproszczenia, na razie zostawmy 0, ale to powinno być dynamiczne
+            if (tower) { // Upewnij się, że wieża jest wybrana
+                let calculatedSellValue = Math.floor(towerDef.cost * 0.75);
+                tower.definition.upgradeLevelNames?.forEach(upgradeName => {
+                    const levelKey = `${upgradeName}Level`;
+                    for(let i = 0; i < (tower[levelKey] || 0); i++) {
+                        calculatedSellValue += Math.floor((tower.definition.upgrades[upgradeName]?.[i]?.cost || 0) * 0.5);
+                    }
+                });
+                sellValue = calculatedSellValue;
+            }
+            if (sellValueSpan) sellValueSpan.textContent = sellValue;
+            uiButtonSellTower.classList.remove('disabled'); // Przycisk sprzedaży jest zawsze dostępny, jeśli wieża jest wybrana
         }
 
     } else {
