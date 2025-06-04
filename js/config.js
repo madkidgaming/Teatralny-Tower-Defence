@@ -19,17 +19,19 @@ export const PROJECTILE_SIZE_MULTIPLIER = 1.2;
 export const BASE_SIZE_MULTIPLIER = 2.2;
 export const EFFECT_SIZE_MULTIPLIER = 1.0;
 
-// Upewnij się, że te nazwy DOKŁADNIE odpowiadają nazwom plików w folderze assets/images/ w Twoim repozytorium GitHub
-// po ich standaryzacji (bez spacji, poprawna wielkość liter).
 export const imageSources = {
+    // Dodano GAME_TITLE.png do śledzenia ładowania
+    gameTitle: 'assets/images/GAME_TITLE.png',
+    gameTitleHorizontal: 'assets/images/GAME_TITLE_HORIZONTAL.png', // Zakładam, że ten też jest potrzebny
+
     teatrBase: 'assets/images/TEATR.png',
     laserProjectile: 'assets/images/LASER_PROJECTILE.png',
     biletProjectile: 'assets/images/BILET_PROJECTILE.png',
     bileterTowerIcon: 'assets/images/BILETER.png',
     spoznionyWidz: 'assets/images/SPOZNIONY_WIDZ.png',
     krytykTeatralny: 'assets/images/KRYTYK_TEATRALNY.png',
-    reflektorTowerIcon: 'assets/images/reflektor.png', // Ta nazwa jest małą literą, upewnij się, że tak jest w repo
-    tileset: 'assets/images/TILESET_TOWER_DEFENCE.png', // Sprawdź, czy "DEFENCE" czy "DEFENSE" i wielkość liter
+    reflektorTowerIcon: 'assets/images/reflektor.png',
+    tileset: 'assets/images/TILESET_TOWER_DEFENCE.png',
 
     garderobianaTowerIcon: 'assets/images/GARDEROBIANA.png',
     garderobianaProjectileEffect: 'assets/images/GARDEROBIANA_PROJECTILE.png',
@@ -38,10 +40,6 @@ export const imageSources = {
     divaEnemy: 'assets/images/DIVA.png',
     technicznyEnemy: 'assets/images/TECHNICZNY.png',
     sabotageEffectIcon: 'assets/images/ZEPSUTA.png'
-    // Dodaj tutaj GAME_TITLE_HORIZONTAL.png i GAME_TITLE.png jeśli są dynamicznie ładowane,
-    // chociaż zwykle tytuły są statycznie w HTML.
-    // gameTitleHorizontal: 'assets/images/GAME_TITLE_HORIZONTAL.png',
-    // gameTitle: 'assets/images/GAME_TITLE.png'
 };
 
 export const baseEnemyStats = {

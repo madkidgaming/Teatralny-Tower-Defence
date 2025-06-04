@@ -33,6 +33,50 @@ body {
     position: relative; 
 }
 
+/* Ekran Ładowania */
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1a0505; /* Ciemne tło, pasujące do gry */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000; /* Na samej górze */
+    opacity: 1; /* Początkowo widoczny */
+    transition: opacity 0.7s ease-in-out; /* Dla animacji zanikania tła */
+}
+
+#loadingLogo {
+    max-width: 60%;
+    max-height: 50vh;
+    margin-bottom: 30px;
+    animation: pulseLogo 2s infinite ease-in-out; /* Animacja pulsowania */
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out; /* Dla animacji usuwania */
+}
+
+#loadingText {
+    font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
+    font-size: 2em;
+    color: #ffd700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out; /* Dla animacji usuwania */
+}
+
+@keyframes pulseLogo {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+
 #particles-js {
     position: fixed; 
     width: 100%;
@@ -94,7 +138,6 @@ h1#pageTitle {
     z-index: 10; 
 }
 
-/* Stała szerokość paneli UI */
 #leftUiPanel, #rightUiPanel {
     background-color: rgba(26, 5, 5, 0.92); 
     padding: 20px; 
@@ -109,7 +152,7 @@ h1#pageTitle {
     overflow-y: auto; 
     position: relative; 
     z-index: 11; 
-    width: 290px; /* Ustawiona stała szerokość, dostosuj w razie potrzeby */
+    width: 290px; 
     flex-shrink: 0; 
 }
 
@@ -167,9 +210,9 @@ canvas#gameCanvas {
     background-color: #8c6c0a; 
     color: #ffffff;
     border: 1px solid #5c400a;
-    padding: 10px 15px; /* Zmniejszony padding dla ogólnych przycisków */
+    padding: 10px 15px; 
     font-family: 'Jersey10-Regular', 'Merriweather', serif;
-    font-size: 1em; /* Zmniejszony font dla ogólnych przycisków */
+    font-size: 1em; 
     font-weight: normal; 
     cursor: pointer;
     border-radius: 8px; 
@@ -182,30 +225,22 @@ canvas#gameCanvas {
     text-transform: uppercase;
     position: relative; 
     z-index: 3; 
-    display: flex; /* Umożliwia lepsze centrowanie i rozmieszczenie tekstu */
+    display: flex; 
     align-items: center;
-    justify-content: center; /* Domyślne centrowanie dla przycisków bez wielu spanów */
+    justify-content: center; 
 }
 
-/* Style dla wewnętrznych spanów przycisków */
 .ui-button .button-text-main {
     flex-grow: 1;
-    text-align: left; /* Wyrównanie do lewej dla głównego tekstu */
+    text-align: left; 
 }
 .ui-button .button-text-cost-wrapper {
     flex-shrink: 0;
     white-space: nowrap;
-    margin-left: 8px; /* Odstęp od głównego tekstu */
+    margin-left: 8px; 
     font-size: 0.9em;
     color: #f0e0c0;
 }
-.ui-button .button-text-cost-wrapper .cost-value {
-    /* Styl dla samej wartości, jeśli potrzebny */
-}
-.ui-button .button-text-cost-wrapper .cost-currency {
-    /* Styl dla "Ap.", jeśli potrzebny */
-}
-
 
 .ui-button:hover {
     background-color: #a07c1a; 
@@ -219,7 +254,6 @@ canvas#gameCanvas {
     box-shadow: 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 2px rgba(0,0,0,0.15);
 }
 
-/* Styl dla nieaktywnych/niedostępnych przycisków */
 .ui-button.disabled {
     background-color: #504231 !important; 
     color: #8a7c6a !important;
@@ -227,9 +261,9 @@ canvas#gameCanvas {
     border-color: #403526 !important;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
     transform: none !important;
-    opacity: 0.6; /* Dodatkowe wyszarzenie */
+    opacity: 0.6; 
 }
-.ui-button.disabled:hover { /* Usunięcie efektu hover dla nieaktywnych */
+.ui-button.disabled:hover { 
     background-color: #504231 !important;
     border-color: #403526 !important;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
@@ -267,9 +301,8 @@ canvas#gameCanvas {
     z-index: 3; 
 }
 
-/* Poprawki dla przycisków zakupu wież */
 .tower-buy-button {
-    justify-content: flex-start; /* Wyrównanie do lewej dla zawartości */
+    justify-content: flex-start; 
     gap: 8px; 
     padding: 10px 12px; 
 }
@@ -283,15 +316,11 @@ canvas#gameCanvas {
     border-radius: 4px; 
     background: rgba(0,0,0,0.15);
     padding: 3px;
-    margin-right: 4px; /* Mały odstęp od tekstu */
-}
-
-.tower-buy-button .button-text-main {
-    /* Już zdefiniowane ogólnie dla .ui-button .button-text-main */
+    margin-right: 4px; 
 }
 
 .tower-buy-button .button-text-cost-wrapper {
-    color: #d0bfa6; /* Kolor dla kosztu w przyciskach wież */
+    color: #d0bfa6; 
 }
 
 
@@ -306,7 +335,6 @@ canvas#gameCanvas {
     color: #ffe080; 
 }
 
-/* Modernizacja ekranów menu */
 .menu-screen { 
     display: flex;
     flex-direction: column;

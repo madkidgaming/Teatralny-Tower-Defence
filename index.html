@@ -11,6 +11,12 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
+    <!-- Ekran Ładowania -->
+    <div id="loadingScreen">
+        <img src="assets/images/GAME_TITLE.png" alt="Ładowanie gry..." id="loadingLogo">
+        <p id="loadingText">Ładowanie...</p>
+    </div>
+
     <!-- Kontener dla particles.js -->
     <div id="particles-js"></div>
 
@@ -125,7 +131,7 @@
         </div>
     </div>
 
-    <div id="mainMenu" class="menu-screen visible">
+    <div id="mainMenu" class="menu-screen hidden"> <!-- Początkowo ukryte -->
         <div class="main-menu-content">
             <img src="assets/images/GAME_TITLE.png" alt="Ostatni Akt Obrony" id="gameTitleImage">
             <div class="main-menu-buttons">

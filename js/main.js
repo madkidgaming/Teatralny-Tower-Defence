@@ -11,6 +11,12 @@ import *as ScreenManager from './screenManager.js';
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Referencje do elementów ekranu ładowania
+const loadingScreen = document.getElementById('loadingScreen');
+const loadingLogo = document.getElementById('loadingLogo');
+const loadingText = document.getElementById('loadingText');
+const mainMenuScreen = document.getElementById('mainMenu'); // Potrzebne do pokazania po załadowaniu
+
 ScreenManager.initializeScreenManager({
     startGameLevel: startGameLevel,
     updateContinueButtonState: updateContinueButtonState,
@@ -68,7 +74,7 @@ function showCustomConfirm(title = "Potwierdzenie", message = "Czy na pewno?") {
 function hideCustomConfirm() {
     if (customConfirmOverlay) {
         customConfirmOverlay.classList.remove('visible');
-        setTimeout(() => { customConfirmOverlay.classList.add('hidden'); }, 300); // Delay to allow fade-out animation
+        setTimeout(() => { customConfirmOverlay.classList.add('hidden'); }, 300);
     }
     confirmResolve = null;
 }
@@ -83,7 +89,7 @@ export function startGameLevel(levelIndex, startFromWave = 0) {
     clearTimeout(autoStartTimerId);
     state.autoStartNextWaveEnabled = true;
     GameLogic.setupLevel(levelIndex, startFromWave);
-    ScreenManager.showScreen('playing');
+    ScreenManager.showScreen('playing'); // ScreenManager zajmie się ukryciem menu
     UIManager.updateUiStats();
     UIManager.updateTowerUpgradePanel();
     UIManager.updateSelectedTowerButtonUI();
@@ -103,14 +109,142 @@ export function updateContinueButtonState() {
     }
 }
 
+function finishLoadingAndShowMenu() {
+    if (loadingScreen && loadingLogo && loadingText) {
+        const tl = gsap.timeline({
+            onComplete: () => {
+                if (loadingScreen) loadingScreen.style.display = 'none';
+                ScreenManager.showScreen('menu'); // Pokaż menu główne
+                updateContinueButtonState();
+                
+                // Inicjalizacja particles.js Z POPRAWNĄ KONFIGURACJĄ
+                if (typeof particlesJS !== 'undefined') {
+                    particlesJS('particles-js', {
+                        "particles": {
+                            "number": {
+                                "value": 60, 
+                                "density": {
+                                    "enable": true,
+                                    "value_area": 800
+                                }
+                            },
+                            "color": {
+                                "value": "#ffd700" // Złoty kolor
+                            },
+                            "shape": {
+                                "type": "circle",
+                                "stroke": {
+                                    "width": 0,
+                                    "color": "#000000"
+                                },
+                                "polygon": {
+                                    "nb_sides": 5
+                                }
+                            },
+                            "opacity": {
+                                "value": 0.4, 
+                                "random": true,
+                                "anim": {
+                                    "enable": true, 
+                                    "speed": 0.8,
+                                    "opacity_min": 0.1,
+                                    "sync": false
+                                }
+                            },
+                            "size": {
+                                "value": 2.5, // Małe cząsteczki
+                                "random": true,
+                                "anim": {
+                                    "enable": false, 
+                                    "speed": 40,
+                                    "size_min": 0.1,
+                                    "sync": false
+                                }
+                            },
+                            "line_linked": {
+                                "enable": false // Linie wyłączone
+                            },
+                            "move": {
+                                "enable": true,
+                                "speed": 1.2, 
+                                "direction": "top-right", 
+                                "random": true,
+                                "straight": false,
+                                "out_mode": "out",
+                                "bounce": false,
+                                "attract": {
+                                    "enable": false,
+                                    "rotateX": 600,
+                                    "rotateY": 1200
+                                }
+                            }
+                        },
+                        "interactivity": {
+                            "detect_on": "canvas",
+                            "events": {
+                                "onhover": {
+                                    "enable": false, 
+                                    "mode": "repulse"
+                                },
+                                "onclick": {
+                                    "enable": false, 
+                                    "mode": "push"
+                                },
+                                "resize": true
+                            },
+                            "modes": {
+                                "grab": {"distance": 400, "line_linked": {"opacity": 1}},
+                                "bubble": {"distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3},
+                                "repulse": {"distance": 200, "duration": 0.4},
+                                "push": {"particles_nb": 4},
+                                "remove": {"particles_nb": 2}
+                            }
+                        },
+                        "retina_detect": true
+                    });
+                    console.log("Particles.js initialized after loading screen with gold config.");
+                } else {
+                    console.warn("Particles.js library not found for init after loading.");
+                }
+            }
+        });
+
+        tl.to([loadingLogo, loadingText], { 
+            opacity: 0, 
+            y: -30, 
+            duration: 0.4, 
+            ease: "power1.in", 
+            stagger: 0.1 
+        }, "+=0.5") 
+        .to(loadingScreen, { 
+            opacity: 0, 
+            duration: 0.6, 
+            ease: "power1.inOut"
+        }, "-=0.2"); 
+
+    } else { 
+        ScreenManager.showScreen('menu');
+        updateContinueButtonState();
+        if (typeof particlesJS !== 'undefined') {
+            particlesJS('particles-js', { /* ... Twoja konfiguracja particles.js ... */ });
+        }
+    }
+    canvas.width = C.COLS * C.TILE_SIZE;
+    canvas.height = C.ROWS * C.TILE_SIZE;
+}
+
+
 function preloadImagesAndStart() {
     Storage.loadGameProgress(state);
     setTotalImagesToLoad(Object.keys(C.imageSources).length);
 
     if (totalImagesToLoad === 0) {
-        initGame();
+        finishLoadingAndShowMenu(); 
         return;
     }
+
+    if (loadingScreen) loadingScreen.style.display = 'flex';
+    if (mainMenuScreen) mainMenuScreen.classList.add('hidden'); 
 
     for (const key in C.imageSources) {
         images[key] = new Image();
@@ -120,7 +254,8 @@ function preloadImagesAndStart() {
             images[key].error = false;
             incrementImagesLoadedCount();
             if (imagesLoadedCount === totalImagesToLoad) {
-                initGame();
+                console.log("All images loaded. Finishing loading sequence.");
+                finishLoadingAndShowMenu(); 
             }
         };
         images[key].onerror = (e) => {
@@ -128,128 +263,10 @@ function preloadImagesAndStart() {
             images[key].error = true;
             incrementImagesLoadedCount();
             if (imagesLoadedCount === totalImagesToLoad) {
-                initGame();
+                console.log("All images attempted to load (some with errors). Finishing loading sequence.");
+                finishLoadingAndShowMenu();
             }
         }
-    }
-}
-
-function initGame() {
-    canvas.width = C.COLS * C.TILE_SIZE;
-    canvas.height = C.ROWS * C.TILE_SIZE;
-    ScreenManager.showScreen('menu');
-    updateContinueButtonState();
-
-    // Inicjalizacja particles.js - UPEWNIJ SIĘ, ŻE TA KONFIGURACJA JEST UŻYWANA
-    if (typeof particlesJS !== 'undefined') {
-        particlesJS('particles-js', {
-            "particles": {
-                "number": {
-                    "value": 60, // Mniejsza liczba cząsteczek dla subtelniejszego efektu
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#ffd700" // Złoty kolor pasujący do tematyki
-                },
-                "shape": {
-                    "type": "circle", // Kształt koła
-                    "stroke": {
-                        "width": 0, // Bez obramowania
-                        "color": "#000000"
-                    },
-                    "polygon": {
-                        "nb_sides": 5
-                    }
-                },
-                "opacity": {
-                    "value": 0.4, // Nieco mniejsza przezroczystość
-                    "random": true, // Losowa przezroczystość
-                    "anim": {
-                        "enable": true, // Animacja przezroczystości
-                        "speed": 0.8,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 2.5, // Mniejsze cząsteczki
-                    "random": true, // Losowy rozmiar
-                    "anim": {
-                        "enable": false, // Wyłączona animacja rozmiaru (dla subtelności)
-                        "speed": 40,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": false, // KLUCZOWE: Wyłączono linie między cząsteczkami
-                    "distance": 150,
-                    "color": "#ffffff",
-                    "opacity": 0.4,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 1.2, // Wolniejszy ruch
-                    "direction": "top-right", // Ruch w górę i lekko w bok
-                    "random": true, // Losowy kierunek (w ramach ogólnego kierunku)
-                    "straight": false, // Niech się lekko wiją
-                    "out_mode": "out", // Znikają poza ekranem
-                    "bounce": false, // Nie odbijają się
-                    "attract": {
-                        "enable": false,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": false, // Wyłączono interakcję przy najechaniu
-                        "mode": "repulse"
-                    },
-                    "onclick": {
-                        "enable": false, // Wyłączono interakcję przy kliknięciu
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 400,
-                        "line_linked": {
-                            "opacity": 1
-                        }
-                    },
-                    "bubble": {
-                        "distance": 400,
-                        "size": 40,
-                        "duration": 2,
-                        "opacity": 8,
-                        "speed": 3
-                    },
-                    "repulse": {
-                        "distance": 200,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    },
-                    "remove": {
-                        "particles_nb": 2
-                    }
-                }
-            },
-            "retina_detect": true
-        });
-        console.log("Particles.js initialized with custom gold config.");
-    } else {
-        console.warn("Particles.js library not found.");
     }
 }
 
@@ -267,12 +284,12 @@ function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (state.gameScreen === 'levelCompleteCanvas' && state.showingLevelCompleteSummary) {
-        Drawing.drawTiledBackground(ctx);
-        Drawing.drawLevelCompleteSummary(ctx);
-        UIManager.updateUiStats();
+        Drawing.drawTiledBackground(ctx); 
+        Drawing.drawLevelCompleteSummary(ctx); 
+        UIManager.updateUiStats(); 
     } else if (state.gameScreen === 'levelLost') {
         Drawing.drawTiledBackground(ctx);
-        renderGameObjectsSorted();
+        renderGameObjectsSorted(); 
         Drawing.drawTextWithOutline(ctx, "KONIEC GRY!", canvas.width / 2, canvas.height / 2 - 40, "bold 48px Georgia", "red", "black", 4);
         Drawing.drawTextWithOutline(ctx, "Premiera tego aktu zrujnowana...", canvas.width / 2, canvas.height / 2 + 10, "bold 22px Georgia", "white", "black");
         UIManager.updateUiStats();
@@ -283,34 +300,33 @@ function gameLoop() {
             renderGameObjectsSorted();
             Drawing.drawProjectiles(ctx);
             Drawing.drawEffects(ctx);
-            Drawing.drawUI(ctx);
-            if(state.showingWaveIntro) Drawing.drawWaveIntro(ctx);
-            UIManager.showUiMessage(state.currentMessage || "Pauza");
+            Drawing.drawUI(ctx); 
+            if(state.showingWaveIntro) Drawing.drawWaveIntro(ctx); 
+            UIManager.showUiMessage(state.currentMessage || "Pauza"); 
             UIManager.updateUiStats();
-        } else if (state.gameScreen === 'playing' && !state.isPaused) {
+        } else if (state.gameScreen === 'playing' && !state.isPaused) { 
             state.towers.forEach(tower => {
                 if (tower.isAnimatingIn) {
                     tower.isAnimatingIn = false;
                     gsap.to(tower, { duration: 0.6, currentScale: 1, currentAlpha: 1, currentRotation: 0, ease: "back.out(1.7)" });
                 }
-                // Animacja ulepszenia
                 if (tower.justUpgraded && !tower.upgradeAnimation) {
                     tower.upgradeAnimation = gsap.timeline({onComplete: () => {
                         tower.justUpgraded = false;
-                        tower.upgradeAnimation = null; // Usuń referencję do animacji po zakończeniu
-                        tower.upgradeFlashAlpha = 0; // Zresetuj flash
-                        tower.upgradePulseScale = 1; // Zresetuj skalę
+                        tower.upgradeAnimation = null; 
+                        tower.upgradeFlashAlpha = 0; 
+                        tower.upgradePulseScale = 1; 
                     }})
-                    .to(tower, { upgradeFlashAlpha: 0.7, duration: 0.15, yoyo: true, repeat: 1 }) // Błysk
-                    .to(tower, { upgradePulseScale: 1.15, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" }, "-=0.2"); // Lekki podskok
+                    .to(tower, { upgradeFlashAlpha: 0.7, duration: 0.15, yoyo: true, repeat: 1 }) 
+                    .to(tower, { upgradePulseScale: 1.15, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" }, "-=0.2"); 
                 }
             });
             for (let i = state.effects.length - 1; i >= 0; i--) {
                 const effect = state.effects[i];
-                if (effect.isNew && !effect.isDebuffCloud) {
+                if (effect.isNew && !effect.isDebuffCloud) { 
                     effect.isNew = false;
                     gsap.to(effect, {
-                        duration: (effect.durationFrames || 20) / 60,
+                        duration: (effect.durationFrames || 20) / 60, 
                         scale: effect.maxScale, alpha: 0, ease: "expo.out",
                         onComplete: () => { const index = state.effects.indexOf(effect); if (index > -1) state.effects.splice(index, 1); }
                     });
@@ -322,7 +338,7 @@ function gameLoop() {
                     enemy.isDeathAnimationStarted = true;
                     gsap.to(enemy, {
                         duration: 0.5, currentAlpha: 0,
-                        currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3,
+                        currentScale: (enemy.currentScale !== undefined ? enemy.currentScale : 1) * 0.3, 
                         ease: "power2.in",
                         onComplete: () => { const index = state.enemies.indexOf(enemy); if (index > -1) state.enemies.splice(index, 1); checkWaveCompletion(); }
                     });
@@ -344,11 +360,11 @@ function gameLoop() {
 
             Drawing.drawTiledBackground(ctx);
             Drawing.drawTowerSpots(ctx);
-            renderGameObjectsSorted();
+            renderGameObjectsSorted(); 
             Drawing.drawProjectiles(ctx);
             Drawing.drawEffects(ctx);
-            Drawing.drawUI(ctx);
-            if(state.showingWaveIntro) Drawing.drawWaveIntro(ctx);
+            Drawing.drawUI(ctx); 
+            if(state.showingWaveIntro) Drawing.drawWaveIntro(ctx); 
 
             UIManager.updateUiStats();
             UIManager.updateTowerUpgradePanel();
@@ -362,7 +378,7 @@ function gameLoop() {
             }
         }
     }
-    animationFrameId = requestAnimationFrame(gameLoop);
+    animationFrameId = requestAnimationFrame(gameLoop); 
 }
 
 const renderGameObjectsSorted = () => {
@@ -445,7 +461,6 @@ function prepareAutoStartNextWave(seconds) {
     autoStartTimerId = setTimeout(countdownTick, 1000);
 }
 
-// Zarządzanie animacjami GSAP dla wież
 function stopTowerAnimations(tower) {
     if (tower) {
         if (tower.rangePulseAnimation) {
@@ -456,25 +471,22 @@ function stopTowerAnimations(tower) {
             tower.selectionPulseAnimation.kill();
             tower.selectionPulseAnimation = null;
         }
-        // Reset wartości animowanych, aby nie wpływały na następne rysowanie
         tower.animatedRangeRadius = tower.range;
-        tower.animatedRangeAlpha = 0.5; // Wartość domyślna
-        tower.selectionHighlightAlpha = 0.9; // Wartość domyślna
-        tower.selectionHighlightPadding = 2; // Wartość domyślna
+        tower.animatedRangeAlpha = 0.5; 
+        tower.selectionHighlightAlpha = 0.9; 
+        tower.selectionHighlightPadding = 2; 
     }
 }
 
 function startTowerAnimations(tower) {
     if (tower) {
-        // Animacja zasięgu
         if (!tower.rangePulseAnimation) {
-            tower.animatedRangeRadius = tower.range * 0.95; // Start slightly smaller
+            tower.animatedRangeRadius = tower.range * 0.95; 
             tower.animatedRangeAlpha = 0.3;
             tower.rangePulseAnimation = gsap.timeline({ repeat: -1, yoyo: true })
                 .to(tower, { animatedRangeRadius: tower.range * 1.05, duration: 1.2, ease: "sine.inOut" })
-                .to(tower, { animatedRangeAlpha: 0.6, duration: 1.2, ease: "sine.inOut" }, "<"); // Animuj alpha równocześnie
+                .to(tower, { animatedRangeAlpha: 0.6, duration: 1.2, ease: "sine.inOut" }, "<"); 
         }
-        // Animacja podświetlenia
         if (!tower.selectionPulseAnimation) {
             tower.selectionHighlightAlpha = 0.6;
             tower.selectionHighlightPadding = 1;
@@ -485,8 +497,6 @@ function startTowerAnimations(tower) {
     }
 }
 
-
-// Event Listeners for UI buttons
 uiButtonBileter.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { stopTowerAnimations(state.selectedTowerForUpgrade); state.selectedTowerType = 'bileter'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
 uiButtonOswietleniowiec.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { stopTowerAnimations(state.selectedTowerForUpgrade); state.selectedTowerType = 'oswietleniowiec'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
 uiButtonGarderobiana.addEventListener('click', () => { if (state.gameScreen === 'playing' && !state.isPaused) { stopTowerAnimations(state.selectedTowerForUpgrade); state.selectedTowerType = 'garderobiana'; state.selectedTowerForUpgrade = null; UIManager.updateTowerUpgradePanel(); UIManager.updateSelectedTowerButtonUI(); }});
@@ -502,9 +512,9 @@ uiButtonStartWave.addEventListener('click', () => {
 
 function handleUpgradeButtonClick(upgradeKey) {
     if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        const success = GameLogic.upgradeTower(state.selectedTowerForUpgrade, upgradeKey); // Zakładamy, że upgradeTower zwraca true/false
+        const success = GameLogic.upgradeTower(state.selectedTowerForUpgrade, upgradeKey); 
         if (success) {
-            // Animacja GSAP dla wieży jest teraz w pętli gry, sprawdzając flagę justUpgraded
+            // Flaga justUpgraded jest ustawiana w GameLogic.upgradeTower
         }
         UIManager.updateTowerUpgradePanel();
         UIManager.updateUiStats();
@@ -551,7 +561,7 @@ uiButtonUpgradeSpecial2.addEventListener('click', () => {
 
 uiButtonSellTower.addEventListener('click', () => {
     if (state.selectedTowerForUpgrade && state.gameScreen === 'playing' && !state.isPaused) {
-        stopTowerAnimations(state.selectedTowerForUpgrade); // Zatrzymaj animacje przed sprzedażą
+        stopTowerAnimations(state.selectedTowerForUpgrade); 
         GameLogic.sellTower(state.selectedTowerForUpgrade);
         UIManager.updateTowerUpgradePanel();
         UIManager.updateUiStats();
@@ -562,7 +572,7 @@ resumeButton.addEventListener('click', () => { if (state.isPaused) { GameLogic.t
 
 export function goToMainMenu() {
     clearTimeout(autoStartTimerId);
-    stopTowerAnimations(state.selectedTowerForUpgrade); // Zatrzymaj animacje przy powrocie do menu
+    stopTowerAnimations(state.selectedTowerForUpgrade); 
     state.isPaused = false; state.gameOver = false; state.selectedTowerType = null; state.selectedTowerForUpgrade = null; state.showingLevelCompleteSummary = false; state.levelCompleteButtons = [];
     if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
     ScreenManager.showScreen('menu'); updateContinueButtonState();
@@ -570,7 +580,6 @@ export function goToMainMenu() {
 returnToMenuButtonGame.addEventListener('click', goToMainMenu);
 menuFromPauseButton.addEventListener('click', goToMainMenu);
 
-// Main Menu navigation
 continueGameButton.addEventListener('click', () => { if (!continueGameButton.disabled) ScreenManager.showScreen('levelSelection'); });
 newGameButtonFromMenu.addEventListener('click', async () => {
     const confirmed = await showCustomConfirm("Rozpocząć Nową Grę?", "Czy na pewno chcesz rozpocząć nową grę? Cały dotychczasowy postęp zostanie utracony.");
@@ -585,7 +594,6 @@ creditsButton.addEventListener('click', () => ScreenManager.showScreen('credits'
 backToMainMenuFromLevelSelection.addEventListener('click', () => ScreenManager.showScreen('menu'));
 backToMainMenuFromCredits.addEventListener('click', () => ScreenManager.showScreen('menu'));
 
-// Canvas click handling
 canvas.addEventListener('click', (event) => {
     const rect = canvas.getBoundingClientRect();
     const clickX = event.clientX - rect.left; const clickY = event.clientY - rect.top;
@@ -611,13 +619,13 @@ canvas.addEventListener('click', (event) => {
         const clickedTower = state.towers.find(t => t.xGrid === gridX && t.yGrid === gridY);
         
         if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade !== clickedTower) {
-            stopTowerAnimations(state.selectedTowerForUpgrade); // Zatrzymaj animacje poprzednio wybranej wieży
+            stopTowerAnimations(state.selectedTowerForUpgrade); 
         }
 
         if (clickedTower) {
             state.selectedTowerForUpgrade = clickedTower;
             state.selectedTowerType = null;
-            startTowerAnimations(clickedTower); // Uruchom animacje dla nowo wybranej wieży
+            startTowerAnimations(clickedTower); 
             UIManager.updateTowerUpgradePanel();
             UIManager.updateSelectedTowerButtonUI();
             return;
@@ -631,7 +639,7 @@ canvas.addEventListener('click', (event) => {
             return;
         }
         if (!clickedTower && !state.selectedTowerType) {
-            stopTowerAnimations(state.selectedTowerForUpgrade); // Zatrzymaj animacje, jeśli kliknięto puste pole
+            stopTowerAnimations(state.selectedTowerForUpgrade); 
             state.selectedTowerForUpgrade = null;
             UIManager.updateTowerUpgradePanel();
         }
@@ -708,4 +716,5 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+// Rozpocznij ładowanie zasobów i pokaż ekran ładowania
 preloadImagesAndStart();
