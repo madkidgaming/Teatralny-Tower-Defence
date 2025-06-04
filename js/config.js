@@ -19,24 +19,29 @@ export const PROJECTILE_SIZE_MULTIPLIER = 1.2;
 export const BASE_SIZE_MULTIPLIER = 2.2;
 export const EFFECT_SIZE_MULTIPLIER = 1.0;
 
+// Upewnij się, że te nazwy DOKŁADNIE odpowiadają nazwom plików w folderze assets/images/ w Twoim repozytorium GitHub
+// po ich standaryzacji (bez spacji, poprawna wielkość liter).
 export const imageSources = {
-    // Zaktualizowane ścieżki do lokalnych zasobów
     teatrBase: 'assets/images/TEATR.png',
     laserProjectile: 'assets/images/LASER_PROJECTILE.png',
     biletProjectile: 'assets/images/BILET_PROJECTILE.png',
     bileterTowerIcon: 'assets/images/BILETER.png',
-    spoznionyWidz: 'assets/images/SPOZNIONY_WIDZ.png', // Upewnij się, że nazwa pliku jest poprawna
-    krytykTeatralny: 'assets/images/KRYTYK_TEATRALNY.png', // Poprawiona nazwa pliku z podkreśleniem
-    reflektorTowerIcon: 'assets/images/reflektor.png',
-    tileset: 'assets/images/TILESET_TOWER_DEFENCE.png', // Poprawiona nazwa pliku (jeśli tak jest w assets)
+    spoznionyWidz: 'assets/images/SPOZNIONY_WIDZ.png',
+    krytykTeatralny: 'assets/images/KRYTYK_TEATRALNY.png',
+    reflektorTowerIcon: 'assets/images/reflektor.png', // Ta nazwa jest małą literą, upewnij się, że tak jest w repo
+    tileset: 'assets/images/TILESET_TOWER_DEFENCE.png', // Sprawdź, czy "DEFENCE" czy "DEFENSE" i wielkość liter
 
     garderobianaTowerIcon: 'assets/images/GARDEROBIANA.png',
     garderobianaProjectileEffect: 'assets/images/GARDEROBIANA_PROJECTILE.png',
-    budkaInspicjentaTowerIcon: 'assets/images/BUDKA_INSPICJENTA.png', // Zakładam, że ten plik też jest lokalnie
-    budkaInspicjentaProjectile: 'assets/images/BUDKA_INSPICJENTA_PROJECTILE.png', // Zakładam, że ten plik też jest lokalnie
-    divaEnemy: 'assets/images/DIVA.png', // Zakładam, że ten plik też jest lokalnie
+    budkaInspicjentaTowerIcon: 'assets/images/BUDKA_INSPICJENTA.png',
+    budkaInspicjentaProjectile: 'assets/images/BUDKA_INSPICJENTA_PROJECTILE.png',
+    divaEnemy: 'assets/images/DIVA.png',
     technicznyEnemy: 'assets/images/TECHNICZNY.png',
     sabotageEffectIcon: 'assets/images/ZEPSUTA.png'
+    // Dodaj tutaj GAME_TITLE_HORIZONTAL.png i GAME_TITLE.png jeśli są dynamicznie ładowane,
+    // chociaż zwykle tytuły są statycznie w HTML.
+    // gameTitleHorizontal: 'assets/images/GAME_TITLE_HORIZONTAL.png',
+    // gameTitle: 'assets/images/GAME_TITLE.png'
 };
 
 export const baseEnemyStats = {
@@ -141,15 +146,10 @@ export const levelData = [
 
 
 export const waveDefinitionsBase = [
-    // Fala 1: Wprowadzenie Spóźnionego Widza i Krytyka
     { spozniony: {count: 10, level: 1}, krytyk: {count: 4, level: 1}, interval: 95 },
-    // Fala 2: Więcej podstawowych, niektórzy Lvl 2
     { spozniony: {count: 12, level: 1}, krytyk: {count: 6, level: 2}, interval: 90 },
-    // Fala 3: Wprowadzenie Technicznego Sabotażysty, więcej Krytyków Lvl 2
     { spozniony: {count: 10, level: 2}, krytyk: {count: 8, level: 2}, techniczny: {count: 1, level: 1}, interval: 85 },
-    // Fala 4: Wprowadzenie Primadonny, więcej Technicznych
     { spozniony: {count: 12, level: 2}, krytyk: {count: 5, level: 2}, techniczny: {count: 2, level: 1}, diva: {count: 1, level: 1}, interval: 80 },
-    // Fala 5 (BOSS): Więcej wrogów poziomu 2/3, Boss: Primadonna
     { spozniony: {count: 10, level: 3}, krytyk: {count: 8, level: 3}, techniczny: {count: 2, level: 2}, diva: {count: 1, level: 2}, interval: 75, boss: {type: 'diva', level: 2, hpMultiplier: 2.8} }
 ];
 
