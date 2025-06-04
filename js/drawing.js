@@ -30,8 +30,17 @@ export function drawTiledBackground(ctx) {
                             C.TILE_SIZE,
                             C.TILE_SIZE
                         );
+
+                        // Dodatkowe obramowanie dla kafelków ścieżki
+                        const isPathTile = state.currentPath.some(p => p.x === col && p.y === row);
+                        if (isPathTile) {
+                            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // Ciemny, półprzezroczysty obrys
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(tileX_onCanvas + 0.5, tileY_onCanvas + 0.5, C.TILE_SIZE -1, C.TILE_SIZE -1);
+                        }
+
                     } else {
-                        ctx.fillStyle = 'pink'; // Fallback for missing tile data
+                        ctx.fillStyle = 'pink'; 
                         ctx.fillRect(tileX_onCanvas, tileY_onCanvas, C.TILE_SIZE, C.TILE_SIZE);
                     }
                 }
@@ -43,7 +52,7 @@ export function drawTiledBackground(ctx) {
     }
 }
 
-export function drawOldBackgroundAndPath(ctx) { // Fallback rendering
+export function drawOldBackgroundAndPath(ctx) { 
      if (images.tileset && !images.tileset.error && images.tileset.width > 0) {
         for (let row = 0; row < C.ROWS; row++) {
             for (let col = 0; col < C.COLS; col++) {
@@ -56,7 +65,7 @@ export function drawOldBackgroundAndPath(ctx) { // Fallback rendering
             }
         }
     } else {
-        ctx.fillStyle = '#5E7C4B'; // Dark green fallback
+        ctx.fillStyle = '#5E7C4B'; 
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 }
@@ -133,31 +142,63 @@ export function drawSingleEnemy(ctx, enemy) {
         }
         ctx.restore(); 
 
+        // Rysowanie paska HP i poziomu
+        const hpBarYOffset = enemy.y - h / 2 - 8 - 3; // Podniesiono pasek HP, aby zrobić miejsce na ikonki
         if ((enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) && enemy.hp > 0 && !enemy.isDying) {
             const barWidth = C.TILE_SIZE * 0.8;
             const barHeight = 7;
-            const barYOffset = enemy.y - h / 2 - barHeight - 3;
             ctx.fillStyle = 'rgba(255,0,0,0.7)'; 
-            ctx.fillRect(enemy.x - barWidth / 2, barYOffset, barWidth, barHeight);
+            ctx.fillRect(enemy.x - barWidth / 2, hpBarYOffset, barWidth, barHeight);
             ctx.fillStyle = 'rgba(0,255,0,0.7)'; 
-            ctx.fillRect(enemy.x - barWidth / 2, barYOffset, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+            ctx.fillRect(enemy.x - barWidth / 2, hpBarYOffset, barWidth * (enemy.hp / enemy.maxHp), barHeight);
             if (enemy.level > 1) {
-                drawTextWithOutline(ctx, `L${enemy.level}`, enemy.x, barYOffset - 2, C.UI_FONT_TINY, "white", "black");
+                drawTextWithOutline(ctx, `L${enemy.level}`, enemy.x, hpBarYOffset - 2, C.UI_FONT_TINY, "white", "black");
             }
+        }
+
+        // Rysowanie ikon statusu
+        let statusIconXOffset = - (C.TILE_SIZE * 0.25); // Początkowy offset dla pierwszej ikonki
+        const statusIconSize = C.TILE_SIZE * 0.35;
+        const statusIconY = hpBarYOffset - statusIconSize - 2; // Nad paskiem HP
+
+        if (enemy.isSlowed) {
+            const slowIconImg = images.slowStatusIcon;
+            if (slowIconImg && !slowIconImg.error) {
+                ctx.drawImage(slowIconImg, enemy.x + statusIconXOffset - statusIconSize / 2, statusIconY, statusIconSize, statusIconSize);
+            } else { // Placeholder
+                ctx.fillStyle = 'rgba(0, 150, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(enemy.x + statusIconXOffset, statusIconY + statusIconSize / 2, statusIconSize / 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                drawTextWithOutline(ctx, "S", enemy.x + statusIconXOffset, statusIconY + statusIconSize / 1.8, C.UI_FONT_TINY, "white", "black");
+            }
+            statusIconXOffset += statusIconSize + 2; // Przesuń dla następnej ikonki
+        }
+
+        if (enemy.damageTakenMultiplier && enemy.damageTakenMultiplier > 1) {
+            const damageTakenIconImg = images.damageTakenStatusIcon;
+            if (damageTakenIconImg && !damageTakenIconImg.error) {
+                ctx.drawImage(damageTakenIconImg, enemy.x + statusIconXOffset - statusIconSize / 2, statusIconY, statusIconSize, statusIconSize);
+            } else { // Placeholder
+                ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+                 ctx.beginPath();
+                ctx.arc(enemy.x + statusIconXOffset, statusIconY + statusIconSize / 2, statusIconSize / 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                drawTextWithOutline(ctx, "D+", enemy.x + statusIconXOffset, statusIconY + statusIconSize / 1.8, C.UI_FONT_TINY, "white", "black");
+            }
+            // statusIconXOffset += statusIconSize + 2; // Jeśli będą kolejne ikonki
         }
     }
 }
 
 export function drawSingleTower(ctx, tower) {
     ctx.save();
-    // Animacja ulepszenia - chwilowe rozjaśnienie (globalAlpha)
     let displayAlpha = tower.currentAlpha !== undefined ? tower.currentAlpha : 1;
     if (tower.upgradeFlashAlpha !== undefined) {
-        displayAlpha = Math.min(1, displayAlpha + tower.upgradeFlashAlpha); // Dodaj flash, ale nie przekraczaj 1
+        displayAlpha = Math.min(1, displayAlpha + tower.upgradeFlashAlpha); 
     }
     ctx.globalAlpha = displayAlpha;
     
-    // Animacja ulepszenia - "podskok" (currentScale)
     const baseScaleFactor = tower.currentScale !== undefined ? tower.currentScale : 1;
     const upgradeScaleFactor = tower.upgradePulseScale !== undefined ? tower.upgradePulseScale : 1;
     const finalScaleFactor = baseScaleFactor * upgradeScaleFactor;
@@ -203,7 +244,27 @@ export function drawSingleTower(ctx, tower) {
         ctx.globalAlpha = 1.0; 
     }
 
-    if ((displayAlpha > 0.9) && (finalScaleFactor > 0.9)) { // Pokaż tekst tylko jeśli wieża jest w pełni widoczna
+    // Rysowanie paska cooldownu
+    if (!tower.isSabotaged && tower.currentFireRate > 0 && tower.fireCooldown > 0) {
+        const cooldownBarWidth = C.TILE_SIZE * 0.7;
+        const cooldownBarHeight = 5;
+        const cooldownBarY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 15; // Nad tekstem poziomu
+
+        ctx.fillStyle = 'rgba(50, 50, 50, 0.7)';
+        ctx.fillRect(tower.x - cooldownBarWidth / 2, cooldownBarY, cooldownBarWidth, cooldownBarHeight);
+
+        const progress = (tower.currentFireRate - tower.fireCooldown) / tower.currentFireRate;
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.9)'; // Jasnoniebieski dla postępu
+        ctx.fillRect(tower.x - cooldownBarWidth / 2, cooldownBarY, cooldownBarWidth * progress, cooldownBarHeight);
+        
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(tower.x - cooldownBarWidth / 2, cooldownBarY, cooldownBarWidth, cooldownBarHeight);
+        ctx.lineWidth = 1;
+    }
+
+
+    if ((displayAlpha > 0.9) && (finalScaleFactor > 0.9)) { 
         let levelText = `D:${tower.damageLevel || 0}|S:${tower.fireRateLevel || 0}`;
         if (tower.type === 'garderobiana') {
             levelText += `|R:${tower.rangeLevel || 0}|E:${tower.effectStrengthLevel || 0}|T:${tower.effectDurationLevel || 0}`;
@@ -214,13 +275,12 @@ export function drawSingleTower(ctx, tower) {
         drawTextWithOutline(ctx, levelText, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
     }
 
-    // Podświetlenie wybranej wieży - teraz animowane przez GSAP w main.js, ale rysujemy na podstawie wartości z GSAP
     if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
-        const highlightPadding = tower.selectionHighlightPadding !== undefined ? tower.selectionHighlightPadding : 2; // Pobierz padding z animacji
-        const highlightAlpha = tower.selectionHighlightAlpha !== undefined ? tower.selectionHighlightAlpha : 0.9; // Pobierz alpha z animacji
+        const highlightPadding = tower.selectionHighlightPadding !== undefined ? tower.selectionHighlightPadding : 2; 
+        const highlightAlpha = tower.selectionHighlightAlpha !== undefined ? tower.selectionHighlightAlpha : 0.9; 
 
         ctx.strokeStyle = `rgba(255, 215, 0, ${highlightAlpha})`; 
-        ctx.lineWidth = 2; // Grubość ramki może być stała lub też animowana
+        ctx.lineWidth = 2; 
         ctx.strokeRect(
             tower.x - tower.renderSize / 2 - highlightPadding, 
             (tower.y + C.TILE_SIZE / 2 - tower.renderSize) - highlightPadding, 
@@ -229,15 +289,9 @@ export function drawSingleTower(ctx, tower) {
         );
         ctx.lineWidth = 1; 
     }
-
-    // Animacja ulepszenia (reset flagi)
-    if (tower.justUpgraded) {
-        // Animacja jest uruchamiana w main.js, tutaj tylko resetujemy flagę po jej przetworzeniu
-        // lub jeśli animacja jest jednorazowa i zarządzana tutaj.
-        // Dla uproszczenia, reset flagi będzie w main.js po uruchomieniu animacji GSAP.
-    }
 }
 
+// ... (reszta pliku drawing.js bez zmian: drawEnemies, drawTowers, drawProjectiles, drawEffects, drawWaveIntro, drawUI, drawLevelCompleteSummary, drawStyledButton, drawGameOverScreen) ...
 export function drawEnemies(ctx) {
     state.enemies.forEach(enemy => drawSingleEnemy(ctx, enemy));
 }
@@ -336,8 +390,6 @@ export function drawUI(ctx) {
     if (state.selectedTowerForUpgrade) {
         const tower = state.selectedTowerForUpgrade;
         
-        // Animacja zasięgu jest teraz zarządzana przez GSAP w main.js,
-        // ale rysujemy na podstawie wartości z GSAP
         const rangeRadius = tower.animatedRangeRadius !== undefined ? tower.animatedRangeRadius : tower.range;
         const rangeAlpha = tower.animatedRangeAlpha !== undefined ? tower.animatedRangeAlpha : 0.5;
 
@@ -345,7 +397,7 @@ export function drawUI(ctx) {
             ctx.beginPath();
             ctx.arc(tower.x, tower.y, rangeRadius, 0, Math.PI * 2);
             ctx.strokeStyle = `rgba(255, 255, 255, ${rangeAlpha})`;
-            ctx.lineWidth = 2; // Może być stałe lub też animowane
+            ctx.lineWidth = 2; 
             ctx.setLineDash([5, 5]); 
             ctx.stroke();
             ctx.setLineDash([]); 
@@ -519,4 +571,4 @@ function drawStyledButton(ctx, text, centerX, centerY, width, height) {
     ctx.lineWidth = 1; 
 }
 
-export function drawGameOverScreen(ctx) { /* Currently empty, can be used for a dedicated game over canvas screen if needed */ }
+export function drawGameOverScreen(ctx) { /* Currently empty */ }

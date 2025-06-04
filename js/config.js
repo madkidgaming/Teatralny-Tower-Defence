@@ -20,9 +20,8 @@ export const BASE_SIZE_MULTIPLIER = 2.2;
 export const EFFECT_SIZE_MULTIPLIER = 1.0;
 
 export const imageSources = {
-    // Dodano GAME_TITLE.png do śledzenia ładowania
     gameTitle: 'assets/images/GAME_TITLE.png',
-    gameTitleHorizontal: 'assets/images/GAME_TITLE_HORIZONTAL.png', // Zakładam, że ten też jest potrzebny
+    gameTitleHorizontal: 'assets/images/GAME_TITLE_HORIZONTAL.png',
 
     teatrBase: 'assets/images/TEATR.png',
     laserProjectile: 'assets/images/LASER_PROJECTILE.png',
@@ -39,7 +38,12 @@ export const imageSources = {
     budkaInspicjentaProjectile: 'assets/images/BUDKA_INSPICJENTA_PROJECTILE.png',
     divaEnemy: 'assets/images/DIVA.png',
     technicznyEnemy: 'assets/images/TECHNICZNY.png',
-    sabotageEffectIcon: 'assets/images/ZEPSUTA.png'
+    sabotageEffectIcon: 'assets/images/ZEPSUTA.png',
+
+    // Dodane ikonki statusów (na razie z placeholderowymi ścieżkami, jeśli nie masz grafik)
+    // Jeśli masz grafiki, zmień ścieżki np. na 'assets/images/SLOW_ICON.png'
+    slowStatusIcon: 'assets/images/STATUS_SLOW.png', // Przykładowa nazwa pliku
+    damageTakenStatusIcon: 'assets/images/STATUS_DAMAGE_TAKEN.png' // Przykładowa nazwa pliku
 };
 
 export const baseEnemyStats = {
