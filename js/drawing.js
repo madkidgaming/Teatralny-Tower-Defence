@@ -31,10 +31,9 @@ export function drawTiledBackground(ctx) {
                             C.TILE_SIZE
                         );
 
-                        // Dodatkowe obramowanie dla kafelków ścieżki
                         const isPathTile = state.currentPath.some(p => p.x === col && p.y === row);
                         if (isPathTile) {
-                            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // Ciemny, półprzezroczysty obrys
+                            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; 
                             ctx.lineWidth = 1;
                             ctx.strokeRect(tileX_onCanvas + 0.5, tileY_onCanvas + 0.5, C.TILE_SIZE -1, C.TILE_SIZE -1);
                         }
@@ -142,8 +141,7 @@ export function drawSingleEnemy(ctx, enemy) {
         }
         ctx.restore(); 
 
-        // Rysowanie paska HP i poziomu
-        const hpBarYOffset = enemy.y - h / 2 - 8 - 3; // Podniesiono pasek HP, aby zrobić miejsce na ikonki
+        const hpBarYOffset = enemy.y - h / 2 - 8 - 3; 
         if ((enemy.currentAlpha === undefined || enemy.currentAlpha > 0.3) && enemy.hp > 0 && !enemy.isDying) {
             const barWidth = C.TILE_SIZE * 0.8;
             const barHeight = 7;
@@ -156,37 +154,35 @@ export function drawSingleEnemy(ctx, enemy) {
             }
         }
 
-        // Rysowanie ikon statusu
-        let statusIconXOffset = - (C.TILE_SIZE * 0.25); // Początkowy offset dla pierwszej ikonki
+        let statusIconXOffset = - (C.TILE_SIZE * 0.25); 
         const statusIconSize = C.TILE_SIZE * 0.35;
-        const statusIconY = hpBarYOffset - statusIconSize - 2; // Nad paskiem HP
+        const statusIconY = hpBarYOffset - statusIconSize - 2; 
 
         if (enemy.isSlowed) {
             const slowIconImg = images.slowStatusIcon;
             if (slowIconImg && !slowIconImg.error) {
                 ctx.drawImage(slowIconImg, enemy.x + statusIconXOffset - statusIconSize / 2, statusIconY, statusIconSize, statusIconSize);
-            } else { // Placeholder
+            } else { 
                 ctx.fillStyle = 'rgba(0, 150, 255, 0.8)';
                 ctx.beginPath();
                 ctx.arc(enemy.x + statusIconXOffset, statusIconY + statusIconSize / 2, statusIconSize / 2.5, 0, Math.PI * 2);
                 ctx.fill();
                 drawTextWithOutline(ctx, "S", enemy.x + statusIconXOffset, statusIconY + statusIconSize / 1.8, C.UI_FONT_TINY, "white", "black");
             }
-            statusIconXOffset += statusIconSize + 2; // Przesuń dla następnej ikonki
+            statusIconXOffset += statusIconSize + 2; 
         }
 
         if (enemy.damageTakenMultiplier && enemy.damageTakenMultiplier > 1) {
             const damageTakenIconImg = images.damageTakenStatusIcon;
             if (damageTakenIconImg && !damageTakenIconImg.error) {
                 ctx.drawImage(damageTakenIconImg, enemy.x + statusIconXOffset - statusIconSize / 2, statusIconY, statusIconSize, statusIconSize);
-            } else { // Placeholder
+            } else { 
                 ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
                  ctx.beginPath();
                 ctx.arc(enemy.x + statusIconXOffset, statusIconY + statusIconSize / 2, statusIconSize / 2.5, 0, Math.PI * 2);
                 ctx.fill();
                 drawTextWithOutline(ctx, "D+", enemy.x + statusIconXOffset, statusIconY + statusIconSize / 1.8, C.UI_FONT_TINY, "white", "black");
             }
-            // statusIconXOffset += statusIconSize + 2; // Jeśli będą kolejne ikonki
         }
     }
 }
@@ -244,36 +240,90 @@ export function drawSingleTower(ctx, tower) {
         ctx.globalAlpha = 1.0; 
     }
 
-    // Rysowanie paska cooldownu
+    // Rysowanie wskaźnika cooldownu
+    const cooldownBarYBase = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 15; // Bazowa pozycja Y dla wskaźników
+    let currentIndicatorY = cooldownBarYBase;
+
     if (!tower.isSabotaged && tower.currentFireRate > 0 && tower.fireCooldown > 0) {
         const cooldownBarWidth = C.TILE_SIZE * 0.7;
         const cooldownBarHeight = 5;
-        const cooldownBarY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 15; // Nad tekstem poziomu
-
+        
         ctx.fillStyle = 'rgba(50, 50, 50, 0.7)';
-        ctx.fillRect(tower.x - cooldownBarWidth / 2, cooldownBarY, cooldownBarWidth, cooldownBarHeight);
+        ctx.fillRect(tower.x - cooldownBarWidth / 2, currentIndicatorY, cooldownBarWidth, cooldownBarHeight);
 
         const progress = (tower.currentFireRate - tower.fireCooldown) / tower.currentFireRate;
-        ctx.fillStyle = 'rgba(100, 180, 255, 0.9)'; // Jasnoniebieski dla postępu
-        ctx.fillRect(tower.x - cooldownBarWidth / 2, cooldownBarY, cooldownBarWidth * progress, cooldownBarHeight);
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.9)'; 
+        ctx.fillRect(tower.x - cooldownBarWidth / 2, currentIndicatorY, cooldownBarWidth * progress, cooldownBarHeight);
         
         ctx.strokeStyle = 'rgba(0,0,0,0.5)';
         ctx.lineWidth = 0.5;
-        ctx.strokeRect(tower.x - cooldownBarWidth / 2, cooldownBarY, cooldownBarWidth, cooldownBarHeight);
+        ctx.strokeRect(tower.x - cooldownBarWidth / 2, currentIndicatorY, cooldownBarWidth, cooldownBarHeight);
         ctx.lineWidth = 1;
+        currentIndicatorY -= (cooldownBarHeight + 3); // Przesuń Y dla następnego wskaźnika (poziomu)
     }
 
 
-    if ((displayAlpha > 0.9) && (finalScaleFactor > 0.9)) { 
-        let levelText = `D:${tower.damageLevel || 0}|S:${tower.fireRateLevel || 0}`;
-        if (tower.type === 'garderobiana') {
-            levelText += `|R:${tower.rangeLevel || 0}|E:${tower.effectStrengthLevel || 0}|T:${tower.effectDurationLevel || 0}`;
-        } else if (tower.type === 'budkaInspicjenta') {
-            levelText += `|C:${tower.critChanceLevel || 0}`;
-        }
-        const textDrawY = tower.y + C.TILE_SIZE / 2 - tower.renderSize - 6;
-        drawTextWithOutline(ctx, levelText, tower.x, textDrawY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)");
+    // Rysowanie wskaźników poziomu ulepszeń
+    if ((displayAlpha > 0.9) && (finalScaleFactor > 0.9) && tower.definition && tower.definition.upgradeLevelNames) {
+        const pipRadius = 2.5;
+        const pipSpacing = 2; // Odstęp między środkami pipów
+        const pipDiameter = pipRadius * 2;
+        const totalPipSpacing = pipDiameter + pipSpacing;
+        const prefixSpacing = 3;
+        const lineHeight = 8; // Odstęp między liniami wskaźników ulepszeń
+
+        let indicatorLineY = currentIndicatorY; // Zacznij od pozycji Y paska cooldownu lub wyżej
+
+        tower.definition.upgradeLevelNames.forEach((upgradeKey, index) => {
+            const currentLevel = tower[`${upgradeKey}Level`] || 0;
+            const upgradesForType = tower.definition.upgrades[upgradeKey];
+            if (!upgradesForType) return; // Pomiń, jeśli nie ma definicji ulepszeń dla tego klucza
+            
+            const maxLevel = upgradesForType.length;
+            if (maxLevel === 0) return; // Pomiń, jeśli nie ma poziomów dla tego ulepszenia
+
+            let prefix = "";
+            switch(upgradeKey) {
+                case 'damage': prefix = "D"; break;
+                case 'fireRate': prefix = "S"; break; // Speed/Szybkostrzelność
+                case 'range': prefix = "R"; break;
+                case 'effectStrength': prefix = "E"; break;
+                case 'effectDuration': prefix = "T"; break; // Time/Czas
+                case 'critChance': prefix = "C"; break;
+                default: prefix = upgradeKey.charAt(0).toUpperCase(); break;
+            }
+            prefix += ":";
+
+            // Rysowanie prefixu
+            ctx.font = C.UI_FONT_TINY;
+            ctx.fillStyle = "#FFF";
+            ctx.textAlign = "left"; // Wyrównanie do lewej dla prefixu
+            const prefixWidth = ctx.measureText(prefix).width;
+            const totalPipsWidth = maxLevel * pipDiameter + (maxLevel > 0 ? (maxLevel - 1) * pipSpacing : 0);
+            const totalIndicatorWidth = prefixWidth + prefixSpacing + totalPipsWidth;
+            let startX = tower.x - totalIndicatorWidth / 2;
+
+            drawTextWithOutline(ctx, prefix, startX, indicatorLineY, C.UI_FONT_TINY, "#FFF", "rgba(0,0,0,0.8)", 2, "left");
+            
+            // Rysowanie pipów
+            let pipX = startX + prefixWidth + prefixSpacing + pipRadius;
+            for (let i = 0; i < maxLevel; i++) {
+                ctx.beginPath();
+                ctx.arc(pipX, indicatorLineY - pipRadius, pipRadius, 0, Math.PI * 2);
+                if (i < currentLevel) {
+                    ctx.fillStyle = "#ffd700"; // Złoty dla zdobytych
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = "#AAA"; // Szary obrys dla pustych
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                pipX += totalPipSpacing;
+            }
+            indicatorLineY -= lineHeight; // Przesuń Y dla następnej linii wskaźnika
+        });
     }
+
 
     if (state.selectedTowerForUpgrade && state.selectedTowerForUpgrade.id === tower.id) {
         const highlightPadding = tower.selectionHighlightPadding !== undefined ? tower.selectionHighlightPadding : 2; 
@@ -291,7 +341,7 @@ export function drawSingleTower(ctx, tower) {
     }
 }
 
-// ... (reszta pliku drawing.js bez zmian: drawEnemies, drawTowers, drawProjectiles, drawEffects, drawWaveIntro, drawUI, drawLevelCompleteSummary, drawStyledButton, drawGameOverScreen) ...
+// ... (reszta pliku drawing.js bez zmian) ...
 export function drawEnemies(ctx) {
     state.enemies.forEach(enemy => drawSingleEnemy(ctx, enemy));
 }
