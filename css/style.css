@@ -22,32 +22,29 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Tło główne (kurtyna) wraca na body */
     background-image: url('../assets/images/BACKGROUND_LEVELS.png'); 
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
     background-attachment: fixed; 
-    background-color: #1a0505; /* Kolor tła, jeśli obrazek się nie załaduje */
+    background-color: #1a0505; 
     color: #e0c9a6;
     font-size: 1em;
     position: relative; 
 }
 
-/* Styl dla kontenera particles.js */
 #particles-js {
     position: fixed; 
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
-    z-index: 1; /* Warstwa cząsteczek nad tłem body, ale pod resztą UI */
-    background-color: transparent; /* Kontener cząsteczek jest przezroczysty */
+    z-index: 1; 
+    background-color: transparent; 
 }
 
-/* Styl dla płótna (canvas) generowanego przez particles.js */
 #particles-js > .particles-js-canvas-el {
-    background-color: transparent !important; /* Wymuszenie przezroczystego tła dla samego płótna cząsteczek */
+    background-color: transparent !important; 
 }
 
 
@@ -55,11 +52,11 @@ h1#pageTitle {
     display: none; 
     font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Subtelniejszy cień */
     margin: 15px 0 20px 0;
-    font-size: 2.8em;
+    font-size: 2.6em; /* Lekka korekta */
     text-align: center;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px; 
     position: relative; 
     z-index: 5; 
 }
@@ -74,8 +71,8 @@ h1#pageTitle {
 }
 #gameHorizontalTitleContainer img {
     display: block; 
-    max-width: 90vw; 
-    max-height: 10vh; 
+    max-width: 85vw; /* Lekkie zmniejszenie dla marginesu */
+    max-height: 9vh; 
     width: auto; 
     height: auto; 
 }
@@ -86,43 +83,44 @@ h1#pageTitle {
     flex-direction: row; 
     align-items: flex-start; 
     justify-content: center; 
-    gap: 20px; 
+    gap: 25px; /* Zwiększony odstęp */
     width: 100%; 
-    max-width: 95vw; 
+    max-width: 96vw; /* Zwiększenie dla lepszego wykorzystania przestrzeni */
     margin: 0 auto; 
-    padding-top: 15vh; 
-    padding-bottom: 5vh; 
+    padding-top: 14vh; /* Lekka korekta */
+    padding-bottom: 4vh; 
     box-sizing: border-box;
     position: relative; 
-    z-index: 10; /* Główne elementy gry są nad warstwą #particles-js */
+    z-index: 10; 
 }
 
+/* Modernizacja paneli UI */
 #leftUiPanel, #rightUiPanel {
-    background-color: rgba(30, 5, 5, 0.88); 
-    padding: 18px; 
-    border: 2px solid #b8860b;
-    border-radius: 12px; 
-    box-shadow: 0 5px 15px rgba(0,0,0,0.65), inset 0 0 10px rgba(0,0,0,0.35);
+    background-color: rgba(26, 5, 5, 0.92); /* Ciemniejsze, bardziej jednolite tło */
+    padding: 20px; 
+    border: 1px solid #b8860b; /* Subtelniejsza ramka */
+    border-radius: 10px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 0 8px rgba(0,0,0,0.25); /* Zmieniony cień */
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px; /* Zwiększony odstęp */
     color: #e0c9a6;
-    max-height: 78vh; 
+    max-height: 75vh; /* Lekka korekta */
     overflow-y: auto; 
     position: relative; 
     z-index: 11; 
 }
 
 #leftUiPanel {
-    min-width: 220px; 
-    max-width: 280px;
+    min-width: 230px; 
+    max-width: 290px;
 }
 
 #rightUiPanel {
-    min-width: 240px; 
-    max-width: 300px;
+    min-width: 250px; 
+    max-width: 310px;
 }
 
 #gameCanvasContainer {
@@ -134,20 +132,20 @@ h1#pageTitle {
     z-index: 5; 
 }
 
-canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
-    border: 4px solid #800020;
-    box-shadow: 0 0 20px rgba(255,215,0,0.3), inset 0 0 10px rgba(0,0,0,0.4);
+canvas#gameCanvas { 
+    border: 3px solid #7a001c; /* Ciemniejsza, mniej intensywna ramka */
+    box-shadow: 0 0 15px rgba(255,215,0,0.25), inset 0 0 8px rgba(0,0,0,0.3); /* Subtelniejszy cień */
     cursor: default;
-    background-color: #3d291a; 
-    border-radius: 4px;
+    background-color: #332211; /* Ciemniejsze tło canvasa */
+    border-radius: 6px; /* Dopasowanie do paneli */
     position: relative; 
     z-index: 2; 
 }
 
 #inGameUI {
-    margin-top: 12px; 
+    margin-top: 15px; /* Zwiększony odstęp */
     display: flex;
-    gap: 12px;
+    gap: 15px; /* Zwiększony odstęp */
     width: 100%;
     justify-content: center;
     position: relative;
@@ -156,37 +154,38 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 
 #inGameUI .ui-button {
     width: auto;
-    min-width: 120px; 
-    padding: 10px 22px;
-    font-size: 1em;
+    min-width: 130px; 
+    padding: 12px 25px; /* Większy padding */
+    font-size: 1.05em; 
 }
 
 .ui-panel-section h3 {
     font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
-    margin-bottom: 12px; 
-    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-    padding-bottom: 8px; 
-    font-size: 1.5em;
+    margin-bottom: 15px; /* Zwiększony odstęp */
+    border-bottom: 1px solid rgba(255, 215, 0, 0.25); /* Subtelniejszy separator */
+    padding-bottom: 10px; 
+    font-size: 1.4em; /* Lekka korekta */
     text-align: left;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px; 
     text-transform: uppercase;
 }
 
+/* Modernizacja przycisków */
 .ui-button { 
-    background: linear-gradient(to bottom, #b8860b, #8c6c0a);
+    background-color: #8c6c0a; /* Bardziej jednolity kolor bazowy */
     color: #ffffff;
     border: 1px solid #5c400a;
-    padding: 10px 15px;
+    padding: 12px 18px; /* Zwiększony padding */
     font-family: 'Jersey10-Regular', 'Merriweather', serif;
-    font-size: 1em;
+    font-size: 1.05em; 
     font-weight: normal; 
     cursor: pointer;
-    border-radius: 6px;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-    transition: all 0.2s ease-out;
+    border-radius: 8px; /* Większe zaokrąglenie */
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15); /* Subtelniejszy cień */
+    transition: background-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.15s ease-out;
     width: 100%;
     box-sizing: border-box;
     text-align: center;
@@ -196,29 +195,30 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 }
 
 .ui-button:hover {
-    background: linear-gradient(to bottom, #daa520, #b8860b);
-    border-color: #ffd700;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+    background-color: #a07c1a; /* Jaśniejszy odcień przy najechaniu */
+    border-color: #b8860b;
+    box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 .ui-button:active {
     transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 2px rgba(0,0,0,0.2);
+    background-color: #7a5f0a; /* Ciemniejszy przy kliknięciu */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 2px rgba(0,0,0,0.15);
 }
 
 .ui-button.disabled {
-    background: #4a3b2a !important;
-    color: #7a6854 !important;
+    background-color: #504231 !important; /* Bardziej stonowany kolor dla nieaktywnych */
+    color: #8a7c6a !important;
     cursor: not-allowed !important;
-    border-color: #3b2e1e !important;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3) !important;
+    border-color: #403526 !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
     transform: none !important;
 }
 
 .panel-stat {
-    font-size: 1.1em;
-    margin-bottom: 8px;
-    line-height: 1.4;
+    font-size: 1.05em; 
+    margin-bottom: 10px; /* Zwiększony odstęp */
+    line-height: 1.5;
 }
 
 .panel-stat strong {
@@ -227,17 +227,17 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 }
 
 #uiMessages {
-    min-height: 50px;
-    background: rgba(0,0,0,0.3);
-    padding: 8px 10px;
-    border-radius: 5px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    color: #ffd700;
+    min-height: 55px; /* Lekka korekta */
+    background: rgba(10, 2, 2, 0.6); /* Ciemniejsze, bardziej stonowane tło */
+    padding: 10px 15px; /* Zwiększony padding */
+    border-radius: 6px;
+    border: 1px solid rgba(255, 215, 0, 0.15); /* Subtelniejsza ramka */
+    color: #f0e0c0; /* Jaśniejszy tekst dla lepszego kontrastu */
     font-weight: normal; 
-    transition: opacity 0.4s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
     opacity: 0;
-    font-size: 1em;
-    line-height: 1.3;
+    font-size: 1em; 
+    line-height: 1.4;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -249,93 +249,94 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 .tower-buy-button {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px; /* Zwiększony odstęp */
     justify-content: flex-start;
     text-align: left;
-    padding: 8px 10px;
-    font-size: 0.95em;
+    padding: 10px 12px; /* Dopasowany padding */
+    font-size: 1em; 
 }
 
 .tower-buy-button img {
-    width: 30px;
-    height: 30px;
+    width: 32px; /* Lekko większe ikony */
+    height: 32px;
     object-fit: contain;
     vertical-align: middle;
     flex-shrink: 0;
-    border-radius: 3px;
-    background: rgba(0,0,0,0.1);
-    padding: 2px;
+    border-radius: 4px; /* Dopasowanie do przycisków */
+    background: rgba(0,0,0,0.15);
+    padding: 3px;
 }
 
 .tower-buy-button .cost {
     margin-left: auto;
-    padding-left: 8px;
-    font-size: 0.9em; 
-    color: #e0c9a6;
+    padding-left: 10px;
+    font-size: 0.95em; 
+    color: #d0bfa6; /* Lepszy kontrast */
 }
 
 .tower-buy-button.selected-for-build {
-    background: linear-gradient(to bottom, #e8b530, #c8860b) !important;
-    border-color: #fff0a0 !important;
-    box-shadow: 0 0 10px rgba(255, 223, 100, 0.8), inset 0 1px 0 rgba(255,255,255,0.3) !important;
-    color: #331a00 !important;
+    background-color: #c8860b !important; /* Wyraźniejszy kolor zaznaczenia */
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    color: #fff !important;
 }
 
 .tower-buy-button.selected-for-build .cost {
-    color: #4d2a00;
+    color: #ffe080; /* Jaśniejszy koszt przy zaznaczeniu */
 }
 
+/* Modernizacja ekranów menu */
 .menu-screen { 
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 600px;
+    max-width: 650px; /* Lekko szersze menu */
     margin: 30px auto 0 auto;
-    background-color: rgba(30, 10, 10, 0.92);
+    background-color: rgba(20, 5, 5, 0.95); /* Ciemniejsze, bardziej nasycone tło */
     color: white;
     z-index: 30; 
-    padding: 30px;
+    padding: 35px; /* Zwiększony padding */
     box-sizing: border-box;
     text-align: center;
-    border-radius: 12px;
-    border: 2px solid #b8860b;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+    border-radius: 12px; 
+    border: 1px solid #b8860b; /* Subtelniejsza ramka */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6); /* Głębszy cień */
     position: relative; 
 }
 .menu-screen h2 { 
     font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+    margin-bottom: 35px; /* Zwiększony odstęp */
+    font-size: 2.3em; /* Lekka korekta */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     text-transform: uppercase;
 }
 .menu-screen button { 
     font-family: 'Jersey10-Regular', 'Merriweather', serif;
-    background: linear-gradient(to bottom, #b8860b, #8c6c0a);
+    background-color: #8c6c0a; /* Zmieniono z gradientu */
     color: #ffffff;
     border: 1px solid #5c400a;
-    padding: 10px 15px;
-    font-size: 1.1em;
+    padding: 12px 18px;
+    font-size: 1.15em; 
     font-weight: normal; 
     cursor: pointer;
-    border-radius: 6px;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-    transition: all 0.2s ease-out;
+    border-radius: 8px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+    transition: background-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.15s ease-out;
     width: auto;
-    min-width: 180px;
-    margin-top: 10px;
-    padding: 10px 25px;
+    min-width: 200px; /* Zwiększona minimalna szerokość */
+    margin-top: 12px; /* Zwiększony odstęp */
+    padding: 12px 28px; /* Zwiększony padding */
     text-transform: uppercase;
 }
 .menu-screen button:hover {
-    background: linear-gradient(to bottom, #daa520, #b8860b);
-    border-color: #ffd700;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+    background-color: #a07c1a;
+    border-color: #b8860b;
+    box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 #mainMenu.menu-screen { 
@@ -367,41 +368,41 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     flex-direction: column;
     align-items: center; 
     width: auto;
-    max-width: 33vw; 
-    padding: 20px; 
+    max-width: 35vw; /* Lekko zwiększone */
+    padding: 25px; 
     box-sizing: border-box;
 }
 
 #gameTitleImage { 
     width: 100%; 
-    max-width: 400px; 
+    max-width: 420px; /* Lekko zwiększone */
     height: auto; 
-    margin-bottom: 35px; 
+    margin-bottom: 40px; /* Zwiększony odstęp */
 }
 
 .main-menu-buttons {
     display: flex;
     flex-direction: column;
-    gap: 18px; 
+    gap: 20px; /* Zwiększony odstęp */
     align-items: center; 
     width: 100%; 
 }
 
 .main-menu-button { 
-    background-color: #7a501a; 
-    color: #f0e0c0; 
+    background-color: #704815; /* Ciemniejszy, bardziej stonowany brąz */
+    color: #f5e5d0; /* Jaśniejszy tekst */
     font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
-    font-size: 1.4em;
+    font-size: 1.3em; /* Lekka korekta */
     font-weight: normal;
-    padding: 10px 20px; 
-    border: 2px solid #4d3110; 
-    border-radius: 6px; 
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.6); 
-    box-shadow: 0px 3px 0px #4d3110, 0px 3px 5px rgba(0,0,0,0.3); 
+    padding: 12px 22px; 
+    border: 1px solid #402808; /* Ciemniejsza ramka */
+    border-radius: 8px; 
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5); 
+    box-shadow: 0px 2px 0px #402808, 0px 2px 4px rgba(0,0,0,0.25); /* Subtelniejszy cień */
     cursor: pointer;
     transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out;
     width: 100%; 
-    max-width: 280px; 
+    max-width: 300px; /* Zwiększona szerokość */
     box-sizing: border-box;
     text-align: center;
     outline: none;
@@ -409,15 +410,15 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 }
 
 .main-menu-button:hover {
-    background-color: #8c602c; 
-    border-color: #5e3c18;
-    box-shadow: 0px 4px 0px #5e3c18, 0px 4px 7px rgba(0,0,0,0.3);
+    background-color: #855820; 
+    border-color: #50300c;
+    box-shadow: 0px 3px 0px #50300c, 0px 3px 6px rgba(0,0,0,0.3);
     transform: translateY(-1px);
 }
 
 .main-menu-button:active {
-    background-color: #694616;
-    box-shadow: 0px 1px 0px #3c250b, 0px 1px 3px rgba(0,0,0,0.4);
+    background-color: #604010;
+    box-shadow: 0px 1px 0px #302005, 0px 1px 2px rgba(0,0,0,0.35);
     transform: translateY(1px);
 }
 
@@ -426,7 +427,7 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     color: #8b7d6b !important;
     cursor: not-allowed !important;
     border-color: #3b2e1e !important;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,0.5) !important; 
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4) !important; 
     text-shadow: none !important;
     transform: none !important;
 }
@@ -434,24 +435,24 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 
 #mainMenu #saveStatusMainMenu {
     position: absolute;
-    bottom: 70px; 
+    bottom: 75px; /* Lekko wyżej */
     left: 50%;
     transform: translateX(-50%);
     color: #f0e0c0; 
-    font-size: 1em;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    background-color: rgba(0,0,0,0.4);
-    padding: 6px 12px;
-    border-radius: 5px;
+    font-size: 0.95em; 
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    background-color: rgba(0,0,0,0.5); /* Ciemniejsze tło dla lepszej czytelności */
+    padding: 8px 14px; /* Zwiększony padding */
+    border-radius: 6px;
 }
 
 #mainMenu .copyright-text {
     position: absolute;
-    bottom: 10px; 
-    left: 15px;   
-    font-size: 0.8em;
-    color: rgba(255, 255, 255, 0.6); 
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.9);
+    bottom: 12px; 
+    left: 18px;   
+    font-size: 0.85em; 
+    color: rgba(255, 255, 255, 0.65); 
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
 }
 
 #pauseMenu.menu-screen {
@@ -461,37 +462,37 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     transform: translate(-50%, -50%);
     margin-top: 0;
     width: auto;
-    min-width: 360px;
-    max-width: 500px;
+    min-width: 380px; /* Szersze menu pauzy */
+    max-width: 520px;
     z-index: 110; 
 }
 
 #levelSelectionContainer { 
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 18px; /* Zwiększony odstęp */
     justify-content: center;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 30px; /* Zwiększony odstęp */
     width: 100%;
 }
 
 .level-button {
-    background: linear-gradient(to bottom, #8B4513, #6a3005);
+    background-color: #7a501a; /* Zmieniono z gradientu */
     color: #ffebb3;
-    border: 2px solid #4d2103;
-    padding: 15px 20px;
-    font-size: 1.2em;
+    border: 1px solid #4d3110; /* Subtelniejsza ramka */
+    padding: 16px 22px; /* Zwiększony padding */
+    font-size: 1.15em; 
     font-family: 'Jersey10-Regular', 'Merriweather', serif; 
     font-weight: normal;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 10px; /* Większe zaokrąglenie */
     text-align: left;
-    min-width: 320px;
+    min-width: 340px; /* Szersze przyciski */
     max-width: 95%;
     width: auto;
     box-sizing: border-box;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1); /* Zmieniony cień */
     transition: all 0.2s ease-out;
     display: flex;
     justify-content: space-between;
@@ -500,22 +501,22 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 }
 
 .level-button:hover:not(.locked) {
-    background: linear-gradient(to bottom, #a0522d, #803c15);
+    background-color: #8c602c;
     border-color: #b8860b;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .level-button:active:not(.locked) {
     transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(0,0,0,0.1);
 }
 
 .level-button.locked {
-    background: linear-gradient(to bottom, #5a4f3a, #4a3f2a) !important;
-    color: #9c8e79 !important;
+    background-color: #504231 !important; 
+    color: #8a7c6a !important;
     cursor: not-allowed !important;
-    border-color: #3d2e1e !important;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4) !important;
+    border-color: #403526 !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
     transform: none !important;
 }
 
@@ -523,11 +524,11 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     font-size: 1em; 
     font-weight: normal;
     color: #ffebb3;
-    margin-right: 8px;
+    margin-right: 10px;
 }
 
 .level-button .level-progress {
-    font-size: 0.85em; 
+    font-size: 0.8em; 
     color: #d0bfa6;
     white-space: nowrap;
 }
@@ -536,13 +537,11 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     color: #8c7566;
 }
 
-#saveStatusMainMenu { 
-}
 #saveStatusLevelSelection { 
     font-style: italic;
-    color: #a08c76;
-    font-size: 0.9em;
-    margin-top: 20px;
+    color: #b09c86; /* Jaśniejszy dla lepszej czytelności */
+    font-size: 0.95em; 
+    margin-top: 25px;
 }
 
 
@@ -550,20 +549,21 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     display: none !important;
 }
 
+/* Modernizacja modala */
 .custom-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(10, 2, 2, 0.8); /* Ciemniejsze, bardziej nasycone tło */
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000; 
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.25s ease-in-out;
 }
 
 .custom-modal-overlay.visible {
@@ -572,17 +572,17 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
 }
 
 .custom-modal-box {
-    background-color: rgba(40, 15, 10, 0.96); 
-    padding: 25px 35px;
+    background-color: rgba(30, 10, 10, 0.98); 
+    padding: 30px 40px; /* Zwiększony padding */
     border-radius: 10px;
-    border: 2px solid #b8860b;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    border: 1px solid #b8860b; /* Subtelniejsza ramka */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Głębszy cień */
     color: #e0c9a6;
     text-align: center;
-    min-width: 320px;
-    max-width: 450px;
-    transform: scale(0.9);
-    transition: transform 0.3s ease-in-out;
+    min-width: 340px; /* Szerszy modal */
+    max-width: 480px;
+    transform: scale(0.95);
+    transition: transform 0.25s ease-in-out;
     font-family: 'Jersey10-Regular', 'Merriweather', serif;
 }
 
@@ -594,37 +594,37 @@ canvas#gameCanvas { /* Dodano #gameCanvas dla specyficzności */
     font-family: 'Jersey10-Regular', 'Cinzel Decorative', cursive;
     color: #ffd700;
     margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.8em;
+    margin-bottom: 18px; /* Zwiększony odstęp */
+    font-size: 1.7em; /* Lekka korekta */
     text-transform: uppercase;
 }
 
 .custom-modal-box p {
-    font-size: 1.1em;
-    line-height: 1.5;
-    margin-bottom: 25px;
+    font-size: 1.05em; 
+    line-height: 1.6; /* Lepsza czytelność */
+    margin-bottom: 30px; /* Zwiększony odstęp */
 }
 
 .custom-modal-buttons {
     display: flex;
-    justify-content: space-around;
-    gap: 15px;
+    justify-content: space-around; /* Lub space-evenly dla lepszego rozłożenia */
+    gap: 18px; /* Zwiększony odstęp */
 }
 
 .custom-modal-buttons .ui-button {
-    min-width: 100px;
-    padding: 8px 18px;
-    font-size: 1em;
+    min-width: 110px; /* Większe przyciski w modalu */
+    padding: 10px 20px;
+    font-size: 1em; 
 }
 
 .custom-modal-buttons .ui-button.cancel {
-    background: linear-gradient(to bottom, #787878, #505050);
-    border-color: #404040;
+    background-color: #666; /* Bardziej neutralny szary */
+    border-color: #444;
 }
 
 .custom-modal-buttons .ui-button.cancel:hover {
-    background: linear-gradient(to bottom, #8c8c8c, #606060);
-    border-color: #707070;
+    background-color: #777;
+    border-color: #555;
 }
 
 #levelCompleteScreen { } 

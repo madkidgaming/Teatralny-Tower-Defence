@@ -38,9 +38,8 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.currentPath = JSON.parse(JSON.stringify(level.path));
     state.currentTowerSpots = C.levelData[state.currentLevelIndex].towerSpots.map(spot => ({...spot, occupied: false}));
 
-    // ZMIANA BALANSU: Zwiększenie początkowego Aplauzu
     state.aplauz = (325 + state.currentLevelIndex * 85) + state.currentAplauzBonusForNextLevel;
-    state.currentAplauzBonusForNextLevel = 0; // Resetuj bonus po jego dodaniu
+    state.currentAplauzBonusForNextLevel = 0; 
 
     state.maxZadowolenieWidowni = 100;
     state.zadowolenieWidowni = state.maxZadowolenieWidowni;
@@ -275,6 +274,13 @@ export function buildTower(spotXGrid, spotYGrid, type) {
             renderSize: definition.renderSize,
             currentScale: 0.1, currentAlpha: 0, currentRotation: -45, isAnimatingIn: true, 
             isSabotaged: false, sabotageTimer: 0,
+            justUpgraded: false, // Dodano flagę
+            upgradeFlashAlpha: 0, // Dla animacji GSAP
+            upgradePulseScale: 1, // Dla animacji GSAP
+            animatedRangeRadius: definition.range, // Dla animacji GSAP
+            animatedRangeAlpha: 0.5, // Dla animacji GSAP
+            selectionHighlightAlpha: 0.9, // Dla animacji GSAP
+            selectionHighlightPadding: 2, // Dla animacji GSAP
         };
         if (type === 'budkaInspicjenta') {
             newTower.critChance = definition.critChance;
@@ -300,7 +306,7 @@ export function buildTower(spotXGrid, spotYGrid, type) {
 export function upgradeTower(tower, upgradeKey) {
     if (!tower || !tower.definition.upgrades || !tower.definition.upgrades[upgradeKey]) {
         showMessage(state, "Błąd: Nieprawidłowy typ ulepszenia dla tej wieży.", 120);
-        return;
+        return false; // Zwróć false przy błędzie
     }
 
     const upgradesForType = tower.definition.upgrades[upgradeKey]; 
@@ -325,6 +331,7 @@ export function upgradeTower(tower, upgradeKey) {
                 tower.currentFireRate = Math.max(10, tower.currentFireRate + upgradeData.value);
             } else if (upgradeKey === 'range' && tower.type === 'garderobiana') { 
                 tower.range += upgradeData.value;
+                tower.animatedRangeRadius = tower.range; // Zaktualizuj też animowany zasięg
             } else if (upgradeKey === 'effectStrength' && tower.type === 'garderobiana') {
                 tower.debuffStats.slowFactor = Math.max(0.1, tower.debuffStats.slowFactor - upgradeData.slowFactorReduction);
                 tower.debuffStats.damageTakenMultiplier += upgradeData.damageTakenIncrease;
@@ -335,14 +342,18 @@ export function upgradeTower(tower, upgradeKey) {
             }
             
             tower[currentLevelKey]++; 
+            tower.justUpgraded = true; // Ustaw flagę dla animacji
 
             showMessage(state, `${tower.definition.name} ulepszona (${upgradeKey})!`, 90);
             saveGameProgress(state);
+            return true; // Zwróć true przy sukcesie
         } else {
             showMessage(state, "Za mało Aplauzu na to ulepszenie!", 120);
+            return false;
         }
     } else {
         showMessage(state, "Wieża osiągnęła maksymalny poziom tego ulepszenia.", 120);
+        return false;
     }
 }
 
@@ -750,7 +761,6 @@ export function startNextWaveActual() {
     const waveIndexForDefinition = Math.min(state.currentWaveNumber, C.waveDefinitionsBase.length - 1);
     const waveData = JSON.parse(JSON.stringify(C.waveDefinitionsBase[waveIndexForDefinition])); 
     
-    // ZMIANA BALANSU: Zwiększenie współczynnika skalowania trudności fal
     const difficultyScale = 1 + (state.currentWaveNumber) * 0.045 + state.currentLevelIndex * 0.015;
     state.currentWaveSpawns = []; 
 
