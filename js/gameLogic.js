@@ -4,16 +4,15 @@ import { gameState as state, images } from './state.js';
 import { showMessage } from './utils.js';
 import { saveGameProgress } from './storage.js';
 
-// Funkcja pomocnicza do obliczania wartości sprzedaży wieży (używana w completeLevel i sellTower)
+// Funkcja pomocnicza do obliczania wartości sprzedaży wieży
 function calculateTowerSellValue(towerInstance) {
     if (!towerInstance) return 0;
 
     const towerDef = C.towerDefinitions[towerInstance.type];
     if (!towerDef) return 0;
 
-    let sellValue = Math.floor(towerDef.cost * 0.75); // 75% kosztu bazowego
+    let sellValue = Math.floor(towerDef.cost * 0.75); 
 
-    // Dodaj 50% kosztu ulepszeń
     towerDef.upgradeLevelNames?.forEach(upgradeName => {
         const levelKey = `${upgradeName}Level`;
         const currentUpgradeLevel = towerInstance[levelKey] || 0;
@@ -37,13 +36,11 @@ export function setupLevel(levelIdx, startFromWave = 0) {
         return;
     }
     state.currentPath = JSON.parse(JSON.stringify(level.path));
-    // Resetujemy 'occupied' dla towerSpots przy ładowaniu poziomu z configu,
-    // bo config.js ma je pre-mapowane z occupied: false, ale chcemy świeżą kopię za każdym razem.
     state.currentTowerSpots = C.levelData[state.currentLevelIndex].towerSpots.map(spot => ({...spot, occupied: false}));
 
-
-    state.aplauz = (250 + state.currentLevelIndex * 75) + state.currentAplauzBonusForNextLevel;
-    state.currentAplauzBonusForNextLevel = 0;
+    // ZMIANA BALANSU: Zwiększenie początkowego Aplauzu
+    state.aplauz = (325 + state.currentLevelIndex * 85) + state.currentAplauzBonusForNextLevel;
+    state.currentAplauzBonusForNextLevel = 0; // Resetuj bonus po jego dodaniu
 
     state.maxZadowolenieWidowni = 100;
     state.zadowolenieWidowni = state.maxZadowolenieWidowni;
@@ -56,7 +53,7 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     state.enemies.length = 0;
     state.towers.length = 0;
     state.projectiles.length = 0;
-    state.effects.length = 0; // state.effects jest inicjalizowane jako [] w state.js
+    state.effects.length = 0;
     state.gameOver = false;
     state.waveInProgress = false;
     state.showingWaveIntro = false;
@@ -91,10 +88,9 @@ export function setupLevel(levelIdx, startFromWave = 0) {
                 tileData = C.pathVariants[Math.floor(Math.random() * C.pathVariants.length)];
             } else {
                 const rand = Math.random();
-                if (rand < 0.75) { // 75% szans na trawę podstawową
+                if (rand < 0.75) { 
                     tileData = C.tileTypes.GRASS_BASIC;
                 } else {
-                    // Pozostałe 25% na dekoracyjną trawę
                     const decorativeGrass = [
                         C.tileTypes.GRASS_FLOWER_YELLOW,
                         C.tileTypes.GRASS_FLOWER_WHITE,
@@ -111,8 +107,6 @@ export function setupLevel(levelIdx, startFromWave = 0) {
     showMessage(state, `Akt ${state.currentLevelIndex + 1}${level.name ? ': ' + level.name : ''}!`, 120);
 
     const currentLevelProg = state.levelProgress[state.currentLevelIndex];
-    // Jeśli zaczynamy od fali 0 I (nie ma progresu LUB progres to -1 (nowy poziom) LUB poziom został ukończony)
-    // to ustawiamy progres na -1, co oznacza, że gramy poziom od nowa bez kontynuacji.
     if (startFromWave === 0 && (currentLevelProg === undefined || currentLevelProg === -1 || currentLevelProg >= C.WAVES_PER_LEVEL)) {
         state.levelProgress[state.currentLevelIndex] = -1;
     }
@@ -128,7 +122,7 @@ export function spawnEnemy(type, level = 1) {
         x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2,
         y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
         hp: baseStats.baseHp * level, maxHp: baseStats.baseHp * level,
-        speed: baseStats.speed * (1 - (level - 1) * 0.05), // Lekkie zmniejszenie prędkości z poziomem (0.05 na poziom)
+        speed: baseStats.speed * (1 - (level - 1) * 0.05), 
         currentSpeed: baseStats.speed * (1 - (level - 1) * 0.05),
         pathIndex: 0,
         image: img, width: baseStats.width, height: baseStats.height,
@@ -155,7 +149,8 @@ export function spawnEnemy(type, level = 1) {
     if (type === 'techniczny') {
         newEnemy.sabotageChance = baseStats.sabotageChance;
         newEnemy.sabotageDuration = baseStats.sabotageDuration;
-        newEnemy.sabotageCooldown = 0; // Cooldown przed następnym możliwym sabotażem
+        newEnemy.sabotageCooldown = 0; 
+        newEnemy.baseSabotageCooldown = baseStats.sabotageCooldown; 
     }
 
     state.enemies.push(newEnemy);
@@ -167,7 +162,6 @@ export function updateEnemies() {
 
         if (enemy.isDying) continue;
 
-        // Aktualizacja statusów (np. spowolnienie)
         if (enemy.slowTimer > 0) {
             enemy.slowTimer--;
             if (enemy.slowTimer <= 0) {
@@ -178,7 +172,6 @@ export function updateEnemies() {
             }
         }
         
-        // Logika specyficzna dla Divy (furia)
         if (enemy.type === 'diva') {
             if (enemy.furyActive) {
                 enemy.furyTimer--;
@@ -192,17 +185,14 @@ export function updateEnemies() {
                 enemy.furyTimer = enemy.furyDuration;
                 enemy.currentSpeed = enemy.speed * enemy.furySpeedMultiplier * (enemy.isSlowed ? enemy.slowFactor : 1);
                 enemy.currentDamageReduction = enemy.furyDamageReduction;
-                // Można dodać efekt wizualny furii tutaj
             }
         }
 
-        // Sprawdzenie, czy wróg został pokonany
         if (enemy.hp <= 0 && !enemy.isDying) {
             handleEnemyDefeated(enemy);
-            continue; // Przejdź do następnego wroga
+            continue; 
         }
 
-        // Ruch wroga
         if (enemy.pathIndex < state.currentPath.length - 1) {
             const targetNode = state.currentPath[enemy.pathIndex + 1];
             const targetX = targetNode.x * C.TILE_SIZE + C.TILE_SIZE / 2;
@@ -222,34 +212,30 @@ export function updateEnemies() {
                 enemy.y += (dy / distance) * speedToUse;
             }
 
-            // Logika sabotażu dla Technicznego
             if (enemy.type === 'techniczny' && enemy.sabotageCooldown <= 0) {
                 state.towers.forEach(tower => {
-                    if (!tower.isSabotaged) {
-                        const distToTower = Math.sqrt(Math.pow(enemy.x - tower.x, 2) + Math.pow(enemy.y - tower.y, 2));
-                        if (distToTower < C.TILE_SIZE * 0.8) { // Zasięg sabotażu
-                            if (Math.random() < enemy.sabotageChance) {
-                                tower.isSabotaged = true;
-                                tower.sabotageTimer = enemy.sabotageDuration;
-                                enemy.sabotageCooldown = 300; // 5 sekund cooldownu dla tego wroga (przy 60 FPS)
-                                console.log(`Tower ${tower.id} sabotaged by ${enemy.id}`);
-                                // Można dodać efekt wizualny sabotażu
-                            }
+                    const distToTower = Math.sqrt(Math.pow(enemy.x - tower.x, 2) + Math.pow(enemy.y - tower.y, 2));
+                    if (distToTower < C.TILE_SIZE * 0.8 && !tower.isSabotaged) { 
+                        if (Math.random() < enemy.sabotageChance) {
+                            tower.isSabotaged = true;
+                            tower.sabotageTimer = enemy.sabotageDuration;
+                            enemy.sabotageCooldown = enemy.baseSabotageCooldown; 
+                            showMessage(state, `Techniczny Sabotażysta uszkodził wieżę ${tower.definition.name}!`, 120); 
+                            console.log(`Tower ${tower.id} sabotaged by ${enemy.id}`);
                         }
                     }
                 });
             }
             if(enemy.sabotageCooldown > 0) enemy.sabotageCooldown--;
 
-        } else { // Wróg dotarł do końca ścieżki
+        } else { 
             state.zadowolenieWidowni--;
             if (state.zadowolenieWidowni <= 0) {
                 state.zadowolenieWidowni = 0;
-                endGame(false); // Przegrana
+                endGame(false); 
             }
-            // Wróg "pokonany" bez nagrody, bo dotarł do końca
-            if (!enemy.isDying) { // Upewnij się, że nie jest już w trakcie animacji śmierci
-                handleEnemyDefeated(enemy, false); // false oznacza brak nagrody
+            if (!enemy.isDying) { 
+                handleEnemyDefeated(enemy, false); 
             }
         }
     }
@@ -274,31 +260,29 @@ export function buildTower(spotXGrid, spotYGrid, type) {
         const newTower = {
             id: Date.now() + Math.random().toString(36).substring(2, 7) + `_tower_${type}`,
             xGrid: spotXGrid, yGrid: spotYGrid,
-            x: spotXGrid * C.TILE_SIZE + C.TILE_SIZE / 2, // Środek kafelka
-            y: spotYGrid * C.TILE_SIZE + C.TILE_SIZE / 2, // Środek kafelka
-            type: type, definition: definition, // Przechowujemy referencję do definicji dla łatwego dostępu
+            x: spotXGrid * C.TILE_SIZE + C.TILE_SIZE / 2, 
+            y: spotYGrid * C.TILE_SIZE + C.TILE_SIZE / 2, 
+            type: type, definition: definition, 
             damageLevel: 0, fireRateLevel: 0,
-            // Inicjalizacja poziomów specjalnych ulepszeń
             rangeLevel: 0, effectStrengthLevel: 0, effectDurationLevel: 0, critChanceLevel: 0,
 
-            currentDamage: definition.baseDamage, // Może być undefined dla wież bez obrażeń (np. Garderobiana)
+            currentDamage: definition.baseDamage, 
             currentFireRate: definition.baseFireRate,
             range: definition.range,
             fireCooldown: 0,
             projectileType: definition.projectileType,
             image: images[definition.imageKey],
             renderSize: definition.renderSize,
-            currentScale: 0.1, currentAlpha: 0, currentRotation: -45, isAnimatingIn: true, // Dla animacji pojawiania się
+            currentScale: 0.1, currentAlpha: 0, currentRotation: -45, isAnimatingIn: true, 
             isSabotaged: false, sabotageTimer: 0,
         };
-        // Inicjalizacja specyficznych właściwości wieży
         if (type === 'budkaInspicjenta') {
             newTower.critChance = definition.critChance;
             newTower.critMultiplier = definition.critMultiplier;
-            newTower.targetPriority = definition.targetPriority; // np. 'closest', 'strongest'
+            newTower.targetPriority = definition.targetPriority; 
         }
         if (type === 'garderobiana') {
-            newTower.debuffStats = { ...definition.debuffStats }; // Kopia, aby ulepszenia nie wpływały na definicję
+            newTower.debuffStats = { ...definition.debuffStats }; 
         }
 
         state.towers.push(newTower);
@@ -313,19 +297,15 @@ export function buildTower(spotXGrid, spotYGrid, type) {
     }
 }
 
-// KONIEC CZĘŚCI 1/2 PLIKU js/gameLogic.js (Komentarz pozostawiony dla kontekstu, jeśli był ważny)
-
 export function upgradeTower(tower, upgradeKey) {
     if (!tower || !tower.definition.upgrades || !tower.definition.upgrades[upgradeKey]) {
         showMessage(state, "Błąd: Nieprawidłowy typ ulepszenia dla tej wieży.", 120);
         return;
     }
 
-    const upgradesForType = tower.definition.upgrades[upgradeKey]; // Tablica definicji ulepszeń dla danego klucza
-    const currentLevelKey = `${upgradeKey}Level`; // np. damageLevel, rangeLevel, effectStrengthLevel
+    const upgradesForType = tower.definition.upgrades[upgradeKey]; 
+    const currentLevelKey = `${upgradeKey}Level`; 
 
-    // Sprawdzenie, czy wieża ma odpowiedni licznik poziomu ulepszenia.
-    // buildTower powinien inicjalizować wszystkie potrzebne XXXLevel na 0.
     if (!tower.hasOwnProperty(currentLevelKey)) {
         console.warn(`Wieża typu ${tower.type} nie ma zdefiniowanego licznika poziomu '${currentLevelKey}'. Inicjalizuję na 0.`);
         tower[currentLevelKey] = 0;
@@ -335,19 +315,15 @@ export function upgradeTower(tower, upgradeKey) {
     const maxLevelForThisUpgrade = upgradesForType.length;
 
     if (currentSpecificLevel < maxLevelForThisUpgrade) {
-        const upgradeData = upgradesForType[currentSpecificLevel]; // Pobierz dane dla następnego poziomu
+        const upgradeData = upgradesForType[currentSpecificLevel]; 
         if (state.aplauz >= upgradeData.cost) {
             state.aplauz -= upgradeData.cost;
 
-            // Zastosuj ulepszenie
             if (upgradeKey === 'damage') {
                 tower.currentDamage += upgradeData.value;
             } else if (upgradeKey === 'fireRate') {
-                // Zakładamy, że upgradeData.value jest UJEMNE dla ulepszenia fireRate,
-                // ponieważ fireRate to cooldown. Mniejszy cooldown = szybszy strzał.
-                // np. currentFireRate = 100, upgradeData.value = -10 => nowy fireRate = 90
                 tower.currentFireRate = Math.max(10, tower.currentFireRate + upgradeData.value);
-            } else if (upgradeKey === 'range' && tower.type === 'garderobiana') { // Przykład specyficznego ulepszenia
+            } else if (upgradeKey === 'range' && tower.type === 'garderobiana') { 
                 tower.range += upgradeData.value;
             } else if (upgradeKey === 'effectStrength' && tower.type === 'garderobiana') {
                 tower.debuffStats.slowFactor = Math.max(0.1, tower.debuffStats.slowFactor - upgradeData.slowFactorReduction);
@@ -357,9 +333,8 @@ export function upgradeTower(tower, upgradeKey) {
             } else if (upgradeKey === 'critChance' && tower.type === 'budkaInspicjenta') {
                 tower.critChance += upgradeData.value;
             }
-            // Inne specjalne ulepszenia można dodać tutaj
-
-            tower[currentLevelKey]++; // Zwiększ poziom tego konkretnego ulepszenia
+            
+            tower[currentLevelKey]++; 
 
             showMessage(state, `${tower.definition.name} ulepszona (${upgradeKey})!`, 90);
             saveGameProgress(state);
@@ -377,7 +352,7 @@ export function upgradeZadowolenie() {
         if (state.aplauz >= upgradeData.cost) {
             state.aplauz -= upgradeData.cost;
             state.maxZadowolenieWidowni += upgradeData.bonus;
-            state.zadowolenieWidowni += upgradeData.bonus; // Dodaj również do aktualnego zadowolenia
+            state.zadowolenieWidowni += upgradeData.bonus; 
             state.zadowolenieUpgradeLevel++;
             showMessage(state, `Zadowolenie Widowni ulepszone do ${state.maxZadowolenieWidowni}!`, 90);
             saveGameProgress(state);
@@ -391,27 +366,27 @@ export function upgradeZadowolenie() {
 
 export function updateTowers() {
     state.towers.forEach(tower => {
-        // Obsługa sabotażu
-        if (tower.isSabotaged && tower.sabotageTimer > 0) {
+        if (tower.isSabotaged) { 
             tower.sabotageTimer--;
             if (tower.sabotageTimer <= 0) {
                 tower.isSabotaged = false;
+                showMessage(state, `Wieża ${tower.definition.name} naprawiona!`, 90); 
                 console.log(`Tower ${tower.id} sabotage ended.`);
             }
-            return; // Sabotowana wieża nie działa
+            return; 
         }
 
         if (tower.fireCooldown > 0) {
             tower.fireCooldown--;
         } else {
-            if (tower.type === 'garderobiana') { // Garderobiana ma specjalną logikę "strzału" (efekt obszarowy)
+            if (tower.type === 'garderobiana') { 
                 applyPuderDebuff(tower);
-                tower.fireCooldown = tower.currentFireRate; // Reset cooldownu
-            } else { // Pozostałe wieże strzelają pociskami
+                tower.fireCooldown = tower.currentFireRate; 
+            } else { 
                 const target = findTarget(tower);
                 if (target) {
                     fireProjectile(tower, target);
-                    tower.fireCooldown = tower.currentFireRate; // Reset cooldownu
+                    tower.fireCooldown = tower.currentFireRate; 
                 }
             }
         }
@@ -420,26 +395,24 @@ export function updateTowers() {
 
 function findTarget(tower) {
     let potentialTargets = state.enemies.filter(enemy => {
-        if (enemy.hp <= 0 || enemy.isDying) return false; // Nie celuj w pokonanych/umierających
+        if (enemy.hp <= 0 || enemy.isDying) return false; 
         const dx = enemy.x - tower.x;
         const dy = enemy.y - tower.y;
-        return (dx * dx + dy * dy) < (tower.range * tower.range); // Sprawdzenie zasięgu (szybsze niż Math.sqrt)
+        return (dx * dx + dy * dy) < (tower.range * tower.range); 
     });
 
     if (potentialTargets.length === 0) return null;
 
-    // Sortowanie celów według priorytetu (jeśli zdefiniowany)
     if (tower.targetPriority === 'strongest') {
-        potentialTargets.sort((a, b) => b.hp - a.hp); // Najwięcej HP
-    } else { // Domyślnie: najbliższy (lub można dodać 'first' - najdłużej na ścieżce)
+        potentialTargets.sort((a, b) => b.hp - a.hp); 
+    } else { 
         potentialTargets.sort((a, b) => {
-            // Obliczanie dystansu do celu (można pominąć sqrt, jeśli tylko porównujemy)
             const distA = Math.pow(a.x - tower.x, 2) + Math.pow(a.y - tower.y, 2);
             const distB = Math.pow(b.x - tower.x, 2) + Math.pow(b.y - tower.y, 2);
             return distA - distB;
         });
     }
-    return potentialTargets[0]; // Zwróć najlepszy cel
+    return potentialTargets[0]; 
 }
 
 function applyPuderDebuff(tower) {
@@ -451,63 +424,57 @@ function applyPuderDebuff(tower) {
         const distanceSquared = dx * dx + dy * dy;
 
         if (distanceSquared < tower.range * tower.range) {
-            // Zastosuj debuff, jeśli wróg nie jest już zdebuffowany przez tę samą wieżę LUB jego poprzedni debuff wygasł
             if(enemy.debuffSourceTowerId !== tower.id || enemy.slowTimer <= 0) {
                 enemy.isSlowed = true;
                 enemy.slowFactor = tower.debuffStats.slowFactor;
-                // Aktualizuj prędkość, uwzględniając furię Divy
                 enemy.currentSpeed = (enemy.type === 'diva' && enemy.furyActive ? (enemy.speed * C.baseEnemyStats.diva.furySpeedMultiplier) : enemy.speed) * enemy.slowFactor;
                 enemy.damageTakenMultiplier = tower.debuffStats.damageTakenMultiplier;
-                enemy.slowTimer = tower.debuffStats.duration; // Czas trwania debuffu w klatkach
-                enemy.debuffSourceTowerId = tower.id; // Zapisz ID wieży, która nałożyła debuff
+                enemy.slowTimer = tower.debuffStats.duration; 
+                enemy.debuffSourceTowerId = tower.id; 
                 affectedEnemiesThisTurn.push(enemy);
             }
         }
     });
 
-    // Jeśli jacyś wrogowie zostali dotknięci, pokaż efekt wizualny (chmura pudru)
     if (affectedEnemiesThisTurn.length > 0) {
-        const effectData = C.projectileTypes.puderDebuff; // Definicja efektu z config.js
+        const effectData = C.projectileTypes.puderDebuff; 
         const effectImage = images[effectData.imageKey];
 
         if (effectImage && !effectImage.error) {
-            // Sprawdź, czy efekt chmury dla tej wieży już istnieje
             let cloudEffect = state.effects.find(e => e.isDebuffCloud && e.sourceTowerId === tower.id);
-            if (!cloudEffect) { // Jeśli nie, stwórz nowy
+            if (!cloudEffect) { 
                 cloudEffect = {
                     id: `debuff_cloud_${tower.id}`,
                     sourceTowerId: tower.id,
                     x: tower.x, y: tower.y,
                     image: effectImage,
-                    width: tower.range * 2.2, // Chmura nieco większa niż zasięg wieży
+                    width: tower.range * 2.2, 
                     height: tower.range * 2.2,
-                    alpha: 0.1, // Początkowa alfa (może być animowana)
+                    alpha: 0.1, 
                     scale: 1,
-                    durationFrames: effectData.duration, // Jak długo efekt ma być widoczny
-                    isNew: true, // Flaga dla systemu animacji (jeśli jest)
-                    isDebuffCloud: true, // Identyfikator tego typu efektu
-                    currentAlpha: 0.1, // Dla animacji GSAP
-                    currentScale: 0.5, // Dla animacji GSAP
+                    durationFrames: effectData.duration, 
+                    isNew: true, 
+                    isDebuffCloud: true, 
+                    currentAlpha: 0.1, 
+                    currentScale: 0.5, 
                 };
                 state.effects.push(cloudEffect);
-                // Animacja pulsowania chmury za pomocą GSAP (jeśli dostępne)
                 if (typeof gsap !== 'undefined') {
                     gsap.to(cloudEffect, {
                         currentScale: 1,
-                        currentAlpha: 0.5, // Docelowa alfa pulsowania
+                        currentAlpha: 0.5, 
                         duration: 0.5,
-                        yoyo: true, // Powrót do stanu początkowego
-                        repeat: -1, // Nieskończone powtarzanie
+                        yoyo: true, 
+                        repeat: -1, 
                         ease: "sine.inOut"
                     });
                 }
             }
-            // Odśwież timer usuwania chmury (jeśli gracz ponownie aktywuje efekt)
             if (cloudEffect.removeTimeout) clearTimeout(cloudEffect.removeTimeout);
             cloudEffect.removeTimeout = setTimeout(() => {
                 if (typeof gsap !== 'undefined') {
-                    gsap.killTweensOf(cloudEffect); // Zatrzymaj animację pulsowania
-                    gsap.to(cloudEffect, { // Animacja zanikania
+                    gsap.killTweensOf(cloudEffect); 
+                    gsap.to(cloudEffect, { 
                         currentAlpha: 0,
                         duration: 0.5,
                         onComplete: () => {
@@ -515,11 +482,11 @@ function applyPuderDebuff(tower) {
                             if (index > -1) state.effects.splice(index, 1);
                         }
                     });
-                } else { // Fallback, jeśli GSAP nie jest dostępny
+                } else { 
                     const index = state.effects.indexOf(cloudEffect);
                     if (index > -1) state.effects.splice(index, 1);
                 }
-            }, (tower.debuffStats.duration / 60 * 1000) + 500); // Usuń chmurę chwilę po wygaśnięciu debuffu
+            }, (tower.debuffStats.duration / 60 * 1000) + 500); 
         }
     }
 }
@@ -534,28 +501,25 @@ function fireProjectile(tower, target) {
     
     let actualDamage = tower.currentDamage;
     let isCrit = false;
-    // Logika trafienia krytycznego dla Budki Inspicjenta
     if (tower.type === 'budkaInspicjenta' && Math.random() < tower.critChance) {
         actualDamage *= tower.critMultiplier;
         isCrit = true;
         console.log("Krytyk z Budki Inspicjenta trafił krytycznie!");
     }
 
-    // Ustalenie punktu startowego pocisku (np. lufa wieży)
-    // To jest uproszczenie, można dostosować dla każdej wieży indywidualnie
-    const fireYOffset = tower.definition.renderSize * 0.4; // Przesunięcie od środka wieży w górę
+    const fireYOffset = tower.definition.renderSize * 0.4; 
     const fireY = (tower.y + C.TILE_SIZE / 2 - tower.definition.renderSize) + fireYOffset;
 
     const newProjectile = {
-        x: tower.x, y: fireY, // Pozycja startowa
-        target: target, // Obiekt celu
+        x: tower.x, y: fireY, 
+        target: target, 
         type: tower.projectileType,
         speed: projectileData.speed,
-        damage: actualDamage, // Obrażenia (mogą być zmodyfikowane przez krytyk)
+        damage: actualDamage, 
         isCrit: isCrit,
         image: projectileImage,
         width: projectileData.width, height: projectileData.height,
-        angle: Math.atan2(target.y - fireY, target.x - tower.x) // Kąt do celu (dla obracania obrazka)
+        angle: Math.atan2(target.y - fireY, target.x - tower.x) 
     };
     state.projectiles.push(newProjectile);
 }
@@ -564,58 +528,52 @@ export function updateProjectiles() {
     for (let i = state.projectiles.length - 1; i >= 0; i--) {
         const p = state.projectiles[i];
 
-        // Sprawdzenie, czy cel jest nadal ważny
         if (!p.target || p.target.hp <= 0 || p.target.isDying) {
-            state.projectiles.splice(i, 1); // Usuń pocisk, jeśli cel zniknął/pokonany
+            state.projectiles.splice(i, 1); 
             continue;
         }
 
-        // Ruch pocisku
         const dx = p.target.x - p.x;
         const dy = p.target.y - p.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < p.speed) { // Pocisk dotarł do celu
-            let finalDamage = p.damage * (p.target.damageTakenMultiplier || 1); // Uwzględnij mnożnik obrażeń od debuffu
+        if (distance < p.speed) { 
+            let finalDamage = p.damage * (p.target.damageTakenMultiplier || 1); 
 
-            // Uwzględnij redukcję obrażeń Divy
             if (p.target.type === 'diva') {
                 finalDamage *= (1 - (p.target.currentDamageReduction || 0));
             }
             p.target.hp -= finalDamage;
 
-            state.projectiles.splice(i, 1); // Usuń pocisk
+            state.projectiles.splice(i, 1); 
 
-            // Stwórz efekt trafienia
             const hitEffect = {
                 x: p.target.x, y: p.target.y, scale: 0, alpha: 1,
-                durationFrames: p.isCrit ? 30 : 20, // Dłuższy efekt dla krytyka
+                durationFrames: p.isCrit ? 30 : 20, 
                 maxScale: p.isCrit ? C.TILE_SIZE * 0.4 : C.TILE_SIZE * 0.25,
                 color: p.isCrit ? 'rgba(255,100,0,0.95)' : (p.type === 'laser' ? 'rgba(255,255,100,0.9)' : (p.type === 'recenzja' ? 'rgba(200,200,200,0.8)' : 'rgba(220,220,220,0.8)')),
-                isNew: true // Flaga dla systemu animacji
+                isNew: true 
             };
             state.effects.push(hitEffect);
 
-            // Sprawdź, czy cel został pokonany po trafieniu
             if (p.target.hp <= 0 && !p.target.isDying) {
                 handleEnemyDefeated(p.target);
             }
-        } else { // Kontynuuj ruch w kierunku celu
+        } else { 
             p.x += (dx / distance) * p.speed;
             p.y += (dy / distance) * p.speed;
-            p.angle = Math.atan2(dy, dx); // Aktualizuj kąt (jeśli cel się porusza)
+            p.angle = Math.atan2(dy, dx); 
         }
     }
 }
 
 export function handleEnemyDefeated(enemy, withReward = true) {
-    if (enemy.isDying) return; // Już jest w trakcie animacji śmierci
+    if (enemy.isDying) return; 
     
     if (withReward) {
-        state.aplauz += (enemy.reward * enemy.level); // Nagroda skalowana poziomem wroga
+        state.aplauz += (enemy.reward * enemy.level); 
     }
-    enemy.isDying = true; // Rozpocznij proces umierania (animacja zostanie obsłużona w pętli gry)
-    // Tutaj można dodać logikę np. odtworzenia dźwięku pokonania wroga
+    enemy.isDying = true; 
 }
 
 export function completeLevel() {
@@ -624,7 +582,6 @@ export function completeLevel() {
     state.lastLevelStats.finalSatisfaction = state.zadowolenieWidowni;
     state.lastLevelStats.initialMaxSatisfaction = state.initialMaxAudienceSatisfaction;
 
-    // Zlicz zbudowane wieże na potrzeby statystyk
     state.lastLevelStats.towersBuilt.bileter = state.towers.filter(t => t.type === 'bileter').length;
     state.lastLevelStats.towersBuilt.oswietleniowiec = state.towers.filter(t => t.type === 'oswietleniowiec').length;
     state.lastLevelStats.towersBuilt.garderobiana = state.towers.filter(t => t.type === 'garderobiana').length;
@@ -637,7 +594,6 @@ export function completeLevel() {
     state.lastLevelStats.totalTowerValue = totalSellValue;
     state.lastLevelStats.remainingAplauz = state.aplauz;
 
-    // Obliczanie gwiazdek
     if (state.zadowolenieWidowni === state.initialMaxAudienceSatisfaction) {
         state.lastLevelStats.stars = 3;
     } else if (state.zadowolenieWidowni >= 0.6 * state.initialMaxAudienceSatisfaction) {
@@ -645,10 +601,9 @@ export function completeLevel() {
     } else if (state.zadowolenieWidowni > 0) {
         state.lastLevelStats.stars = 1;
     } else {
-        state.lastLevelStats.stars = 0; // Powinno być niemożliwe, jeśli przegrana jest obsługiwana wcześniej
+        state.lastLevelStats.stars = 0; 
     }
 
-    // Reset stanu gwiazdek dla animacji
     state.lastLevelStats.starStates.forEach(star => {
         star.scale = 0.3; star.opacity = 0; star.isFilled = false;
         star.fillProgress = 0; star.character = '☆'; star.color = '#777777';
@@ -656,27 +611,25 @@ export function completeLevel() {
     state.lastLevelStats.isStarAnimationComplete = false;
 
     state.lastLevelStats.aplauzBonusForNextLevel = state.aplauz + totalSellValue;
-    state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel; // Przekaż bonus do następnego poziomu
+    state.currentAplauzBonusForNextLevel = state.lastLevelStats.aplauzBonusForNextLevel; 
 
-    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; // Oznacz poziom jako ukończony
-    if (state.currentLevelIndex < C.levelData.length - 1) { // Odblokuj następny poziom
-        state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2); // +1 za obecny, +1 za następny (indeks + 2)
+    state.levelProgress[state.currentLevelIndex] = C.WAVES_PER_LEVEL; 
+    if (state.currentLevelIndex < C.levelData.length - 1) { 
+        state.unlockedLevels = Math.max(state.unlockedLevels, state.currentLevelIndex + 2); 
     }
     saveGameProgress(state);
 
-    state.gameOver = true; // Oznacz grę jako zakończoną (ale wygraną)
-    state.gameScreen = 'levelCompleteCanvas'; // Przełącz na ekran podsumowania
+    state.gameOver = true; 
+    state.gameScreen = 'levelCompleteCanvas'; 
     state.showingLevelCompleteSummary = true;
     console.log(`[gameLogic.js completeLevel] Level ${state.currentLevelIndex + 1} completed. Stars: ${state.lastLevelStats.stars}`);
     
-    // Animacja gwiazdek (GSAP lub fallback)
     if (typeof gsap !== 'undefined') {
-        gsap.killTweensOf(state.lastLevelStats.starStates); // Anuluj poprzednie animacje gwiazdek
+        gsap.killTweensOf(state.lastLevelStats.starStates); 
 
         const tl = gsap.timeline({
             onComplete: () => {
                 state.lastLevelStats.isStarAnimationComplete = true;
-                // Ustaw finalny stan gwiazdek po animacji (upewnienie się)
                 for(let i = 0; i < 3; i++) {
                     if (i < state.lastLevelStats.stars) {
                         state.lastLevelStats.starStates[i].isFilled = true;
@@ -696,50 +649,48 @@ export function completeLevel() {
             }
         });
 
-        const starAppearDelay = 0.6;      // Opóźnienie przed pojawieniem się pierwszej gwiazdki
-        const interStarAppearDelay = 0.2; // Opóźnienie między pojawianiem się kolejnych gwiazdek
-        const starAppearDuration = 0.3;   // Czas trwania animacji pojawiania się gwiazdki
+        const starAppearDelay = 0.6;      
+        const interStarAppearDelay = 0.2; 
+        const starAppearDuration = 0.3;   
         
-        const starFillDelayAfterAppear = 0.4; // Opóźnienie przed rozpoczęciem wypełniania gwiazdek
-        const interStarFillDelay = 0.5;       // Opóźnienie między wypełnianiem kolejnych gwiazdek
-        const starFillDuration = 0.3;         // Czas trwania animacji wypełniania gwiazdki
+        const starFillDelayAfterAppear = 0.4; 
+        const interStarFillDelay = 0.5;       
+        const starFillDuration = 0.3;         
 
-        // Animacja pojawiania się wszystkich 3 konturów gwiazdek
         for (let i = 0; i < 3; i++) {
             tl.to(state.lastLevelStats.starStates[i], {
                 scale: 1,
                 opacity: 1,
-                character: '☆', // Upewnij się, że zaczynają jako puste
-                color: '#a0a0a0', // Kolor pustej gwiazdki
+                character: '☆', 
+                color: '#a0a0a0', 
                 duration: starAppearDuration,
                 delay: (i === 0) ? starAppearDelay : interStarAppearDelay,
                 ease: "back.out(1.4)",
-            }, (i === 0) ? ">" : `<${interStarAppearDelay*0.8}`); // Użyj relatywnych pozycji dla płynności
+            }, (i === 0) ? ">" : `<${interStarAppearDelay*0.8}`); 
         }
         
-        tl.addLabel("fillStars", `>${starFillDelayAfterAppear}`); // Etykieta dla momentu rozpoczęcia wypełniania
+        tl.addLabel("fillStars", `>${starFillDelayAfterAppear}`); 
 
-        // Animacja wypełniania zdobytych gwiazdek
         for (let i = 0; i < state.lastLevelStats.stars; i++) {
             tl.to(state.lastLevelStats.starStates[i], {
-                scale: 1.3, // Lekkie powiększenie przed wypełnieniem
+                scale: 1.3, 
                 duration: starFillDuration / 2,
                 ease: "power2.out",
-                onStart: () => { // W momencie rozpoczęcia animacji wypełniania
+                onStart: () => { 
                     state.lastLevelStats.starStates[i].character = '★';
-                    state.lastLevelStats.starStates[i].color = '#ffd700'; // Zmień na złotą, wypełnioną gwiazdkę
+                    state.lastLevelStats.starStates[i].color = '#ffd700'; 
                 }
-            }, `fillStars+=${i * interStarFillDelay}`) // Rozpocznij z opóźnieniem dla każdej gwiazdki
+            }, `fillStars+=${i * interStarFillDelay}`) 
             .to(state.lastLevelStats.starStates[i], {
-                scale: 1, // Powrót do normalnego rozmiaru
+                scale: 1, 
                 duration: starFillDuration / 2,
                 ease: "power1.in",
                 onComplete: () => {
-                    state.lastLevelStats.starStates[i].isFilled = true; // Oznacz jako wypełnioną
+                    state.lastLevelStats.starStates[i].isFilled = true; 
                 }
-            }, ">"); // Kontynuuj bezpośrednio po poprzedniej części animacji tej gwiazdki
+            }, ">"); 
         }
-    } else { // Fallback, jeśli GSAP nie jest dostępny
+    } else { 
         for (let i = 0; i < 3; i++) {
             state.lastLevelStats.starStates[i].scale = 1;
             state.lastLevelStats.starStates[i].opacity = 1;
@@ -760,20 +711,18 @@ export function completeLevel() {
 
 export function prepareNextWave() {
     if (state.waveInProgress || state.gameOver || state.currentWaveNumber >= C.WAVES_PER_LEVEL) {
-        return; // Nie przygotowuj fali, jeśli gra się toczy, jest zakończona lub wszystkie fale przeszły
+        return; 
     }
     
-    state.showingWaveIntro = true; // Pokaż ekran intro fali
-    state.waveIntroTimer = 180; // 3 sekundy (przy 60 FPS)
-    state.waveIntroEnemies = []; // Zresetuj listę wrogów do pokazania w intro
+    state.showingWaveIntro = true; 
+    state.waveIntroTimer = 180; 
+    state.waveIntroEnemies = []; 
 
-    // Użyj indeksu fali, ale nie przekraczaj liczby zdefiniowanych wzorców fal
     const waveIndexForDefinition = Math.min(state.currentWaveNumber, C.waveDefinitionsBase.length - 1);
     const wavePattern = C.waveDefinitionsBase[waveIndexForDefinition];
     
-    // Zbierz informacje o typach wrogów w nadchodzącej fali
     for (const enemyType in wavePattern) {
-        if (enemyType === 'interval' || enemyType === 'boss') continue; // Pomiń pola niebędące typami wrogów
+        if (enemyType === 'interval' || enemyType === 'boss') continue; 
         if (wavePattern[enemyType].count > 0) {
             const enemyConfig = C.baseEnemyStats[enemyType];
             if (enemyConfig) {
@@ -781,7 +730,6 @@ export function prepareNextWave() {
             }
         }
     }
-    // Dodaj informacje o bossie, jeśli jest zdefiniowany dla tej fali
     if (wavePattern.boss) {
         const bossConfig = C.baseEnemyStats[wavePattern.boss.type];
         if (bossConfig) {
@@ -791,120 +739,113 @@ export function prepareNextWave() {
 }
 
 export function startNextWaveActual() {
-    state.showingWaveIntro = false; // Ukryj ekran intro
-    state.waveInProgress = true;    // Oznacz falę jako trwającą
+    state.showingWaveIntro = false; 
+    state.waveInProgress = true;    
     showMessage(state, `Fala ${state.currentWaveNumber + 1} rozpoczęta!`, 60);
 
-    // Zapisz postęp (która fala została osiągnięta)
     const previousProgress = state.levelProgress[state.currentLevelIndex] === undefined ? -1 : state.levelProgress[state.currentLevelIndex];
     state.levelProgress[state.currentLevelIndex] = Math.max(previousProgress, state.currentWaveNumber);
     saveGameProgress(state);
 
     const waveIndexForDefinition = Math.min(state.currentWaveNumber, C.waveDefinitionsBase.length - 1);
-    const waveData = JSON.parse(JSON.stringify(C.waveDefinitionsBase[waveIndexForDefinition])); // Głęboka kopia danych fali
-    // Skalowanie trudności fali w oparciu o numer fali i poziom
-    const difficultyScale = 1 + (state.currentWaveNumber) * 0.025 + state.currentLevelIndex * 0.015;
-    state.currentWaveSpawns = []; // Tablica wrogów do zespawnowania w tej fali
+    const waveData = JSON.parse(JSON.stringify(C.waveDefinitionsBase[waveIndexForDefinition])); 
+    
+    // ZMIANA BALANSU: Zwiększenie współczynnika skalowania trudności fal
+    const difficultyScale = 1 + (state.currentWaveNumber) * 0.045 + state.currentLevelIndex * 0.015;
+    state.currentWaveSpawns = []; 
 
-    // Generuj listę wrogów do zespawnowania
     for (const enemyType in waveData) {
         if (enemyType === 'interval' || enemyType === 'boss') continue;
         if (waveData[enemyType] && waveData[enemyType].count > 0) {
-            for(let i=0; i < Math.ceil(waveData[enemyType].count * difficultyScale); i++) { // Skaluj liczbę wrogów
+            for(let i=0; i < Math.ceil(waveData[enemyType].count * difficultyScale); i++) { 
                 state.currentWaveSpawns.push({type: enemyType, level: waveData[enemyType].level});
             }
         }
     }
 
-    // Dodaj bossa, jeśli jest zdefiniowany i to odpowiednia fala (np. co 5 fal)
-    if (waveData.boss && (state.currentWaveNumber + 1) % 5 === 0) { // Boss co 5 fal
+    if (waveData.boss && (state.currentWaveNumber + 1) === C.WAVES_PER_LEVEL) { 
          state.currentWaveSpawns.push({
             type: waveData.boss.type, level: waveData.boss.level, isBoss: true,
-            hpMultiplier: waveData.boss.hpMultiplier || (1 + (waveData.boss.level-1)*0.4), // Mnożnik HP dla bossa
+            hpMultiplier: waveData.boss.hpMultiplier || (1 + (waveData.boss.level-1)*0.4), 
         });
     }
 
-    state.currentWaveSpawns.sort(() => Math.random() - 0.5); // Losowa kolejność spawnowania
-    state.currentWaveSpawnsLeft = state.currentWaveSpawns.length; // Liczba wrogów do zespawnowania
-    // Skaluj interwał spawnowania wrogów
+    state.currentWaveSpawns.sort(() => Math.random() - 0.5); 
+    state.currentWaveSpawnsLeft = state.currentWaveSpawns.length; 
     state.spawnInterval = Math.max(35, waveData.interval * (1 - state.currentLevelIndex * 0.02) * (1 - (state.currentWaveNumber)*0.01) );
-    state.spawnTimer = state.spawnInterval > 60 ? 60 : state.spawnInterval; // Początkowy timer spawnu (może być krótszy dla pierwszej jednostki)
+    state.spawnTimer = state.spawnInterval > 60 ? 60 : state.spawnInterval; 
 }
 
 export function handleWaveSpawning() {
     if (state.waveInProgress && state.currentWaveSpawnsLeft > 0) {
         state.spawnTimer--;
         if (state.spawnTimer <= 0) {
-            const enemyToSpawnData = state.currentWaveSpawns.shift(); // Pobierz następnego wroga z kolejki
+            const enemyToSpawnData = state.currentWaveSpawns.shift(); 
             state.currentWaveSpawnsLeft--;
 
-            if (enemyToSpawnData.isBoss) { // Specjalna logika spawnowania bossa
+            if (enemyToSpawnData.isBoss) { 
                 const bossBaseStats = C.baseEnemyStats[enemyToSpawnData.type];
                 const bossImg = images[bossBaseStats.imageKey];
-                const newBoss = { // Stwórz obiekt bossa z odpowiednio zmodyfikowanymi statystykami
+                const newBoss = { 
                     id: Date.now() + Math.random().toString(36).substring(2, 7) + '_boss',
                     type: enemyToSpawnData.type, level: enemyToSpawnData.level,
                     x: state.currentPath[0].x * C.TILE_SIZE + C.TILE_SIZE / 2,
                     y: state.currentPath[0].y * C.TILE_SIZE + C.TILE_SIZE / 2,
-                    hp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier, // Zwiększone HP
+                    hp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier, 
                     maxHp: bossBaseStats.baseHp * enemyToSpawnData.level * enemyToSpawnData.hpMultiplier,
-                    speed: bossBaseStats.speed * (1 - (enemyToSpawnData.level - 1) * 0.15), // Bossy mogą być wolniejsze
+                    speed: bossBaseStats.speed * (1 - (enemyToSpawnData.level - 1) * 0.15), 
                     currentSpeed: bossBaseStats.speed * (1 - (enemyToSpawnData.level - 1) * 0.15),
                     pathIndex: 0,
-                    image: bossImg, width: bossBaseStats.width * 1.3, height: bossBaseStats.height * 1.3, // Większy rozmiar
-                    reward: C.baseEnemyStats[enemyToSpawnData.type].aplauzReward * 2, // Większa nagroda
+                    image: bossImg, width: bossBaseStats.width * 1.3, height: bossBaseStats.height * 1.3, 
+                    reward: C.baseEnemyStats[enemyToSpawnData.type].aplauzReward * 2, 
                     isDying: false, isDeathAnimationStarted: false,
                     isSlowed: false, slowTimer: 0, slowFactor: 1, damageTakenMultiplier: 1, debuffSourceTowerId: null,
                 };
-                 // Dodaj specjalne właściwości bossa (np. furia Divy)
                  if (enemyToSpawnData.type === 'diva') {
                     newBoss.baseDamageReduction = bossBaseStats.damageReduction;
                     newBoss.currentDamageReduction = bossBaseStats.damageReduction;
                     newBoss.furyThreshold = bossBaseStats.furyThreshold;
                     newBoss.furySpeedMultiplier = bossBaseStats.furySpeedMultiplier;
                     newBoss.furyDamageReduction = bossBaseStats.furyDamageReduction;
-                    newBoss.furyDuration = bossBaseStats.furyDuration; // Boss może mieć dłuższą furię
+                    newBoss.furyDuration = bossBaseStats.furyDuration; 
                     newBoss.furyActive = false;
                     newBoss.furyTimer = 0;
                 }
                 state.enemies.push(newBoss);
-            } else { // Spawnowanie standardowego wroga
+            } else { 
                 spawnEnemy(enemyToSpawnData.type, enemyToSpawnData.level);
             }
-            state.spawnTimer = state.spawnInterval; // Reset timera spawnu
+            state.spawnTimer = state.spawnInterval; 
         }
     }
 }
 
 export function endGame(isWin) {
-    // Zapobiegaj wielokrotnemu wywołaniu endGame, zwłaszcza przy przegranej
     if (state.gameOver && !isWin) {
         return;
     }
 
     if (isWin) {
-        if (!state.gameOver) { // Upewnij się, że completeLevel jest wywoływane tylko raz
+        if (!state.gameOver) { 
             completeLevel();
         }
-        // Nie rób nic więcej, completeLevel przełącza ekran
         return;
     }
 
-    // Logika dla przegranej
     state.gameOver = true;
-    state.waveInProgress = false; // Zatrzymaj falę
-    showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 30000); // Długi czas wyświetlania
-    saveGameProgress(state); // Zapisz stan gry (np. osiągniętą falę przed przegraną)
-    state.gameScreen = 'levelLost'; // Przełącz na ekran przegranej
+    state.waveInProgress = false; 
+    showMessage(state, "KONIEC GRY! Premiera tego aktu zrujnowana...", 30000); 
+    saveGameProgress(state); 
+    state.gameScreen = 'levelLost'; 
 }
 
 
 export function togglePauseGame() {
     state.isPaused = !state.isPaused;
     if (state.isPaused) {
-        showMessage(state, "Pauza", 360000); // Komunikat pauzy wyświetlany "nieskończenie" (długi czas)
+        showMessage(state, "Pauza", 360000); 
     } else {
-        showMessage(state, "Wznowiono", 60); // Krótki komunikat wznowienia
+        showMessage(state, "Wznowiono", 60); 
     }
 }
 
@@ -914,15 +855,13 @@ export function sellTower(towerToSell) {
     const sellValue = calculateTowerSellValue(towerToSell);
     state.aplauz += sellValue;
 
-    // Usuń wieżę z listy
     const index = state.towers.findIndex(t => t.id === towerToSell.id);
     if (index > -1) state.towers.splice(index, 1);
 
-    // Oznacz miejsce jako wolne
     const spot = state.currentTowerSpots.find(s => s.x === towerToSell.xGrid && s.y === towerToSell.yGrid);
     if (spot) spot.occupied = false;
 
     showMessage(state, `Sprzedano wieżę za ${sellValue} Aplauzu.`, 120);
-    state.selectedTowerForUpgrade = null; // Odznacz wieżę po sprzedaży
+    state.selectedTowerForUpgrade = null; 
     saveGameProgress(state);
 }

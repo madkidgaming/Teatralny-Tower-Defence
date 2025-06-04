@@ -1,4 +1,5 @@
 // js/config.js
+
 export const TILE_SIZE = 40;
 export const ROWS = 12;
 export const COLS = 20;
@@ -8,9 +9,9 @@ export const UI_FONT_MEDIUM = "bold 13px Arial";
 export const UI_FONT_SMALL = "12px Arial";
 export const UI_FONT_TINY = `bold 10px Arial`;
 
-export const WAVES_PER_LEVEL = 10;
+export const WAVES_PER_LEVEL = 5; // Zmieniono z 10 na 5 fal na poziom
 export const MAX_ZADOWOLENIE_UPGRADE_LEVEL = 5;
-export const MAX_UPGRADE_LEVEL = 3; // Zmieniono na 3 dla nowych wież dla uproszczenia, stare mogą mieć 5
+export const MAX_UPGRADE_LEVEL = 3;
 
 export const ENEMY_BASE_SIZE_MULTIPLIER = 1.4;
 export const TOWER_RENDER_SIZE_MULTIPLIER = 1.6;
@@ -19,14 +20,12 @@ export const BASE_SIZE_MULTIPLIER = 2.2;
 export const EFFECT_SIZE_MULTIPLIER = 1.0;
 
 export const imageSources = {
-    // POPRAWKA SUGE ROWANA: Sprawdź ten URL lub użyj lokalnego zasobu. Na razie pozostawiam, ale jeśli jest 404, gra może mieć problem z ładowaniem.
-    // Jeśli masz lokalny plik np. 'assets/images/TEATR.png', zmień na: teatrBase: 'assets/images/TEATR.png',
-    teatrBase: 'https://kaliskie.org/wp-content/uploads/2025/05/TEATR.png', // UWAGA: Ten URL zwracał 404 na screenshocie.
+    teatrBase: 'https://kaliskie.org/wp-content/uploads/2025/05/TEATR.png',
     laserProjectile: 'https://kaliskie.org/wp-content/uploads/2025/05/LASER-PROJECTILE.png',
     biletProjectile: 'https://kaliskie.org/wp-content/uploads/2025/05/BILET-PROJECTILE.png',
     bileterTowerIcon: 'https://kaliskie.org/wp-content/uploads/2025/05/BILETER.png',
     spoznionyWidz: 'https://kaliskie.org/wp-content/uploads/2025/05/SPOZNIONY-WIDZ.png',
-    krytykTeatralny: 'https://kaliskie.org/wp-content/uploads/2025/05/KRYTYK-TEATRALNY.png',
+    krytykTeatralny: 'https://kaliskie.org/wp-content/uploads/2025/05/KRYTYK_TEATRALNY.png',
     reflektorTowerIcon: 'https://kaliskie.org/wp-content/uploads/2025/05/reflektor.png',
     tileset: 'assets/images/TILESET TOWER DEFENCE.png',
 
@@ -41,23 +40,29 @@ export const imageSources = {
 
 export const baseEnemyStats = {
     krytyk: {
-        name: "Krytyk Teatralny", baseHp: 100, speed: 1, aplauzReward: 10, imageKey: 'krytykTeatralny',
+        name: "Krytyk Teatralny", baseHp: 100, speed: 1, aplauzReward: 12, // Zmieniono z 10
+        imageKey: 'krytykTeatralny',
         width: TILE_SIZE * 0.7 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.9 * ENEMY_BASE_SIZE_MULTIPLIER
     },
     spozniony: {
-        name: "Spóźniony Widz", baseHp: 40, speed: 2.5, aplauzReward: 5, imageKey: 'spoznionyWidz',
+        name: "Spóźniony Widz", baseHp: 40, speed: 2.5, aplauzReward: 6, // Zmieniono z 5
+        imageKey: 'spoznionyWidz',
         width: TILE_SIZE * 0.6 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.8 * ENEMY_BASE_SIZE_MULTIPLIER
     },
     diva: {
-        name: "Primadonna", baseHp: 300, speed: 0.8, aplauzReward: 25, imageKey: 'divaEnemy',
+        name: "Primadonna", baseHp: 280, speed: 0.8, aplauzReward: 30, // Zmieniono z 25, HP z 300
+        imageKey: 'divaEnemy',
         width: TILE_SIZE * 0.8 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 1.1 * ENEMY_BASE_SIZE_MULTIPLIER,
-        damageReduction: 0.25,
-        furyThreshold: 0.5, furySpeedMultiplier: 1.8, furyDamageReduction: 0.4, furyDuration: 300
+        damageReduction: 0.20, // Zmieniono z 0.25
+        furyThreshold: 0.5, furySpeedMultiplier: 1.8, furyDamageReduction: 0.35, furyDuration: 300 // Zmieniono furyDamageReduction
     },
     techniczny: {
-        name: "Techniczny Sabotażysta", baseHp: 80, speed: 2.0, aplauzReward: 12, imageKey: 'technicznyEnemy',
+        name: "Techniczny Sabotażysta", baseHp: 80, speed: 2.0, aplauzReward: 15, // Zmieniono z 12
+        imageKey: 'technicznyEnemy',
         width: TILE_SIZE * 0.65 * ENEMY_BASE_SIZE_MULTIPLIER, height: TILE_SIZE * 0.95 * ENEMY_BASE_SIZE_MULTIPLIER,
-        sabotageChance: 0.3, sabotageDuration: 180
+        sabotageChance: 0.25, // Zmieniono z 0.3
+        sabotageDuration: 180, // 3 sekundy
+        sabotageCooldown: 420 // Zmieniono z 300 (7 sekund)
     }
 };
 
@@ -68,29 +73,27 @@ export const zadowolenieUpgrades = [
 
 export const towerDefinitions = {
     bileter: {
-        name: "Bileter", cost: 50, baseDamage: 20, baseFireRate: 70, range: TILE_SIZE * 2.8,
+        name: "Bileter", cost: 50, baseDamage: 22, baseFireRate: 65, range: TILE_SIZE * 2.8, // Zwiększono bazowe obrażenia i szybkostrzelność
         projectileType: 'bilet', imageKey: 'bileterTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER,
         upgrades: {
-            damage: [ { cost: 30, value: 5 }, { cost: 55, value: 7 }, { cost: 90, value: 10 }, { cost: 140, value: 12 }, { cost: 200, value: 15 } ],
-            // POPRAWKA: Wartości fireRate ujemne, jeśli fireRate to cooldown
-            fireRate: [ { cost: 35, value: -5 }, { cost: 60, value: -7 }, { cost: 95, value: -8 }, { cost: 150, value: -9 }, { cost: 220, value: -10 } ]
+            damage: [ { cost: 25, value: 6 }, { cost: 50, value: 8 }, { cost: 85, value: 10 } ], // Dostosowano koszty/wartości ulepszeń
+            fireRate: [ { cost: 30, value: -5 }, { cost: 55, value: -7 }, { cost: 90, value: -8 } ]
         },
         upgradeLevelNames: ['damage', 'fireRate']
     },
     oswietleniowiec: {
-        name: "Oświetleniowiec", cost: 75, baseDamage: 35, baseFireRate: 100, range: TILE_SIZE * 3.8,
+        name: "Oświetleniowiec", cost: 70, baseDamage: 35, baseFireRate: 100, range: TILE_SIZE * 3.8, // Zmieniono koszt z 75
         projectileType: 'laser', imageKey: 'reflektorTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER,
         upgrades: {
-            damage: [ { cost: 45, value: 8 }, { cost: 75, value: 12 }, { cost: 120, value: 15 }, { cost: 180, value: 20 }, { cost: 250, value: 25 } ],
-            // POPRAWKA: Wartości fireRate ujemne, jeśli fireRate to cooldown
-            fireRate: [ { cost: 50, value: -7 }, { cost: 80, value: -10 }, { cost: 130, value: -12 }, { cost: 190, value: -15 }, { cost: 270, value: -18 } ]
+            damage: [ { cost: 40, value: 10 }, { cost: 70, value: 15 }, { cost: 110, value: 20 } ],
+            fireRate: [ { cost: 45, value: -8 }, { cost: 75, value: -10 }, { cost: 120, value: -12 } ]
         },
         upgradeLevelNames: ['damage', 'fireRate']
     },
     garderobiana: {
         name: "Garderobiana", cost: 65, baseFireRate: 210, range: TILE_SIZE * 2.2,
         projectileType: 'puderDebuff', imageKey: 'garderobianaTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER,
-        debuffStats: { slowFactor: 0.65, damageTakenMultiplier: 1.20, duration: 180 },
+        debuffStats: { slowFactor: 0.70, damageTakenMultiplier: 1.15, duration: 180 }, // Zmieniono slowFactor i damageTakenMultiplier
         upgrades: {
             range: [ { cost: 40, value: TILE_SIZE * 0.3 }, { cost: 60, value: TILE_SIZE * 0.4 }, { cost: 80, value: TILE_SIZE * 0.5 } ],
             effectStrength: [ { cost: 50, slowFactorReduction: 0.05, damageTakenIncrease: 0.05 }, { cost: 75, slowFactorReduction: 0.05, damageTakenIncrease: 0.05 }, { cost: 100, slowFactorReduction: 0.05, damageTakenIncrease: 0.05 } ],
@@ -99,14 +102,14 @@ export const towerDefinitions = {
         upgradeLevelNames: ['range', 'effectStrength', 'effectDuration']
     },
     budkaInspicjenta: {
-        name: "Budka Inspicjenta", cost: 110, baseDamage: 65, baseFireRate: 180, range: TILE_SIZE * 5.0,
+        name: "Budka Inspicjenta", cost: 100, baseDamage: 60, baseFireRate: 170, range: TILE_SIZE * 5.0, // Zmniejszono koszt i obrażenia, zwiększono szybkostrzelność
         projectileType: 'recenzja', imageKey: 'budkaInspicjentaTowerIcon', renderSize: TILE_SIZE * TOWER_RENDER_SIZE_MULTIPLIER * 0.9,
         critChance: 0.15, critMultiplier: 1.75,
         targetPriority: 'strongest',
         upgrades: {
-            damage: [ { cost: 70, value: 20 }, { cost: 110, value: 30 }, { cost: 160, value: 40 } ],
-            fireRate: [ { cost: 80, value: -30 }, { cost: 130, value: -30 }, { cost: 190, value: -30 } ], // Te są już ujemne - OK
-            critChance: [ { cost: 90, value: 0.05 }, { cost: 140, value: 0.05 }, { cost: 200, value: 0.05 } ]
+            damage: [ { cost: 65, value: 25 }, { cost: 100, value: 35 }, { cost: 150, value: 45 } ],
+            fireRate: [ { cost: 70, value: -25 }, { cost: 120, value: -30 }, { cost: 180, value: -30 } ],
+            critChance: [ { cost: 80, value: 0.05 }, { cost: 130, value: 0.05 }, { cost: 190, value: 0.05 } ]
         },
         upgradeLevelNames: ['damage', 'fireRate', 'critChance']
     }
@@ -119,7 +122,7 @@ export const projectileTypes = {
         imageKey: 'garderobianaProjectileEffect',
         width: TILE_SIZE * 2.0 * EFFECT_SIZE_MULTIPLIER,
         height: TILE_SIZE * 2.0 * EFFECT_SIZE_MULTIPLIER,
-        duration: 90 // Czas widoczności chmury (1.5s)
+        duration: 90
     },
     recenzja: {
         speed: 9, imageKey: 'budkaInspicjentaProjectile',
@@ -137,16 +140,16 @@ export const levelData = [
 
 
 export const waveDefinitionsBase = [
-    { krytyk: {count: 2, level: 1}, spozniony: {count: 0, level: 1}, diva: {count: 0, level: 1}, techniczny: {count:0, level:1}, interval: 150 },
-    { krytyk: {count: 3, level: 1}, spozniony: {count: 1, level: 1}, diva: {count: 0, level: 1}, techniczny: {count:0, level:1}, interval: 140 },
-    { krytyk: {count: 4, level: 1}, spozniony: {count: 2, level: 1}, diva: {count: 0, level: 1}, techniczny: {count:1, level:1}, interval: 130 },
-    { krytyk: {count: 2, level: 2}, spozniony: {count: 2, level: 1}, diva: {count: 1, level: 1}, techniczny: {count:0, level:1}, interval: 120 },
-    { krytyk: {count: 3, level: 2}, spozniony: {count: 3, level: 2}, diva: {count: 0, level: 1}, techniczny: {count:1, level:1}, interval: 110, boss: {type: 'krytyk', level: 1, hpMultiplier: 1.8} },
-    { krytyk: {count: 4, level: 2}, spozniony: {count: 4, level: 2}, diva: {count: 1, level: 2}, techniczny: {count:1, level:2}, interval: 100 },
-    { krytyk: {count: 2, level: 3}, spozniony: {count: 5, level: 2}, diva: {count: 0, level: 2}, techniczny: {count:2, level:2}, interval: 95 },
-    { krytyk: {count: 3, level: 3}, spozniony: {count: 6, level: 3}, diva: {count: 2, level: 2}, techniczny: {count:1, level:2}, interval: 90 },
-    { krytyk: {count: 4, level: 3}, spozniony: {count: 5, level: 3}, diva: {count: 1, level: 3}, techniczny: {count:2, level:3}, interval: 85 },
-    { krytyk: {count: 5, level: 3}, spozniony: {count: 5, level: 3}, diva: {count: 2, level: 3}, techniczny: {count:2, level:3}, interval: 80, boss: {type: 'diva', level: 1, hpMultiplier: 2.2} } // Diva jako boss
+    // Fala 1: Wprowadzenie Spóźnionego Widza i Krytyka
+    { spozniony: {count: 10, level: 1}, krytyk: {count: 4, level: 1}, interval: 95 },
+    // Fala 2: Więcej podstawowych, niektórzy Lvl 2
+    { spozniony: {count: 12, level: 1}, krytyk: {count: 6, level: 2}, interval: 90 },
+    // Fala 3: Wprowadzenie Technicznego Sabotażysty, więcej Krytyków Lvl 2
+    { spozniony: {count: 10, level: 2}, krytyk: {count: 8, level: 2}, techniczny: {count: 1, level: 1}, interval: 85 },
+    // Fala 4: Wprowadzenie Primadonny, więcej Technicznych
+    { spozniony: {count: 12, level: 2}, krytyk: {count: 5, level: 2}, techniczny: {count: 2, level: 1}, diva: {count: 1, level: 1}, interval: 80 },
+    // Fala 5 (BOSS): Więcej wrogów poziomu 2/3, Boss: Primadonna
+    { spozniony: {count: 10, level: 3}, krytyk: {count: 8, level: 3}, techniczny: {count: 2, level: 2}, diva: {count: 1, level: 2}, interval: 75, boss: {type: 'diva', level: 2, hpMultiplier: 2.8} } // Zwiększono mnożnik HP Bossa
 ];
 
 export const TILESET_TILE_SIZE_PX = 16;
